@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 
 	"github.com/wzshiming/ffmt"
-	"github.com/wzshiming/gen/api"
+	"github.com/wzshiming/gen"
+	"github.com/wzshiming/gen/openapi"
 )
 
 func printJson(i interface{}) {
@@ -29,14 +30,16 @@ func writeJson(i interface{}) {
 }
 
 func main() {
-
-	def := api.NewGenAPI()
+	def := gen.NewGen()
 	err := def.Import("github.com/wzshiming/gen/testdata")
 	if err != nil {
 		ffmt.Mark(err)
 		return
 	}
-
-	swa := def.OpenAPI()
-	writeJson(swa)
+	api, err := openapi.NewGenOpenAPI(def.API()).WithServices("http://127.0.0.1:8080/").Generate()
+	if err != nil {
+		ffmt.Mark(err)
+		return
+	}
+	writeJson(api)
 }
