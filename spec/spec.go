@@ -1,10 +1,11 @@
-package gen
+package spec
 
 import (
 	"reflect"
 )
 
 type API struct {
+	Package    string
 	Operations []*Operation
 	Requests   map[string]*Request
 	Responses  map[string]*Response

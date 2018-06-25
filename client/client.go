@@ -3,23 +3,26 @@ package client
 import (
 	"bytes"
 	"sort"
-	"strconv"
-	"strings"
 
-	"github.com/wzshiming/gen"
+	"github.com/wzshiming/gen/model"
+	"github.com/wzshiming/gen/spec"
+	"github.com/wzshiming/gen/utils"
 	"github.com/wzshiming/namecase"
 )
 
 // GenClient is the generating generating
 type GenClient struct {
-	api *gen.API
+	api *spec.API
 	buf *bytes.Buffer
+	model.GenModel
 }
 
-func NewGenClient(api *gen.API) *GenClient {
+func NewGenClient(api *spec.API) *GenClient {
+	buf := bytes.NewBuffer(nil)
 	return &GenClient{
-		api: api,
-		buf: bytes.NewBuffer(nil),
+		api:      api,
+		buf:      buf,
+		GenModel: *model.NewGenModel(api, buf),
 	}
 }
 
@@ -52,9 +55,9 @@ func (g *GenClient) GenerateSchemas() (err error) {
 	sort.Strings(ks)
 	for _, k := range ks {
 		v := schemas[k]
-		g.buf.WriteString(commentLine(v.Description))
+		g.buf.WriteString(utils.CommentLine(v.Description))
 		g.buf.WriteString("type ")
-		g.buf.WriteString(getName(k))
+		g.buf.WriteString(utils.GetName(k))
 		g.buf.WriteByte(' ')
 		err = g.Types(v)
 		if err != nil {
@@ -81,7 +84,7 @@ func (g *GenClient) GenerateOperations() (err error) {
 	return
 }
 
-func (g *GenClient) FuncBody(oper *gen.Operation) (err error) {
+func (g *GenClient) FuncBody(oper *spec.Operation) (err error) {
 	g.buf.WriteString("{\n")
 	g.buf.WriteString("_resp, _err := NewRequests().\n")
 	for _, v := range oper.Requests {
@@ -155,9 +158,9 @@ return
 	return nil
 }
 
-func (g *GenClient) Operations(oper *gen.Operation) (err error) {
+func (g *GenClient) Operations(oper *spec.Operation) (err error) {
 
-	g.buf.WriteString(commentLine(oper.Description))
+	g.buf.WriteString(utils.CommentLine(oper.Description))
 	g.buf.WriteString("func ")
 
 	if oper.Type != nil {
@@ -168,7 +171,7 @@ func (g *GenClient) Operations(oper *gen.Operation) (err error) {
 		}
 		g.buf.WriteByte(')')
 	}
-	g.buf.WriteString(getName(oper.Name))
+	g.buf.WriteString(utils.GetName(oper.Name))
 	g.buf.WriteByte('(')
 	for i, v := range oper.Requests {
 		if i != 0 {
@@ -211,7 +214,7 @@ func (g *GenClient) Operations(oper *gen.Operation) (err error) {
 	return
 }
 
-func (g *GenClient) Requests(req *gen.Request) (err error) {
+func (g *GenClient) Requests(req *spec.Request) (err error) {
 	if req.Ref != "" {
 		return g.Requests(g.api.Requests[req.Ref])
 	}
@@ -223,13 +226,13 @@ func (g *GenClient) Requests(req *gen.Request) (err error) {
 	}
 	if req.Description != "" {
 		g.buf.WriteString("/* ")
-		g.buf.WriteString(mergeLine(req.Description))
+		g.buf.WriteString(utils.MergeLine(req.Description))
 		g.buf.WriteString(" */")
 	}
 	return nil
 }
 
-func (g *GenClient) Responses(req *gen.Response) (err error) {
+func (g *GenClient) Responses(req *spec.Response) (err error) {
 	if req.Ref != "" {
 		return g.Responses(g.api.Responses[req.Ref])
 	}
@@ -241,92 +244,8 @@ func (g *GenClient) Responses(req *gen.Response) (err error) {
 	}
 	if req.Description != "" {
 		g.buf.WriteString("/* ")
-		g.buf.WriteString(mergeLine(req.Description))
+		g.buf.WriteString(utils.MergeLine(req.Description))
 		g.buf.WriteString(" */")
 	}
 	return nil
-}
-
-func (g *GenClient) Types(typ *gen.Type) (err error) {
-	if typ.Ref != "" {
-		g.buf.WriteString(getName(typ.Ref))
-		return nil
-	}
-	switch typ.Type {
-	case "ptr":
-		g.buf.WriteByte('*')
-		err := g.Types(typ.Elem)
-		if err != nil {
-			return err
-		}
-	case "slice":
-		g.buf.WriteString("[]")
-		err := g.Types(typ.Elem)
-		if err != nil {
-			return err
-		}
-	case "array":
-		g.buf.WriteByte('[')
-		g.buf.WriteString(strconv.Itoa(typ.Len))
-		g.buf.WriteByte(']')
-		err := g.Types(typ.Elem)
-		if err != nil {
-			return err
-		}
-	case "map":
-		g.buf.WriteString("map[")
-		err := g.Types(typ.Key)
-		if err != nil {
-			return err
-		}
-		g.buf.WriteByte(']')
-		err = g.Types(typ.Elem)
-		if err != nil {
-			return err
-		}
-	case "struct":
-		g.buf.WriteString("struct {")
-		if len(typ.Fields) != 0 {
-			g.buf.WriteByte('\n')
-		}
-		for _, v := range typ.Fields {
-			if !v.Anonymous {
-				g.buf.WriteString(v.Name)
-				g.buf.WriteByte(' ')
-			}
-			err := g.Types(v.Type)
-			if err != nil {
-				return err
-			}
-			if v.Tag != "" {
-				g.buf.WriteByte(' ')
-				g.buf.WriteByte('`')
-				g.buf.WriteString(string(v.Tag))
-				g.buf.WriteByte('`')
-			}
-			g.buf.WriteString("// ")
-			g.buf.WriteString(mergeLine(v.Description))
-			g.buf.WriteByte('\n')
-		}
-		g.buf.WriteByte('}')
-	default:
-		g.buf.WriteString(typ.Type)
-	}
-	return
-}
-
-func getName(name string) string {
-	i := strings.Index(name, ".")
-	if i == -1 {
-		return name
-	}
-	return name[:i]
-}
-
-func mergeLine(t string) string {
-	return strings.TrimSpace(strings.Replace(t, "\n", " ", -1))
-}
-
-func commentLine(t string) string {
-	return "// " + strings.Join(strings.Split(strings.TrimSpace(t), "\n"), "\n// ") + "\n"
 }

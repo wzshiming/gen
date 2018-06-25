@@ -4,32 +4,32 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/wzshiming/gen"
-	"github.com/wzshiming/openapi/spec"
+	"github.com/wzshiming/gen/spec"
+	oaspec "github.com/wzshiming/openapi/spec"
 )
 
 type GenOpenAPI struct {
-	api     *gen.API
-	openapi *spec.OpenAPI
+	api     *spec.API
+	openapi *oaspec.OpenAPI
 	servers []string
 }
 
-func NewGenOpenAPI(api *gen.API) *GenOpenAPI {
+func NewGenOpenAPI(api *spec.API) *GenOpenAPI {
 	return &GenOpenAPI{
 		api: api,
-		openapi: &spec.OpenAPI{
+		openapi: &oaspec.OpenAPI{
 			OpenAPI:    "3.0.1",
-			Components: spec.NewComponents(),
-			Paths:      spec.Paths{},
-			Info: &spec.Info{
+			Components: oaspec.NewComponents(),
+			Paths:      oaspec.Paths{},
+			Info: &oaspec.Info{
 				Title:       "OpenAPI Demo",
 				Description: "Demo of github.com/wzshiming/openapi",
-				Contact: &spec.Contact{
+				Contact: &oaspec.Contact{
 					Name:  "wzshiming",
 					URL:   "https://github.com/wzshiming",
 					Email: "wzshiming@foxmail.com",
 				},
-				License: &spec.License{
+				License: &oaspec.License{
 					Name: "MIT",
 					URL:  "https://github.com/wzshiming/openapi/blob/master/LICENSE",
 				},
@@ -44,20 +44,20 @@ func (g *GenOpenAPI) WithServices(servers ...string) *GenOpenAPI {
 	return g
 }
 
-func (g *GenOpenAPI) Generate() (*spec.OpenAPI, error) {
+func (g *GenOpenAPI) Generate() (*oaspec.OpenAPI, error) {
 	err := g.Components()
 	if err != nil {
 		return nil, err
 	}
-	servers, err := spec.NewServers(g.servers...)
+	servers, err := oaspec.NewServers(g.servers...)
 	if err != nil {
 		return nil, err
 	}
 	g.openapi.Servers = servers
-	g.openapi.Security = append(g.openapi.Security, map[string]spec.SecurityRequirement{
-		"api_key": spec.SecurityRequirement{},
+	g.openapi.Security = append(g.openapi.Security, map[string]oaspec.SecurityRequirement{
+		"api_key": oaspec.SecurityRequirement{},
 	})
-	sr := &spec.SecurityScheme{}
+	sr := &oaspec.SecurityScheme{}
 	sr.In = "query"
 	sr.Type = "apiKey"
 	sr.Name = "api_key"
@@ -105,8 +105,8 @@ func (g *GenOpenAPI) Components() (err error) {
 	return nil
 }
 
-func (g *GenOpenAPI) Operations(ope *gen.Operation) (err error) {
-	oper := &spec.Operation{}
+func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
+	oper := &oaspec.Operation{}
 	for _, v := range ope.Requests {
 		par, body, err := g.Parameters(v)
 		if err != nil {
@@ -119,7 +119,7 @@ func (g *GenOpenAPI) Operations(ope *gen.Operation) (err error) {
 		}
 	}
 
-	oper.Responses = map[string]*spec.Response{}
+	oper.Responses = map[string]*oaspec.Response{}
 	for _, v := range ope.Responses {
 		code, resp, err := g.Responses(v)
 		if err != nil {
@@ -130,7 +130,7 @@ func (g *GenOpenAPI) Operations(ope *gen.Operation) (err error) {
 	oper.Description = ope.Description
 
 	if g.openapi.Paths[ope.Path] == nil {
-		g.openapi.Paths[ope.Path] = &spec.PathItem{}
+		g.openapi.Paths[ope.Path] = &oaspec.PathItem{}
 	}
 	item := g.openapi.Paths[ope.Path]
 
@@ -165,7 +165,7 @@ func (g *GenOpenAPI) Operations(ope *gen.Operation) (err error) {
 			} else {
 				description = sch.Description
 			}
-			g.openapi.Tags = append(g.openapi.Tags, &spec.Tag{
+			g.openapi.Tags = append(g.openapi.Tags, &oaspec.Tag{
 				Name:        v,
 				Description: description,
 			})
@@ -176,9 +176,9 @@ func (g *GenOpenAPI) Operations(ope *gen.Operation) (err error) {
 	return
 }
 
-func (g *GenOpenAPI) Responses(res *gen.Response) (code string, resp *spec.Response, err error) {
+func (g *GenOpenAPI) Responses(res *spec.Response) (code string, resp *oaspec.Response, err error) {
 	if res.Ref != "" {
-		return g.api.Responses[res.Ref].Code, spec.RefResponse(res.Ref), nil
+		return g.api.Responses[res.Ref].Code, oaspec.RefResponse(res.Ref), nil
 	}
 	sch, err := g.Schemas(res.Type)
 	if err != nil {
@@ -186,15 +186,15 @@ func (g *GenOpenAPI) Responses(res *gen.Response) (code string, resp *spec.Respo
 	}
 	switch res.Content {
 	case "json":
-		resp = spec.JSONResponse(sch)
+		resp = oaspec.JSONResponse(sch)
 	case "xml":
-		resp = spec.XMLResponse(sch)
+		resp = oaspec.XMLResponse(sch)
 	case "octetstream":
-		resp = spec.OctetStreamResponse(sch)
+		resp = oaspec.OctetStreamResponse(sch)
 	case "urlencoded":
-		resp = spec.URLEncodedResponse(sch)
+		resp = oaspec.URLEncodedResponse(sch)
 	case "formdata":
-		resp = spec.FormDataResponse(sch)
+		resp = oaspec.FormDataResponse(sch)
 	default:
 		return "", nil, fmt.Errorf("Responses undefined content:%s", res.Content)
 	}
@@ -203,12 +203,12 @@ func (g *GenOpenAPI) Responses(res *gen.Response) (code string, resp *spec.Respo
 	return
 }
 
-func (g *GenOpenAPI) Parameters(req *gen.Request) (par *spec.Parameter, body *spec.RequestBody, err error) {
+func (g *GenOpenAPI) Parameters(req *spec.Request) (par *oaspec.Parameter, body *oaspec.RequestBody, err error) {
 	if req.Ref != "" {
 		if _, ok := g.openapi.Components.Parameters[req.Ref]; ok {
-			return spec.RefParameter(req.Ref), nil, nil
+			return oaspec.RefParameter(req.Ref), nil, nil
 		} else if _, ok := g.openapi.Components.RequestBodies[req.Ref]; ok {
-			return nil, spec.RefRequestBody(req.Ref), nil
+			return nil, oaspec.RefRequestBody(req.Ref), nil
 		}
 		return nil, nil, fmt.Errorf("Responses undefined ref:%s", req.Ref)
 	}
@@ -218,27 +218,27 @@ func (g *GenOpenAPI) Parameters(req *gen.Request) (par *spec.Parameter, body *sp
 	}
 	switch req.In {
 	case "header":
-		par = spec.HeaderParam(req.Name, sch)
+		par = oaspec.HeaderParam(req.Name, sch)
 	case "cookie":
-		par = spec.CookieParam(req.Name, sch)
+		par = oaspec.CookieParam(req.Name, sch)
 	case "path":
-		par = spec.PathParam(req.Name, sch)
+		par = oaspec.PathParam(req.Name, sch)
 	case "query":
-		par = spec.QueryParam(req.Name, sch)
+		par = oaspec.QueryParam(req.Name, sch)
 	case "body":
 		switch req.Content {
 		case "json":
-			body = spec.JSONRequestBody(sch)
+			body = oaspec.JSONRequestBody(sch)
 		case "xml":
-			body = spec.XMLRequestBody(sch)
+			body = oaspec.XMLRequestBody(sch)
 		case "textplain":
-			body = spec.TextPlainRequestBody(sch)
+			body = oaspec.TextPlainRequestBody(sch)
 		case "octetstream":
-			body = spec.OctetStreamRequestBody(sch)
+			body = oaspec.OctetStreamRequestBody(sch)
 		case "urlencoded":
-			body = spec.URLEncodedRequestBody(sch)
+			body = oaspec.URLEncodedRequestBody(sch)
 		case "formdata":
-			body = spec.FormDataRequestBody(sch)
+			body = oaspec.FormDataRequestBody(sch)
 		default:
 			return nil, nil, fmt.Errorf("RequestBody undefined content:%s", req.Content)
 		}
@@ -253,64 +253,64 @@ func (g *GenOpenAPI) Parameters(req *gen.Request) (par *spec.Parameter, body *sp
 	return
 }
 
-func (g *GenOpenAPI) Schemas(typ *gen.Type) (sch *spec.Schema, err error) {
+func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	if typ.Ref != "" {
-		return spec.RefSchemas(typ.Ref), nil
+		return oaspec.RefSchemas(typ.Ref), nil
 	}
 	switch typ.Type {
 	default:
-		sch = spec.StrFmtProperty(typ.Type)
+		sch = oaspec.StrFmtProperty(typ.Type)
 	case "string":
-		sch = spec.StringProperty()
+		sch = oaspec.StringProperty()
 	case "bool":
-		sch = spec.BooleanProperty()
+		sch = oaspec.BooleanProperty()
 	case "float32":
-		sch = spec.Float32Property() //.WithMinimum(math.SmallestNonzeroFloat32, false).WithMaximum(math.MaxFloat32, false)
+		sch = oaspec.Float32Property() //.WithMinimum(math.SmallestNonzeroFloat32, false).WithMaximum(math.MaxFloat32, false)
 	case "float64":
-		sch = spec.Float64Property() //.WithMinimum(math.SmallestNonzeroFloat64, false).WithMaximum(math.MaxFloat64, false)
+		sch = oaspec.Float64Property() //.WithMinimum(math.SmallestNonzeroFloat64, false).WithMaximum(math.MaxFloat64, false)
 	case "int8":
-		sch = spec.Int8Property() //.WithMinimum(math.MinInt8, false).WithMaximum(math.MaxInt8, false)
+		sch = oaspec.Int8Property() //.WithMinimum(math.MinInt8, false).WithMaximum(math.MaxInt8, false)
 	case "int16":
-		sch = spec.Int16Property() //.WithMinimum(math.MinInt16, false).WithMaximum(math.MaxInt16, false)
+		sch = oaspec.Int16Property() //.WithMinimum(math.MinInt16, false).WithMaximum(math.MaxInt16, false)
 	case "int32":
-		sch = spec.Int32Property() //.WithMinimum(math.MinInt32, false).WithMaximum(math.MaxInt32, false)
+		sch = oaspec.Int32Property() //.WithMinimum(math.MinInt32, false).WithMaximum(math.MaxInt32, false)
 	case "int64", "int":
-		sch = spec.Int64Property() //.WithMinimum(math.MinInt64, false).WithMaximum(math.MaxInt64, false)
+		sch = oaspec.Int64Property() //.WithMinimum(math.MinInt64, false).WithMaximum(math.MaxInt64, false)
 	case "uint8":
-		sch = spec.IntFmtProperty("uin8") //.WithMinimum(0, false).WithMaximum(math.MaxUint8, false)
+		sch = oaspec.IntFmtProperty("uin8") //.WithMinimum(0, false).WithMaximum(math.MaxUint8, false)
 	case "uint16":
-		sch = spec.IntFmtProperty("uin16") //.WithMinimum(0, false).WithMaximum(math.MaxUint16, false)
+		sch = oaspec.IntFmtProperty("uin16") //.WithMinimum(0, false).WithMaximum(math.MaxUint16, false)
 	case "uint32":
-		sch = spec.IntFmtProperty("uin32") //.WithMinimum(0, false).WithMaximum(math.MaxUint32, false)
+		sch = oaspec.IntFmtProperty("uin32") //.WithMinimum(0, false).WithMaximum(math.MaxUint32, false)
 	case "uint64", "uint":
-		sch = spec.IntFmtProperty("uin64") //.WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
+		sch = oaspec.IntFmtProperty("uin64") //.WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
 	case "map":
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
-		sch = spec.MapProperty(sch)
+		sch = oaspec.MapProperty(sch)
 	case "slice":
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
-		sch = spec.ArrayProperty(sch)
+		sch = oaspec.ArrayProperty(sch)
 	case "array":
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
-		sch = spec.ArrayProperty(sch).WithMaxItems(int64(typ.Len))
+		sch = oaspec.ArrayProperty(sch).WithMaxItems(int64(typ.Len))
 	case "ptr":
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
 	case "error":
-		sch = spec.StrFmtProperty("error")
+		sch = oaspec.StrFmtProperty("error")
 	case "struct":
-		sch = &spec.Schema{}
+		sch = &oaspec.Schema{}
 		sch.Type = "object"
 		for _, v := range typ.Fields {
 			name := v.Name
@@ -322,12 +322,11 @@ func (g *GenOpenAPI) Schemas(typ *gen.Type) (sch *spec.Schema, err error) {
 			}
 			val.Description += v.Description
 			if v.Anonymous {
-
 				sch.AllOf = append(sch.AllOf, val)
 				continue
 			}
 			if sch.Properties == nil {
-				sch.Properties = map[string]*spec.Schema{}
+				sch.Properties = map[string]*oaspec.Schema{}
 			}
 
 			if n := strings.Split(tag.Get("json"), ",")[0]; n != "" {
@@ -347,7 +346,7 @@ func (g *GenOpenAPI) Schemas(typ *gen.Type) (sch *spec.Schema, err error) {
 	}
 	sch.Description = typ.Description
 	for _, v := range typ.Enum {
-		sch.Enum = append(sch.Enum, spec.Any(v))
+		sch.Enum = append(sch.Enum, oaspec.Any(v))
 	}
 	return sch, nil
 }

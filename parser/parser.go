@@ -1,39 +1,39 @@
-package gen
+package parser
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"path"
 	"reflect"
 	"strings"
 
+	"github.com/wzshiming/gen/spec"
+	"github.com/wzshiming/gen/utils"
 	"github.com/wzshiming/gotype"
 )
 
-// Gen is the parse type generating definitions
-type Gen struct {
+// Parser is the parse type generating definitions
+type Parser struct {
 	imp *gotype.Importer
-	api *API
+	api *spec.API
 }
 
-func NewGen() *Gen {
-	return &Gen{
+func NewParser() *Parser {
+	return &Parser{
 		imp: gotype.NewImporter(gotype.WithCommentLocator()),
-		api: NewAPI(),
+		api: spec.NewAPI(),
 	}
 }
 
-func (g *Gen) API() *API {
+func (g *Parser) API() *spec.API {
 	return g.api
 }
 
-func (g *Gen) Import(pkgpath string) error {
+func (g *Parser) Import(pkgpath string) error {
 	pkg, err := g.imp.Import(pkgpath)
 	if err != nil {
 		return err
 	}
-
+	g.api.Package = pkg.Name()
 	numchi := pkg.NumChild()
 
 	for i := 0; i != numchi; i++ {
@@ -53,6 +53,7 @@ func (g *Gen) Import(pkgpath string) error {
 			// No action
 		}
 	}
+
 	return nil
 }
 
@@ -74,7 +75,7 @@ func GetTag(text string) reflect.StructTag {
 	return reflect.StructTag(strings.Join(ss, " "))
 }
 
-func (g *Gen) AddPaths(t gotype.Type) (err error) {
+func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	numm := t.NumMethods()
 	if numm == 0 {
 		return nil
@@ -99,7 +100,7 @@ func (g *Gen) AddPaths(t gotype.Type) (err error) {
 	return
 }
 
-func (g *Gen) AddOperation(bashPath string, sch *Type, t gotype.Type) (err error) {
+func (g *Parser) AddOperation(bashPath string, sch *spec.Type, t gotype.Type) (err error) {
 	if t.Kind() != gotype.Func {
 		return fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
 	}
@@ -119,7 +120,7 @@ func (g *Gen) AddOperation(bashPath string, sch *Type, t gotype.Type) (err error
 
 	method := strings.ToLower(strings.TrimSpace(rs[0]))
 
-	oper := &Operation{}
+	oper := &spec.Operation{}
 	if bashPath != "" {
 		oper.Tags = append(oper.Tags, bashPath)
 		pat = path.Join(bashPath, pat)
@@ -159,7 +160,7 @@ func (g *Gen) AddOperation(bashPath string, sch *Type, t gotype.Type) (err error
 	return nil
 }
 
-func (g *Gen) AddResponse(t gotype.Type) (resp *Response, err error) {
+func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
 	name := t.Name()
@@ -180,15 +181,15 @@ func (g *Gen) AddResponse(t gotype.Type) (resp *Response, err error) {
 		return nil, err
 	}
 
-	key := name + "." + hash(name, code, content, sch.Name, doc)
+	key := name + "." + utils.Hash(name, code, content, sch.Name, doc)
 
 	if g.api.Responses[key] != nil {
-		return &Response{
+		return &spec.Response{
 			Ref: key,
 		}, nil
 	}
 
-	resp = &Response{}
+	resp = &spec.Response{}
 	resp.Name = name
 	resp.Code = code
 	resp.Content = content
@@ -196,13 +197,13 @@ func (g *Gen) AddResponse(t gotype.Type) (resp *Response, err error) {
 	resp.Description = doc
 
 	g.api.Responses[key] = resp
-	return &Response{
+	return &spec.Response{
 		Ref:  key,
 		Name: sch.Name,
 	}, nil
 }
 
-func (g *Gen) AddRequest(path string, t gotype.Type) (par *Request, err error) {
+func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err error) {
 	rawname := t.Name()
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
@@ -240,14 +241,14 @@ func (g *Gen) AddRequest(path string, t gotype.Type) (par *Request, err error) {
 		return nil, err
 	}
 
-	key := name + "." + hash(name, in, sch.Name, doc)
+	key := name + "." + utils.Hash(name, in, sch.Name, doc)
 
 	if g.api.Requests[key] != nil {
-		return &Request{
+		return &spec.Request{
 			Ref: key,
 		}, nil
 	}
-	par = &Request{}
+	par = &spec.Request{}
 	par.In = in
 	par.Name = name
 	par.Content = content
@@ -255,36 +256,36 @@ func (g *Gen) AddRequest(path string, t gotype.Type) (par *Request, err error) {
 	par.Type = sch
 
 	g.api.Requests[key] = par
-	return &Request{
+	return &spec.Request{
 		Ref:  key,
 		Name: sch.Name,
 	}, nil
 }
 
-func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
+func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	name := t.Name()
 	pkgpath := t.PkgPath()
 	doc := t.Doc().Text()
-	key := name + "." + hash(name, pkgpath, doc)
+	kind := t.Kind()
+
+	key := name + "." + utils.Hash(name, pkgpath, kind.String(), doc)
 	if g.api.Types[key] != nil {
-		return &Type{
+		return &spec.Type{
 			Ref: key,
 		}, nil
 	}
 
 	if t.IsGoroot() && pkgpath == "time" && name == "Time" {
-		sch := &Type{
+		sch := &spec.Type{
 			Type: "time",
 		}
 		return sch, nil
 	}
 
-	kind := t.Kind()
-
 	switch kind {
 	case gotype.Struct:
 
-		sch = &Type{
+		sch = &spec.Type{
 			Type: "struct",
 		}
 
@@ -299,7 +300,7 @@ func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
 				if err != nil {
 					return nil, err
 				}
-				field := &Field{
+				field := &spec.Field{
 					Name:        name,
 					Type:        val,
 					Tag:         tag,
@@ -314,7 +315,7 @@ func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
 	case gotype.Error, gotype.String, gotype.Bool, gotype.Float32, gotype.Float64,
 		gotype.Int8, gotype.Int16, gotype.Int32, gotype.Int64, gotype.Int,
 		gotype.Uint8, gotype.Uint16, gotype.Uint32, gotype.Uint64, gotype.Uint:
-		sch = &Type{
+		sch = &spec.Type{
 			Type: strings.ToLower(kind.String()),
 		}
 
@@ -349,7 +350,7 @@ func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
 		if err != nil {
 			return nil, err
 		}
-		sch = &Type{
+		sch = &spec.Type{
 			Type: "map",
 			Key:  schk,
 			Elem: schv,
@@ -359,7 +360,7 @@ func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
 		if err != nil {
 			return nil, err
 		}
-		sch = &Type{
+		sch = &spec.Type{
 			Type: "slice",
 			Elem: sch,
 		}
@@ -368,7 +369,7 @@ func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
 		if err != nil {
 			return nil, err
 		}
-		sch = &Type{
+		sch = &spec.Type{
 			Type: "array",
 			Elem: sch,
 			Len:  t.Len(),
@@ -378,7 +379,7 @@ func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
 		if err != nil {
 			return nil, err
 		}
-		sch = &Type{
+		sch = &spec.Type{
 			Type: "ptr",
 			Elem: sch,
 		}
@@ -394,19 +395,11 @@ func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
 	}
 	if name != "" && name != strings.ToLower(kind.String()) {
 		g.api.Types[key] = sch
-		return &Type{
+		return &spec.Type{
 			Ref:  key,
 			Name: sch.Name,
 		}, nil
 	}
 
 	return sch, nil
-}
-
-func hash(s ...string) string {
-	h := md5.New()
-	for _, v := range s {
-		h.Write([]byte(v))
-	}
-	return hex.EncodeToString(h.Sum(nil))
 }
