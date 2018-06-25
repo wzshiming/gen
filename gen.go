@@ -1,0 +1,412 @@
+package gen
+
+import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
+	"path"
+	"reflect"
+	"strings"
+
+	"github.com/wzshiming/gotype"
+)
+
+// Gen is the parse type generating definitions
+type Gen struct {
+	imp *gotype.Importer
+	api *API
+}
+
+func NewGen() *Gen {
+	return &Gen{
+		imp: gotype.NewImporter(gotype.WithCommentLocator()),
+		api: NewAPI(),
+	}
+}
+
+func (g *Gen) API() *API {
+	return g.api
+}
+
+func (g *Gen) Import(pkgpath string) error {
+	pkg, err := g.imp.Import(pkgpath)
+	if err != nil {
+		return err
+	}
+
+	numchi := pkg.NumChild()
+
+	for i := 0; i != numchi; i++ {
+		v := pkg.Child(i)
+		switch v.Kind() {
+		case gotype.Func:
+			err := g.AddOperation("", nil, v)
+			if err != nil {
+				return err
+			}
+		default:
+			err := g.AddPaths(v)
+			if err != nil {
+				return err
+			}
+		case gotype.Interface, gotype.Scope, gotype.Invalid, gotype.Var:
+			// No action
+		}
+	}
+	return nil
+}
+
+// GetTag [#[^#]+#]...
+func GetTag(text string) reflect.StructTag {
+	ss := []string{}
+	prev := 0
+	for i, v := range text {
+		if v != '#' {
+			continue
+		}
+		if prev == 0 {
+			prev = i
+		} else {
+			ss = append(ss, text[prev+1:i])
+			prev = 0
+		}
+	}
+	return reflect.StructTag(strings.Join(ss, " "))
+}
+
+func (g *Gen) AddPaths(t gotype.Type) (err error) {
+	numm := t.NumMethods()
+	if numm == 0 {
+		return nil
+	}
+	tag := GetTag(t.Doc().Text())
+	route := tag.Get("route")
+	if route == "" {
+		return nil
+	}
+
+	sch, err := g.AddType(t)
+	if err != nil {
+		return err
+	}
+	for i := 0; i != numm; i++ {
+		v := t.Methods(i)
+		err := g.AddOperation(route, sch, v)
+		if err != nil {
+			return err
+		}
+	}
+	return
+}
+
+func (g *Gen) AddOperation(bashPath string, sch *Type, t gotype.Type) (err error) {
+	if t.Kind() != gotype.Func {
+		return fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
+	}
+
+	doc := t.Doc().Text()
+	tag := GetTag(doc)
+	route := tag.Get("route")
+	if route == "" {
+		return nil
+	}
+	rs := strings.SplitN(route, " ", 2)
+	if len(rs) != 2 {
+		return nil
+	}
+
+	pat := strings.TrimSpace(rs[1])
+
+	method := strings.ToLower(strings.TrimSpace(rs[0]))
+
+	oper := &Operation{}
+	if bashPath != "" {
+		oper.Tags = append(oper.Tags, bashPath)
+		pat = path.Join(bashPath, pat)
+	}
+	oper.Method = method
+	oper.Path = pat
+	oper.Description = doc
+	oper.Type = sch
+
+	oper.Name = t.Name()
+	{
+		numin := t.NumIn()
+		for i := 0; i != numin; i++ {
+			v := t.In(i)
+			par, err := g.AddRequest(pat, v)
+			if err != nil {
+				return err
+			}
+			if par != nil {
+				oper.Requests = append(oper.Requests, par)
+			}
+		}
+	}
+
+	{
+		numout := t.NumOut()
+		for i := 0; i != numout; i++ {
+			v := t.Out(i)
+			resp, err := g.AddResponse(v)
+			if err != nil {
+				return err
+			}
+			oper.Responses = append(oper.Responses, resp)
+		}
+	}
+	g.api.Operations = append(g.api.Operations, oper)
+	return nil
+}
+
+func (g *Gen) AddResponse(t gotype.Type) (resp *Response, err error) {
+	doc := t.Comment().Text()
+	tag := GetTag(doc)
+	name := t.Name()
+	code := tag.Get("code")
+	content := tag.Get("content")
+	if content == "" {
+		content = "json"
+	}
+	if code == "" {
+		if t.Elem().Kind() != gotype.Error {
+			code = "200"
+		} else {
+			code = "400"
+		}
+	}
+	sch, err := g.AddType(t.Elem())
+	if err != nil {
+		return nil, err
+	}
+
+	key := name + "." + hash(name, code, content, sch.Name, doc)
+
+	if g.api.Responses[key] != nil {
+		return &Response{
+			Ref: key,
+		}, nil
+	}
+
+	resp = &Response{}
+	resp.Name = name
+	resp.Code = code
+	resp.Content = content
+	resp.Type = sch
+	resp.Description = doc
+
+	g.api.Responses[key] = resp
+	return &Response{
+		Ref:  key,
+		Name: sch.Name,
+	}, nil
+}
+
+func (g *Gen) AddRequest(path string, t gotype.Type) (par *Request, err error) {
+	rawname := t.Name()
+	doc := t.Comment().Text()
+	tag := GetTag(doc)
+
+	in := tag.Get("in")
+	if in == "" {
+		t := t
+		for t.Elem().Kind() == gotype.Ptr {
+			t = t.Elem()
+		}
+		switch t.Elem().Kind() {
+		case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
+			in = "body"
+		default:
+			if strings.Index(path, "{"+rawname+"}") == -1 {
+				in = "query"
+			} else {
+				in = "path"
+			}
+		}
+	}
+
+	content := tag.Get("content")
+	if content == "" && in == "body" {
+		content = "json"
+	}
+
+	name, ok := tag.Lookup("name")
+	if !ok {
+		name = rawname
+	}
+
+	sch, err := g.AddType(t.Elem())
+	if err != nil {
+		return nil, err
+	}
+
+	key := name + "." + hash(name, in, sch.Name, doc)
+
+	if g.api.Requests[key] != nil {
+		return &Request{
+			Ref: key,
+		}, nil
+	}
+	par = &Request{}
+	par.In = in
+	par.Name = name
+	par.Content = content
+	par.Description = doc
+	par.Type = sch
+
+	g.api.Requests[key] = par
+	return &Request{
+		Ref:  key,
+		Name: sch.Name,
+	}, nil
+}
+
+func (g *Gen) AddType(t gotype.Type) (sch *Type, err error) {
+	name := t.Name()
+	pkgpath := t.PkgPath()
+	doc := t.Doc().Text()
+	key := name + "." + hash(name, pkgpath, doc)
+	if g.api.Types[key] != nil {
+		return &Type{
+			Ref: key,
+		}, nil
+	}
+
+	if t.IsGoroot() && pkgpath == "time" && name == "Time" {
+		sch := &Type{
+			Type: "time",
+		}
+		return sch, nil
+	}
+
+	kind := t.Kind()
+
+	switch kind {
+	case gotype.Struct:
+
+		sch = &Type{
+			Type: "struct",
+		}
+
+		// Field
+		{
+			num := t.NumField()
+			for i := 0; i != num; i++ {
+				v := t.Field(i)
+				name := v.Name()
+				tag := v.Tag()
+				val, err := g.AddType(v.Elem())
+				if err != nil {
+					return nil, err
+				}
+				field := &Field{
+					Name:        name,
+					Type:        val,
+					Tag:         tag,
+					Anonymous:   v.IsAnonymous(),
+					Description: v.Doc().Text() + v.Comment().Text(),
+				}
+
+				sch.Fields = append(sch.Fields, field)
+			}
+		}
+
+	case gotype.Error, gotype.String, gotype.Bool, gotype.Float32, gotype.Float64,
+		gotype.Int8, gotype.Int16, gotype.Int32, gotype.Int64, gotype.Int,
+		gotype.Uint8, gotype.Uint16, gotype.Uint32, gotype.Uint64, gotype.Uint:
+		sch = &Type{
+			Type: strings.ToLower(kind.String()),
+		}
+
+		scope, err := g.imp.Import(t.PkgPath())
+		if err != nil {
+			return nil, err
+		}
+
+		typname := t.Name()
+		numchi := scope.NumChild()
+		for i := 0; i != numchi; i++ {
+			v := scope.Child(i)
+			if v.Kind() != gotype.Var {
+				continue
+			}
+			if v.Elem().Name() == typname {
+				name := v.Name()
+				if name == "_" {
+					continue
+				}
+				value := v.Value()
+				sch.Enum = append(sch.Enum, value)
+			}
+		}
+
+	case gotype.Map:
+		schk, err := g.AddType(t.Key())
+		if err != nil {
+			return nil, err
+		}
+		schv, err := g.AddType(t.Elem())
+		if err != nil {
+			return nil, err
+		}
+		sch = &Type{
+			Type: "map",
+			Key:  schk,
+			Elem: schv,
+		}
+	case gotype.Slice:
+		sch, err = g.AddType(t.Elem())
+		if err != nil {
+			return nil, err
+		}
+		sch = &Type{
+			Type: "slice",
+			Elem: sch,
+		}
+	case gotype.Array:
+		sch, err = g.AddType(t.Elem())
+		if err != nil {
+			return nil, err
+		}
+		sch = &Type{
+			Type: "array",
+			Elem: sch,
+			Len:  t.Len(),
+		}
+	case gotype.Ptr:
+		sch, err = g.AddType(t.Elem())
+		if err != nil {
+			return nil, err
+		}
+		sch = &Type{
+			Type: "ptr",
+			Elem: sch,
+		}
+	default:
+		return nil, fmt.Errorf("gotype: unsupported type: %s", t.Kind().String())
+	}
+
+	sch.Description = doc
+
+	tag := GetTag(doc)
+	if typ := tag.Get("type"); typ != "" {
+		sch.Type = typ
+	}
+	if name != "" && name != strings.ToLower(kind.String()) {
+		g.api.Types[key] = sch
+		return &Type{
+			Ref:  key,
+			Name: sch.Name,
+		}, nil
+	}
+
+	return sch, nil
+}
+
+func hash(s ...string) string {
+	h := md5.New()
+	for _, v := range s {
+		h.Write([]byte(v))
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
