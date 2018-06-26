@@ -277,7 +277,8 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 
 	if t.IsGoroot() && pkgpath == "time" && name == "Time" {
 		sch := &spec.Type{
-			Type: "time",
+			Name: name,
+			Kind: spec.Time,
 		}
 		return sch, nil
 	}
@@ -285,9 +286,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	switch kind {
 	case gotype.Struct:
 
-		sch = &spec.Type{
-			Type: "struct",
-		}
+		sch = &spec.Type{}
 
 		// Field
 		{
@@ -314,10 +313,9 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 
 	case gotype.Error, gotype.String, gotype.Bool, gotype.Float32, gotype.Float64,
 		gotype.Int8, gotype.Int16, gotype.Int32, gotype.Int64, gotype.Int,
-		gotype.Uint8, gotype.Uint16, gotype.Uint32, gotype.Uint64, gotype.Uint:
-		sch = &spec.Type{
-			Type: strings.ToLower(kind.String()),
-		}
+		gotype.Uint8, gotype.Uint16, gotype.Uint32, gotype.Uint64, gotype.Uint,
+		gotype.Byte, gotype.Rune:
+		sch = &spec.Type{}
 
 		scope, err := g.imp.Import(t.PkgPath())
 		if err != nil {
@@ -351,7 +349,6 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			return nil, err
 		}
 		sch = &spec.Type{
-			Type: "map",
 			Key:  schk,
 			Elem: schv,
 		}
@@ -361,7 +358,6 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			return nil, err
 		}
 		sch = &spec.Type{
-			Type: "slice",
 			Elem: sch,
 		}
 	case gotype.Array:
@@ -370,7 +366,6 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			return nil, err
 		}
 		sch = &spec.Type{
-			Type: "array",
 			Elem: sch,
 			Len:  t.Len(),
 		}
@@ -380,19 +375,20 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			return nil, err
 		}
 		sch = &spec.Type{
-			Type: "ptr",
 			Elem: sch,
 		}
 	default:
-		return nil, fmt.Errorf("gotype: unsupported type: %s", t.Kind().String())
+		return nil, fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
 	}
 
+	sch.Name = name
+	sch.Kind = kindMapping[kind]
 	sch.Description = doc
 
-	tag := GetTag(doc)
-	if typ := tag.Get("type"); typ != "" {
-		sch.Type = typ
-	}
+	//	tag := GetTag(doc)
+	//	if typ := tag.Get("type"); typ != "" {
+	//		sch.Kind = typ
+	//	}
 	if name != "" && name != strings.ToLower(kind.String()) {
 		g.api.Types[key] = sch
 		return &spec.Type{

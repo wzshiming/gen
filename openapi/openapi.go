@@ -257,59 +257,59 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	if typ.Ref != "" {
 		return oaspec.RefSchemas(typ.Ref), nil
 	}
-	switch typ.Type {
+	switch typ.Kind {
 	default:
-		sch = oaspec.StrFmtProperty(typ.Type)
-	case "string":
+		sch = oaspec.StrFmtProperty(strings.ToLower(typ.Kind.String()))
+	case spec.String:
 		sch = oaspec.StringProperty()
-	case "bool":
+	case spec.Bool:
 		sch = oaspec.BooleanProperty()
-	case "float32":
+	case spec.Float32:
 		sch = oaspec.Float32Property() //.WithMinimum(math.SmallestNonzeroFloat32, false).WithMaximum(math.MaxFloat32, false)
-	case "float64":
+	case spec.Float64:
 		sch = oaspec.Float64Property() //.WithMinimum(math.SmallestNonzeroFloat64, false).WithMaximum(math.MaxFloat64, false)
-	case "int8":
+	case spec.Int8:
 		sch = oaspec.Int8Property() //.WithMinimum(math.MinInt8, false).WithMaximum(math.MaxInt8, false)
-	case "int16":
+	case spec.Int16:
 		sch = oaspec.Int16Property() //.WithMinimum(math.MinInt16, false).WithMaximum(math.MaxInt16, false)
-	case "int32":
+	case spec.Int32:
 		sch = oaspec.Int32Property() //.WithMinimum(math.MinInt32, false).WithMaximum(math.MaxInt32, false)
-	case "int64", "int":
+	case spec.Int64, spec.Int:
 		sch = oaspec.Int64Property() //.WithMinimum(math.MinInt64, false).WithMaximum(math.MaxInt64, false)
-	case "uint8":
+	case spec.Uint8:
 		sch = oaspec.IntFmtProperty("uin8") //.WithMinimum(0, false).WithMaximum(math.MaxUint8, false)
-	case "uint16":
+	case spec.Uint16:
 		sch = oaspec.IntFmtProperty("uin16") //.WithMinimum(0, false).WithMaximum(math.MaxUint16, false)
-	case "uint32":
+	case spec.Uint32:
 		sch = oaspec.IntFmtProperty("uin32") //.WithMinimum(0, false).WithMaximum(math.MaxUint32, false)
-	case "uint64", "uint":
+	case spec.Uint64, spec.Uint:
 		sch = oaspec.IntFmtProperty("uin64") //.WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
-	case "map":
+	case spec.Map:
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
 		sch = oaspec.MapProperty(sch)
-	case "slice":
+	case spec.Slice:
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
 		sch = oaspec.ArrayProperty(sch)
-	case "array":
+	case spec.Array:
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
 		sch = oaspec.ArrayProperty(sch).WithMaxItems(int64(typ.Len))
-	case "ptr":
+	case spec.Ptr:
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
 			return nil, err
 		}
-	case "error":
+	case spec.Error:
 		sch = oaspec.StrFmtProperty("error")
-	case "struct":
+	case spec.Struct:
 		sch = &oaspec.Schema{}
 		sch.Type = "object"
 		for _, v := range typ.Fields {

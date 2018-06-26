@@ -3,6 +3,7 @@ package route
 import (
 	"strings"
 
+	"github.com/wzshiming/ffmt"
 	"github.com/wzshiming/gen/model"
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/srcgen"
@@ -69,12 +70,22 @@ func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteString(`
-HandlerFunc(func(_w http.ResponseWriter, _r *http.Request) {
-	_vars := mux.Vars(_r)
+HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	_vars := mux.Vars(r)
 `)
 	defer g.buf.WriteString(`
 })
 `)
+
+	for _, req := range oper.Requests {
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
+		}
+
+		g.Convert(`_vars["`+req.Name+`"]`, "_"+req.Name, req.Type)
+		g.buf.WriteString("\n")
+	}
+	g.buf.WriteString("\n")
 
 	for i, resp := range oper.Responses {
 		if resp.Ref != "" {
@@ -83,7 +94,7 @@ HandlerFunc(func(_w http.ResponseWriter, _r *http.Request) {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		g.buf.WriteString(resp.Name)
+		g.buf.WriteString("_" + resp.Name)
 	}
 
 	g.buf.WriteString(":=")
@@ -97,19 +108,10 @@ HandlerFunc(func(_w http.ResponseWriter, _r *http.Request) {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		switch req.In {
-		case "body":
-			err := g.UnmarshalContentBody(req)
-			if err != nil {
-				return err
-			}
-
-		case "cookie":
-			// TODO
-			g.buf.WriteString("nil")
-		default:
-			g.buf.WriteFormat(`_vars["%s"]`, req.Name)
+		if req.Type.Kind == spec.Ptr {
+			g.buf.WriteString("&")
 		}
+		g.buf.WriteString("_" + req.Name)
 	}
 	g.buf.WriteString(")")
 
@@ -119,8 +121,6 @@ HandlerFunc(func(_w http.ResponseWriter, _r *http.Request) {
 		}
 
 		g.MarshalContentBody(resp)
-
-		//g.buf.WriteString(resp.Name)
 	}
 
 	return
@@ -158,8 +158,8 @@ func (g *GenRoute) MarshalContentBody(resp *spec.Response) error {
 		g.buf.WriteString(`
 	data, err:=json.Marshal(_b)
 	if err!=nil {
-		_w.WriteHeader(500)
-		_w.Write([]byte(err.Error()))
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
 		return
 	}`)
 		g.buf.AddImport("", "encoding/json")
@@ -168,8 +168,8 @@ func (g *GenRoute) MarshalContentBody(resp *spec.Response) error {
 		g.buf.WriteString(`
 	data,err:=xml.Marshal(_b)
 	if err!=nil {
-		_w.WriteHeader(500)
-		_w.Write([]byte(err.Error()))
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
 		return
 	}`)
 		g.buf.AddImport("", "encoding/xml")
@@ -177,11 +177,45 @@ func (g *GenRoute) MarshalContentBody(resp *spec.Response) error {
 		contentType = "text/plain; charset=utf-8"
 	}
 	g.buf.WriteFormat(`
-	_w.Header().Set("Content-Type","%s")
-	_w.WriteHeader(%s)
-	_w.Write([]byte(err.Error()))
+	w.Header().Set("Content-Type","%s")
+	w.WriteHeader(%s)
+	w.Write([]byte(err.Error()))
 	return
 }
 `, contentType, resp.Code)
+	return nil
+}
+
+func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+	switch typ.Kind {
+	case spec.Ptr:
+		return g.Convert(in, out, typ.Elem)
+	case spec.String:
+		g.buf.WriteFormat(`%s := %s`, out, in)
+	case spec.Int64:
+		g.buf.AddImport("", "strconv")
+		g.buf.WriteFormat("%s, _ := strconv.ParseInt(%s,0,0)\n", out, in)
+	case spec.Int8, spec.Int16, spec.Int32, spec.Int:
+		g.buf.AddImport("", "strconv")
+		g.buf.WriteFormat("_%s, _ := strconv.ParseInt(%s,0,0)\n", out, in)
+		g.buf.WriteFormat("%s := %s(_%s)", out, typ.Kind, out)
+	case spec.Uint64:
+		g.buf.AddImport("", "strconv")
+		g.buf.WriteFormat("%s, _ := strconv.ParseUint(%s,0,0)\n", out, in)
+	case spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint:
+		g.buf.AddImport("", "strconv")
+		g.buf.WriteFormat("_%s, _ := strconv.ParseUint(%s,0,0)\n", out, in)
+		g.buf.WriteFormat("%s := %s(_%s)\n", out, typ.Kind, out)
+	case spec.Slice:
+		if typ.Elem.Kind == spec.Byte {
+			g.buf.WriteFormat("%s := []byte(%s)\n", out, in)
+		}
+	default:
+		ffmt.P(typ)
+		//		g.buf.WriteString(typ.Type)
+	}
 	return nil
 }

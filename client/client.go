@@ -196,7 +196,7 @@ func (g *GenClient) Operations(oper *spec.Operation) (err error) {
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
 		}
-		if resp.Type.Type != "error" {
+		if resp.Type.Kind != spec.Error {
 			needErr = true
 		}
 	}

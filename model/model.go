@@ -2,6 +2,7 @@ package model
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/srcgen"
@@ -26,20 +27,20 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		g.buf.WriteString(utils.GetName(typ.Ref))
 		return nil
 	}
-	switch typ.Type {
-	case "ptr":
+	switch typ.Kind {
+	case spec.Ptr:
 		g.buf.WriteByte('*')
 		err := g.Types(typ.Elem)
 		if err != nil {
 			return err
 		}
-	case "slice":
+	case spec.Slice:
 		g.buf.WriteString("[]")
 		err := g.Types(typ.Elem)
 		if err != nil {
 			return err
 		}
-	case "array":
+	case spec.Array:
 		g.buf.WriteByte('[')
 		g.buf.WriteString(strconv.Itoa(typ.Len))
 		g.buf.WriteByte(']')
@@ -47,7 +48,7 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		if err != nil {
 			return err
 		}
-	case "map":
+	case spec.Map:
 		g.buf.WriteString("map[")
 		err := g.Types(typ.Key)
 		if err != nil {
@@ -58,7 +59,7 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		if err != nil {
 			return err
 		}
-	case "struct":
+	case spec.Struct:
 		g.buf.WriteString("struct {")
 		if len(typ.Fields) != 0 {
 			g.buf.WriteByte('\n')
@@ -84,7 +85,7 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		}
 		g.buf.WriteByte('}')
 	default:
-		g.buf.WriteString(typ.Type)
+		g.buf.WriteString(strings.ToLower(typ.Kind.String()))
 	}
 	return
 }
