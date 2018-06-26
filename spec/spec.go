@@ -52,7 +52,7 @@ type Response struct {
 type Type struct {
 	Ref         string
 	Name        string
-	Type        string
+	Kind        Kind
 	Key         *Type
 	Elem        *Type
 	Fields      []*Field
