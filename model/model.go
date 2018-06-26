@@ -1,20 +1,20 @@
 package model
 
 import (
-	"bytes"
 	"strconv"
 
 	"github.com/wzshiming/gen/spec"
+	"github.com/wzshiming/gen/srcgen"
 	"github.com/wzshiming/gen/utils"
 )
 
 // GenModel is the generating generating
 type GenModel struct {
 	api *spec.API
-	buf *bytes.Buffer
+	buf *srcgen.File
 }
 
-func NewGenModel(api *spec.API, buf *bytes.Buffer) *GenModel {
+func NewGenModel(api *spec.API, buf *srcgen.File) *GenModel {
 	return &GenModel{
 		api: api,
 		buf: buf,

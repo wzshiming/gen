@@ -1,11 +1,11 @@
 package client
 
 import (
-	"bytes"
 	"sort"
 
 	"github.com/wzshiming/gen/model"
 	"github.com/wzshiming/gen/spec"
+	"github.com/wzshiming/gen/srcgen"
 	"github.com/wzshiming/gen/utils"
 	"github.com/wzshiming/namecase"
 )
@@ -13,12 +13,12 @@ import (
 // GenClient is the generating generating
 type GenClient struct {
 	api *spec.API
-	buf *bytes.Buffer
+	buf *srcgen.File
 	model.GenModel
 }
 
 func NewGenClient(api *spec.API) *GenClient {
-	buf := bytes.NewBuffer(nil)
+	buf := &srcgen.File{}
 	return &GenClient{
 		api:      api,
 		buf:      buf,
@@ -27,14 +27,10 @@ func NewGenClient(api *spec.API) *GenClient {
 }
 
 func (g *GenClient) Generate() ([]byte, error) {
-	g.buf.WriteString(`// Code generated; DO NOT EDIT.
-package main
 
-import (
-	"github.com/wzshiming/requests"
-)
+	g.buf.WithPackname("main")
+	g.buf.AddImport("", "github.com/wzshiming/requests")
 
-`)
 	err := g.GenerateSchemas()
 	if err != nil {
 		return nil, err
