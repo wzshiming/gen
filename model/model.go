@@ -22,6 +22,31 @@ func NewGenModel(api *spec.API, buf *srcgen.File) *GenModel {
 	}
 }
 
+func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+	switch typ.Kind {
+	case spec.Ptr, spec.Slice, spec.Array, spec.Map, spec.Error, spec.Chan, spec.Interface:
+		g.buf.WriteString("nil")
+	case spec.String:
+		g.buf.WriteString("\"\"")
+	case spec.Struct:
+		g.Types(typ)
+		g.buf.WriteString("{}")
+	case spec.Int, spec.Int8, spec.Int16, spec.Int32, spec.Int64,
+		spec.Uint, spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64,
+		spec.Float32, spec.Float64, spec.Complex64, spec.Complex128,
+		spec.Byte, spec.Rune:
+		g.buf.WriteString("0")
+	case spec.Bool:
+		g.buf.WriteString("false")
+	default:
+		g.buf.WriteString(strings.ToLower(typ.Kind.String()))
+	}
+	return nil
+}
+
 func (g *GenModel) Types(typ *spec.Type) (err error) {
 	if typ.Ref != "" {
 		g.buf.WriteString(utils.GetName(typ.Ref))
