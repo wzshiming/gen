@@ -48,7 +48,7 @@ package %s
 		for path, aliase := range f.imports {
 			buf.WriteFormat("%s \"%s\"\n", aliase, path)
 		}
-		buf.WriteFormat(")")
+		buf.WriteFormat(")\n\n")
 	}
 
 	buf.WriteString(f.srcgen.String())
