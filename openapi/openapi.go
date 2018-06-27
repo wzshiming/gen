@@ -195,6 +195,8 @@ func (g *GenOpenAPI) Responses(res *spec.Response) (code string, resp *oaspec.Re
 		resp = oaspec.URLEncodedResponse(sch)
 	case "formdata":
 		resp = oaspec.FormDataResponse(sch)
+	case "textplain", "error":
+		resp = oaspec.TextPlainResponse(sch)
 	default:
 		return "", nil, fmt.Errorf("Responses undefined content:%s", res.Content)
 	}
