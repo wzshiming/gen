@@ -29,7 +29,6 @@ func NewGenClient(api *spec.API) *GenClient {
 func (g *GenClient) Generate() ([]byte, error) {
 
 	g.buf.WithPackname("main")
-	g.buf.AddImport("", "github.com/wzshiming/requests")
 
 	err := g.GenerateSchemas()
 	if err != nil {
@@ -71,7 +70,7 @@ func (g *GenClient) GenerateOperations() (err error) {
 		if err != nil {
 			return err
 		}
-		err = g.FuncBody(v)
+		err = g.GenerateFuncBody(v)
 		if err != nil {
 			return err
 		}
@@ -80,9 +79,88 @@ func (g *GenClient) GenerateOperations() (err error) {
 	return
 }
 
-func (g *GenClient) FuncBody(oper *spec.Operation) (err error) {
+func (g *GenClient) GenerateFuncBody(oper *spec.Operation) (err error) {
+
+	g.buf.AddImport("", "github.com/wzshiming/requests")
 	g.buf.WriteString("{\n")
-	g.buf.WriteString("_resp, _err := NewRequests().\n")
+	defer g.buf.WriteString(`
+	return
+}
+`)
+	g.GenerateRequests(oper)
+	g.GenerateResponses(oper)
+	return nil
+}
+
+func (g *GenClient) GenerateResponses(oper *spec.Operation) (err error) {
+
+	g.buf.WriteString(`
+	switch code := resp.StatusCode(); code {
+`)
+
+	for _, resp := range oper.Responses {
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		if resp.Code == "" {
+			continue
+		}
+		g.buf.WriteFormat("case %s:", resp.Code)
+		switch resp.Content {
+		case "json":
+			g.buf.AddImport("", "encoding/json")
+			g.buf.WriteFormat(`
+	err = json.Unmarshal(resp.Body(),&_%s)
+`, resp.Name)
+		case "xml":
+			g.buf.AddImport("", "encoding/xml")
+			g.buf.WriteFormat(`
+	err = xml.Unmarshal(resp.Body(),&_%s)
+`, resp.Name)
+		case "error":
+			g.buf.AddImport("", "fmt")
+			g.buf.WriteFormat(`
+	_%s = fmt.Errorf(string(resp.Body()))
+`, resp.Name)
+		}
+		// TODO
+	}
+	g.buf.AddImport("", "net/http")
+	g.buf.WriteString(`default:
+		err = fmt.Errorf("Undefined code %d %s", code, http.StatusText(code))
+	}
+`)
+
+	g.GenerateErrror(oper.Responses)
+	return nil
+}
+
+func (g *GenClient) GenerateErrror(resps []*spec.Response) (err error) {
+	g.buf.WriteString(`
+if err != nil {
+	return `)
+	for i, resp := range resps {
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		if i != 0 {
+			g.buf.WriteByte(',')
+		}
+		if i != len(resps)-1 {
+			g.TypesZero(resp.Type)
+		} else {
+			g.buf.WriteString("err")
+		}
+	}
+	g.buf.WriteString(`	
+}
+`)
+	return
+}
+
+func (g *GenClient) GenerateRequests(oper *spec.Operation) (err error) {
+
+	g.buf.WriteString("resp, err := requests.NewRequest().\n")
 	for _, v := range oper.Requests {
 		req := v
 		if req.Ref != "" {
@@ -91,66 +169,30 @@ func (g *GenClient) FuncBody(oper *spec.Operation) (err error) {
 
 		switch req.In {
 		case "header":
-			g.buf.WriteString("SetHeader(\"")
-			g.buf.WriteString(req.Name)
-			g.buf.WriteString("\",fmt.Sprint(")
-			g.buf.WriteString(req.Name)
-			g.buf.WriteString(")).\n")
+			g.buf.AddImport("", "fmt")
+			g.buf.WriteFormat(`SetHead("%s", fmt.Sprint(_%s)).
+`, req.Name, req.Name)
 		case "cookie":
 			// TODO
 		case "path":
-			g.buf.WriteString("SetPath(\"")
-			g.buf.WriteString(req.Name)
-			g.buf.WriteString("\",fmt.Sprint(")
-			g.buf.WriteString(req.Name)
-			g.buf.WriteString(")).\n")
+			g.buf.AddImport("", "fmt")
+			g.buf.WriteFormat(`SetPath("%s", fmt.Sprint(_%s)).
+`, req.Name, req.Name)
 		case "query":
-			g.buf.WriteString("SetQuery(\"")
-			g.buf.WriteString(req.Name)
-			g.buf.WriteString("\",fmt.Sprint(")
-			g.buf.WriteString(req.Name)
-			g.buf.WriteString(")).\n")
+			g.buf.WriteFormat(`SetQuery("%s", fmt.Sprint(_%s)).
+`, req.Name, req.Name)
 		case "body":
 			switch req.Content {
 			case "json":
-				g.buf.WriteString("SetJSON(")
-				g.buf.WriteString(req.Name)
-				g.buf.WriteString(").\n")
+				g.buf.WriteFormat("SetJSON(_%s).\n", req.Name)
 			case "xml":
-				g.buf.WriteString("SetJSON(")
-				g.buf.WriteString(req.Name)
-				g.buf.WriteString(").\n")
+				g.buf.WriteFormat("SetXML(_%s).\n", req.Name)
 			}
 		}
 	}
 	g.buf.WriteString(namecase.ToPascal(oper.Method) + "(\"" + oper.Path + "\")\n")
 
-	g.buf.WriteString(`
-if _err != nil {
-	err = _err
-	return
-}
-`)
-
-	g.buf.WriteString("switch _resp.StatusCode() {\n")
-
-	for _, v := range oper.Responses {
-		resp := v
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		g.buf.WriteString("case ")
-		g.buf.WriteString(resp.Code)
-		g.buf.WriteString(":\n")
-		// TODO
-	}
-
-	g.buf.WriteString(`default:
-	err = fmt.Errorf("Undefined code %d:", _resp.StatusCode())
-}
-return
-}
-`)
+	g.GenerateErrror(oper.Responses)
 	return nil
 }
 
@@ -173,75 +215,53 @@ func (g *GenClient) Operations(oper *spec.Operation) (err error) {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		err = g.Requests(v)
+		err = g.GenerateParameterRequests(v)
 		if err != nil {
 			return err
 		}
 	}
 	g.buf.WriteString(")(")
-	needErr := false
+
 	for i, v := range oper.Responses {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		err = g.Responses(v)
+		err = g.GenerateParameterResponses(v)
 		if err != nil {
 			return err
 		}
 	}
-	if len(oper.Responses) == 0 {
-		needErr = true
-	} else {
-		resp := oper.Responses[len(oper.Responses)-1]
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		if resp.Type.Kind != spec.Error {
-			needErr = true
-		}
-	}
-	if needErr {
-		if len(oper.Responses) != 0 {
-			g.buf.WriteByte(',')
-		}
-		g.buf.WriteString("err error")
-	}
+
 	g.buf.WriteByte(')')
 	return
 }
 
-func (g *GenClient) Requests(req *spec.Request) (err error) {
+func (g *GenClient) GenerateParameterRequests(req *spec.Request) (err error) {
 	if req.Ref != "" {
-		return g.Requests(g.api.Requests[req.Ref])
+		req = g.api.Requests[req.Ref]
 	}
-	g.buf.WriteString(req.Name)
-	g.buf.WriteByte(' ')
+	g.buf.WriteFormat("_%s ", req.Name)
 	err = g.Types(req.Type)
 	if err != nil {
 		return err
 	}
 	if req.Description != "" {
-		g.buf.WriteString("/* ")
-		g.buf.WriteString(utils.MergeLine(req.Description))
-		g.buf.WriteString(" */")
+		g.buf.WriteFormat("/* %s */", utils.MergeLine(req.Description))
 	}
 	return nil
 }
 
-func (g *GenClient) Responses(req *spec.Response) (err error) {
-	if req.Ref != "" {
-		return g.Responses(g.api.Responses[req.Ref])
+func (g *GenClient) GenerateParameterResponses(resp *spec.Response) (err error) {
+	if resp.Ref != "" {
+		resp = g.api.Responses[resp.Ref]
 	}
-	g.buf.WriteString(req.Name)
-	g.buf.WriteByte(' ')
-	err = g.Types(req.Type)
+	g.buf.WriteFormat("_%s ", resp.Name)
+	err = g.Types(resp.Type)
 	if err != nil {
 		return err
 	}
-	if req.Description != "" {
-		g.buf.WriteString("/* ")
-		g.buf.WriteString(utils.MergeLine(req.Description))
-		g.buf.WriteString(" */")
+	if resp.Description != "" {
+		g.buf.WriteFormat("/* %s */", utils.MergeLine(resp.Description))
 	}
 	return nil
 }
