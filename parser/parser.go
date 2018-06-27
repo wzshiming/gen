@@ -166,16 +166,23 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 	name := t.Name()
 	code := tag.Get("code")
 	content := tag.Get("content")
-	if content == "" {
-		content = "json"
-	}
+	kind := t.Elem().Kind()
 	if code == "" {
-		if t.Elem().Kind() != gotype.Error {
+		if kind != gotype.Error {
 			code = "200"
 		} else {
 			code = "400"
 		}
 	}
+
+	if content == "" {
+		if kind != gotype.Error {
+			content = "json"
+		} else {
+			content = "error"
+		}
+	}
+
 	sch, err := g.AddType(t.Elem())
 	if err != nil {
 		return nil, err
