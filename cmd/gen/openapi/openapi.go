@@ -84,13 +84,12 @@ var Command = &cli.Command{
 
 			mux := &http.ServeMux{}
 
-			mux.Handle("/", swaggerui.Handle)
+			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.Handle))
 
-			mux.HandleFunc("/openapi."+f, func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("/swagger/openapi."+f, func(w http.ResponseWriter, r *http.Request) {
 				http.ServeContent(w, r, "openapi."+f, time.Time{}, bytes.NewReader(d))
 			})
-
-			fmt.Printf("Open http://127.0.0.1:8080/?url=./openapi.%s# with your browser.\n", f)
+			fmt.Printf("Open http://127.0.0.1:8080/swagger/?url=./openapi.%s# with your browser.\n", f)
 			return http.ListenAndServe(":8080", mux)
 		}
 
