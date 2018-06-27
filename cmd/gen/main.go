@@ -6,6 +6,7 @@ import (
 	"github.com/wzshiming/gen/cmd/gen/client"
 	"github.com/wzshiming/gen/cmd/gen/openapi"
 	"github.com/wzshiming/gen/cmd/gen/route"
+	"github.com/wzshiming/gen/cmd/gen/run"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
@@ -23,5 +24,6 @@ var app = &cli.App{
 		client.Command,
 		route.Command,
 		openapi.Command,
+		run.Command,
 	},
 }
