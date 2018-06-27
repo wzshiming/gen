@@ -64,6 +64,11 @@ func (g *GenClient) GenerateSchemas() (err error) {
 }
 
 func (g *GenClient) GenerateOperations() (err error) {
+	g.buf.AddImport("", "github.com/wzshiming/requests")
+	g.buf.WriteFormat(`
+	var Client = requests.NewClient().NewRequest()
+`)
+
 	operations := g.api.Operations
 	for _, v := range operations {
 		err = g.Operations(v)
@@ -81,7 +86,6 @@ func (g *GenClient) GenerateOperations() (err error) {
 
 func (g *GenClient) GenerateFuncBody(oper *spec.Operation) (err error) {
 
-	g.buf.AddImport("", "github.com/wzshiming/requests")
 	g.buf.WriteString("{\n")
 	defer g.buf.WriteString(`
 	return
@@ -160,7 +164,7 @@ if err != nil {
 
 func (g *GenClient) GenerateRequests(oper *spec.Operation) (err error) {
 
-	g.buf.WriteString("resp, err := requests.NewRequest().\n")
+	g.buf.WriteString("resp, err := Client.Clone().\n")
 	for _, v := range oper.Requests {
 		req := v
 		if req.Ref != "" {
