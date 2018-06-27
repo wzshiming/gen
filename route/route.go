@@ -180,9 +180,6 @@ func (g *GenRoute) GenerateCall(oper *spec.Operation) error {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		if req.Type.Kind == spec.Ptr {
-			g.buf.WriteString("&")
-		}
 		g.buf.WriteString("_" + req.Name)
 	}
 	g.buf.WriteString(")\n")
