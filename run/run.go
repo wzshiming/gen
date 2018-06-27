@@ -98,6 +98,7 @@ package main
 import (
 	"net/http"
 	"github.com/wzshiming/gen/ui/swaggerui"
+	"github.com/urfave/negroni"
 	"bytes"
 	"time"
 	"fmt"
@@ -113,7 +114,9 @@ func main() {
 		http.ServeContent(w, r, "openapi.{{ .Format }}", time.Time{}, bytes.NewReader(openapi))
 	})
 	fmt.Printf("Open {{ .Server }}/swagger/?url=./openapi.{{ .Format }}# with your browser.\n")
-	err := http.ListenAndServe("{{ .Port }}", mux)
+	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
+  	n.UseHandler(mux)
+	err := http.ListenAndServe("{{ .Port }}", n)
 	if err != nil {
 		fmt.Println(err)	
 	}
