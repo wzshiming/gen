@@ -1,6 +1,8 @@
 package route
 
 import (
+	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/wzshiming/gen/model"
@@ -85,6 +87,7 @@ func (g *GenRoute) GenerateRouteFunction(oper *spec.Operation) (err error) {
 func _%s(w http.ResponseWriter, r *http.Request) {
 `, oper.Name, oper.Name, oper.Name)
 	defer g.buf.WriteString(`
+	w.Write(nil)
 	return
 }
 `)
@@ -200,9 +203,14 @@ func (g *GenRoute) GenerateResponse(resp *spec.Response) error {
 	}
 `)
 	}
+
+	text := ""
+	if i, err := strconv.Atoi(resp.Code); err == nil {
+		text = http.StatusText(i)
+	}
 	g.buf.WriteFormat(`
-	// Response code %s for %s.
-	if _%s != `, resp.Code, resp.Name, resp.Name)
+	// Response code %s %s for %s.
+	if _%s != `, resp.Code, text, resp.Name, resp.Name)
 	g.TypesZero(resp.Type)
 	g.buf.WriteFormat(`{`)
 	switch resp.Content {
