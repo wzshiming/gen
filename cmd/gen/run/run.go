@@ -13,9 +13,8 @@ var Command = &cli.Command{
 			Aliases: []string{"p"},
 		},
 		&cli.StringFlag{
-			Name:    "server",
-			Aliases: []string{"s"},
-			Value:   ":8080",
+			Name:  "port",
+			Value: ":8080",
 		},
 		&cli.StringFlag{
 			Name:    "format",
@@ -26,8 +25,8 @@ var Command = &cli.Command{
 	},
 	Action: func(ctx *cli.Context) error {
 		p := ctx.String("package")
-		s := ctx.String("server")
+		port := ctx.String("port")
 		f := ctx.String("format")
-		return run.Run(p, s, f)
+		return run.Run(p, port, f)
 	},
 }

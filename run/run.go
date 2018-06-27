@@ -15,8 +15,8 @@ import (
 	"github.com/wzshiming/openapi/util"
 )
 
-func Run(pkg string, server string, format string) error {
-	f, err := file(pkg, server, format)
+func Run(pkg string, port string, format string) error {
+	f, err := file(pkg, port, format)
 	if err != nil {
 		return err
 	}
@@ -44,14 +44,16 @@ func Run(pkg string, server string, format string) error {
 	return nil
 }
 
-func file(pkg string, server string, format string) ([]byte, error) {
+func file(pkg string, port string, format string) ([]byte, error) {
 	def := parser.NewParser()
 	err := def.Import(pkg)
 	if err != nil {
 		return nil, err
 	}
 
-	api, err := openapi.NewGenOpenAPI(def.API()).Generate()
+	server := "http://127.0.0.1" + port
+
+	api, err := openapi.NewGenOpenAPI(def.API()).WithServices(server).Generate()
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +80,7 @@ func file(pkg string, server string, format string) ([]byte, error) {
 		"Openapi": "`" + string(d) + "`",
 		"Format":  format,
 		"Server":  server,
+		"Port":    port,
 	})
 	if err != nil {
 		return nil, err
@@ -109,8 +112,8 @@ func main() {
 	mux.HandleFunc("/swagger/openapi.{{ .Format }}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, "openapi.{{ .Format }}", time.Time{}, bytes.NewReader(openapi))
 	})
-	fmt.Printf("Open http://{{ .Server }}/swagger/?url=./openapi.{{ .Format }}# with your browser.\n")
-	err := http.ListenAndServe("{{ .Server }}", mux)
+	fmt.Printf("Open {{ .Server }}/swagger/?url=./openapi.{{ .Format }}# with your browser.\n")
+	err := http.ListenAndServe("{{ .Port }}", mux)
 	if err != nil {
 		fmt.Println(err)	
 	}
