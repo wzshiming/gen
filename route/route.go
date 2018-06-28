@@ -42,7 +42,15 @@ func (g *GenRoute) GenerateRoutes() (err error) {
 	g.buf.WriteString(`
 func Router() *mux.Router {
 	router := mux.NewRouter()
+
 `)
+	m := map[string]bool{}
+	for _, v := range g.api.Operations {
+		err = g.GenerateRouteTypes(v, m)
+		if err != nil {
+			return err
+		}
+	}
 	for _, v := range g.api.Operations {
 		err = g.GenerateRoute(v)
 		if err != nil {
@@ -64,13 +72,40 @@ func Router() *mux.Router {
 	return
 }
 
+func (g *GenRoute) GenerateRouteTypes(oper *spec.Operation, m map[string]bool) (err error) {
+	if oper.Type == nil {
+		return
+	}
+	typ := oper.Type
+	if typ.Ref != "" {
+		typ = g.api.Types[oper.Type.Ref]
+	}
+	if m[typ.Name] {
+		return
+	}
+	g.buf.WriteFormat("// %s Define the method scope\n", typ.Name)
+	g.buf.WriteFormat("var _%s %s\n", typ.Name, typ.Name)
+	m[typ.Name] = true
+	return
+}
+
 func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 	g.buf.WriteFormat(`
 	// Registered routing %s %s
 	router.Path("%s").
 		Methods("%s").
-		HandlerFunc(_%s)
-`, strings.ToUpper(oper.Method), oper.Path, oper.Path, strings.ToUpper(oper.Method), oper.Name)
+		HandlerFunc(`, strings.ToUpper(oper.Method), oper.Path, oper.Path, strings.ToUpper(oper.Method))
+	if oper.Type != nil {
+		typ := oper.Type
+		if typ.Ref != "" {
+			typ = g.api.Types[oper.Type.Ref]
+		}
+		g.buf.WriteString("_")
+		g.Types(oper.Type)
+		g.buf.WriteString(".")
+	}
+	g.buf.WriteFormat(`_%s)
+`, oper.Name)
 	return
 }
 
@@ -84,8 +119,14 @@ func (g *GenRoute) GenerateRouteFunction(oper *spec.Operation) (err error) {
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 // _%s Is the route of %s 
-func _%s(w http.ResponseWriter, r *http.Request) {
-`, oper.Name, oper.Name, oper.Name)
+func`, oper.Name, oper.Name)
+	if oper.Type != nil {
+		g.buf.WriteString("(s ")
+		g.Types(oper.Type)
+		g.buf.WriteString(")")
+	}
+	g.buf.WriteFormat(` _%s(w http.ResponseWriter, r *http.Request) {
+`, oper.Name)
 	defer g.buf.WriteString(`
 	w.Write(nil)
 	return
@@ -171,8 +212,11 @@ func (g *GenRoute) GenerateCall(oper *spec.Operation) error {
 		}
 		g.buf.WriteString("_" + resp.Name)
 	}
-
-	g.buf.WriteFormat(":= %s(", oper.Name)
+	g.buf.WriteString(":= ")
+	if oper.Type != nil {
+		g.buf.WriteString("s.")
+	}
+	g.buf.WriteFormat("%s(", oper.Name)
 	for i, req := range oper.Requests {
 		if req.Ref != "" {
 			req = g.api.Requests[req.Ref]
