@@ -81,8 +81,8 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 		return nil
 	}
 	tag := GetTag(t.Doc().Text())
-	route := tag.Get("route")
-	if route == "" {
+	path := tag.Get("path")
+	if path == "" {
 		return nil
 	}
 
@@ -92,7 +92,7 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	}
 	for i := 0; i != numm; i++ {
 		v := t.Methods(i)
-		err := g.AddOperation(route, sch, v)
+		err := g.AddOperation(path, sch, v)
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	return
 }
 
-func (g *Parser) AddOperation(bashPath string, sch *spec.Type, t gotype.Type) (err error) {
+func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
 	if t.Kind() != gotype.Func {
 		return fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
 	}
@@ -121,9 +121,9 @@ func (g *Parser) AddOperation(bashPath string, sch *spec.Type, t gotype.Type) (e
 	method := strings.ToLower(strings.TrimSpace(rs[0]))
 
 	oper := &spec.Operation{}
-	if bashPath != "" {
-		oper.Tags = append(oper.Tags, bashPath)
-		pat = path.Join(bashPath, pat)
+	if basePath != "" {
+		oper.Tags = append(oper.Tags, basePath)
+		pat = path.Join(basePath, pat)
 	}
 	oper.Method = method
 	oper.Path = pat
