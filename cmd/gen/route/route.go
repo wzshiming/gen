@@ -20,17 +20,23 @@ var Command = &cli.Command{
 			Name:    "out",
 			Aliases: []string{"o"},
 		},
+		&cli.StringFlag{
+			Name:    "name",
+			Aliases: []string{"n"},
+			Value:   "Router",
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		p := ctx.String("package")
 		o := ctx.String("out")
+		n := ctx.String("name")
 
 		def := parser.NewParser()
 		err := def.Import(p)
 		if err != nil {
 			return err
 		}
-		d, err := route.NewGenRoute(def.API()).Generate()
+		d, err := route.NewGenRoute(def.API()).Generate(n)
 		if err != nil {
 			return err
 		}

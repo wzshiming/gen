@@ -26,9 +26,9 @@ func NewGenRoute(api *spec.API) *GenRoute {
 	}
 }
 
-func (g *GenRoute) Generate() ([]byte, error) {
+func (g *GenRoute) Generate(funcName string) ([]byte, error) {
 	g.buf.WithPackname(g.api.Package)
-	err := g.GenerateRoutes()
+	err := g.GenerateRoutes(funcName)
 	if err != nil {
 		return nil, err
 	}
@@ -36,14 +36,14 @@ func (g *GenRoute) Generate() ([]byte, error) {
 	return g.buf.Bytes(), nil
 }
 
-func (g *GenRoute) GenerateRoutes() (err error) {
+func (g *GenRoute) GenerateRoutes(funcName string) (err error) {
 	g.buf.AddImport("", "github.com/gorilla/mux")
 
-	g.buf.WriteString(`
-func Router() *mux.Router {
+	g.buf.WriteFormat(`
+func %s() *mux.Router {
 	router := mux.NewRouter()
 
-`)
+`, funcName)
 	m := map[string]bool{}
 	for _, v := range g.api.Operations {
 		err = g.GenerateRouteTypes(v, m)
