@@ -1,7 +1,10 @@
 package srcgen
 
 import (
+	"go/build"
 	"go/format"
+	"io/ioutil"
+	"path/filepath"
 	"unsafe"
 )
 
@@ -14,6 +17,21 @@ type File struct {
 
 func NewFile() *File {
 	return &File{}
+}
+
+func (f *File) Save() error {
+	if f.filename == "" {
+		f.filename = "auto_gen.go"
+	}
+
+	if f.packname == "" {
+		b, err := build.ImportDir(filepath.Dir(f.filename), 0)
+		if err != nil {
+			return err
+		}
+		f.packname = b.Name
+	}
+	return ioutil.WriteFile(f.filename, f.Bytes(), 0666)
 }
 
 func (f *File) WithPackname(packname string) *File {
