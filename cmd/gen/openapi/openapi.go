@@ -47,6 +47,9 @@ var Command = &cli.Command{
 		s := ctx.StringSlice("servers")
 		o := ctx.String("out")
 		f := ctx.String("format")
+		if p == "" {
+			return cli.ShowAppHelp(ctx)
+		}
 
 		def := parser.NewParser()
 		err := def.Import(p)

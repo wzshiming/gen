@@ -31,6 +31,9 @@ var Command = &cli.Command{
 		p := ctx.String("package")
 		o := ctx.String("out")
 		n := ctx.String("name")
+		if p == "" {
+			return cli.ShowAppHelp(ctx)
+		}
 
 		def := parser.NewParser()
 		err := def.Import(p)

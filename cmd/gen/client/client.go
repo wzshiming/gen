@@ -24,6 +24,9 @@ var Command = &cli.Command{
 	Action: func(ctx *cli.Context) error {
 		p := ctx.String("package")
 		o := ctx.String("out")
+		if p == "" {
+			return cli.ShowAppHelp(ctx)
+		}
 
 		def := parser.NewParser()
 		err := def.Import(p)

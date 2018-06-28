@@ -27,6 +27,10 @@ var Command = &cli.Command{
 		p := ctx.String("package")
 		port := ctx.String("port")
 		f := ctx.String("format")
+		if p == "" {
+			return cli.ShowAppHelp(ctx)
+		}
+
 		return run.Run(p, port, f)
 	},
 }
