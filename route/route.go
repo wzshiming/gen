@@ -26,14 +26,14 @@ func NewGenRoute(api *spec.API) *GenRoute {
 	}
 }
 
-func (g *GenRoute) Generate(funcName string) ([]byte, error) {
+func (g *GenRoute) Generate(funcName string) (*srcgen.File, error) {
 	g.buf.WithPackname(g.api.Package)
 	err := g.GenerateRoutes(funcName)
 	if err != nil {
 		return nil, err
 	}
 
-	return g.buf.Bytes(), nil
+	return g.buf, nil
 }
 
 func (g *GenRoute) GenerateRoutes(funcName string) (err error) {

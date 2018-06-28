@@ -26,9 +26,7 @@ func NewGenClient(api *spec.API) *GenClient {
 	}
 }
 
-func (g *GenClient) Generate() ([]byte, error) {
-
-	g.buf.WithPackname("main")
+func (g *GenClient) Generate() (*srcgen.File, error) {
 
 	err := g.GenerateSchemas()
 	if err != nil {
@@ -38,7 +36,7 @@ func (g *GenClient) Generate() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return g.buf.Bytes(), nil
+	return g.buf, nil
 }
 
 func (g *GenClient) GenerateSchemas() (err error) {

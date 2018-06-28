@@ -1,9 +1,6 @@
 package client
 
 import (
-	"fmt"
-	"io/ioutil"
-
 	"github.com/wzshiming/gen/client"
 	"github.com/wzshiming/gen/parser"
 	cli "gopkg.in/urfave/cli.v2"
@@ -38,10 +35,7 @@ var Command = &cli.Command{
 		if err != nil {
 			return err
 		}
-		if o == "" {
-			fmt.Println(string(d))
-			return nil
-		}
-		return ioutil.WriteFile(o, d, 0666)
+
+		return d.WithFilename(o).Save()
 	},
 }
