@@ -19,6 +19,7 @@ var Command = &cli.Command{
 		&cli.StringFlag{
 			Name:    "out",
 			Aliases: []string{"o"},
+			Value:   "router_gen.go",
 		},
 		&cli.StringFlag{
 			Name:    "name",
