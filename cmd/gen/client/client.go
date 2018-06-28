@@ -19,6 +19,7 @@ var Command = &cli.Command{
 		&cli.StringFlag{
 			Name:    "out",
 			Aliases: []string{"o"},
+			Value:   "client_gen.go",
 		},
 	},
 	Action: func(ctx *cli.Context) error {
