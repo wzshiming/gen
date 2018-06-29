@@ -1,6 +1,7 @@
 package route
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -176,24 +177,42 @@ func (g *GenRoute) GenerateRequest(req *spec.Request) error {
 		g.Types(req.Type)
 		g.buf.WriteFormat(`
 	if cookie, err := r.Cookie("%s"); err == nil {`, req.Name)
-		g.Convert(`cookie.Value`, "_"+req.Name, req.Type, true)
+		g.Convert(`cookie.Value`, "_"+req.Name, req.Type)
 		g.buf.WriteFormat(`}
 `)
+
 	case "query":
 		g.buf.WriteFormat(`
 	// Parsing the query for %s.
-`, req.Name)
-		g.Convert(`r.URL.Query().Get("`+req.Name+`")`, "_"+req.Name, req.Type, false)
+	var _in_%s = r.URL.Query().Get("%s")`, req.Name, req.Name, req.Name)
+		g.buf.WriteFormat(`
+	var _%s `, req.Name)
+		g.Types(req.Type)
+		g.buf.WriteString("\n")
+		g.Convert("_in_"+req.Name, "_"+req.Name, req.Type)
+
 	case "header":
 		g.buf.WriteFormat(`
 	// Parsing the header for %s.
-`, req.Name)
-		g.Convert(`r.URL.Header.Get("`+req.Name+`")`, "_"+req.Name, req.Type, false)
-	default:
+	var _in_%s = r.URL.Header.Get("%s")`, req.Name, req.Name, req.Name)
 		g.buf.WriteFormat(`
-	// Parsing the %s for %s.
-`, req.In, req.Name)
-		g.Convert(`mux.Vars(r)["`+req.Name+`"]`, "_"+req.Name, req.Type, false)
+	var _%s `, req.Name)
+		g.Types(req.Type)
+		g.buf.WriteString("\n")
+		g.Convert("_in_"+req.Name, "_"+req.Name, req.Type)
+
+	case "path":
+		g.buf.WriteFormat(`
+	// Parsing the path for %s.
+	var _in_%s = mux.Vars(r)["%s"]`, req.Name, req.Name, req.Name)
+		g.buf.WriteFormat(`
+	var _%s `, req.Name)
+		g.Types(req.Type)
+		g.buf.WriteString("\n")
+		g.Convert("_in_"+req.Name, "_"+req.Name, req.Type)
+
+	default:
+		return fmt.Errorf("undefine in %s", req.In)
 	}
 	g.buf.WriteString("\n")
 	return nil
@@ -289,66 +308,94 @@ func (g *GenRoute) GenerateResponse(resp *spec.Response) error {
 	return nil
 }
 
-func (g *GenRoute) Convert(in, out string, typ *spec.Type, defined bool) error {
+func (g *GenRoute) convertString(in, out string, typ *spec.Type) error {
+	g.buf.WriteFormat(`%s = %s`, out, in)
+	return nil
+}
+
+func (g *GenRoute) convertPrtString(in, out string, typ *spec.Type) error {
+	g.buf.WriteFormat(`%s = &%s`, out, in)
+	return nil
+}
+
+func (g *GenRoute) convertInt64(in, out string, typ *spec.Type) error {
+	g.buf.AddImport("", "strconv")
+	name := typ.Name
+	g.buf.WriteFormat(`if i, err := strconv.ParseInt(%s,0,0); err == nil {
+	%s = %s(i)
+}
+`, in, out, name)
+	return nil
+}
+
+func (g *GenRoute) convertPrtInt64(in, out string, typ *spec.Type) error {
+	g.buf.AddImport("", "strconv")
+	name := typ.Name
+	g.buf.WriteFormat(`if i, err := strconv.ParseInt(%s,0,0); err == nil {
+	_i := %s(i)
+	%s = &_i
+}
+`, in, name, out)
+	return nil
+}
+
+func (g *GenRoute) convertUint64(in, out string, typ *spec.Type) error {
+	g.buf.AddImport("", "strconv")
+	name := typ.Name
+	g.buf.WriteFormat(`if i, err := strconv.ParseUint(%s,0,0); err == nil {
+	%s = %s(i)
+}
+`, in, out, name)
+	return nil
+}
+
+func (g *GenRoute) convertPrtUint64(in, out string, typ *spec.Type) error {
+	g.buf.AddImport("", "strconv")
+	name := typ.Name
+	g.buf.WriteFormat(`if i, err := strconv.ParseUint(%s,0,0); err == nil {
+	_i := %s(i)
+	%s = &_i
+}
+`, in, name, out)
+	return nil
+}
+
+func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
+
+	//	ffmt.P(typ)
+
 	switch typ.Kind {
 	case spec.Ptr:
-		return g.Convert(in, out, typ.Elem, defined)
-	case spec.String:
-		if !defined {
-			g.buf.WriteFormat(`%s := %s`, out, in)
-		} else {
-			g.buf.WriteFormat(`%s = %s`, out, in)
+		typ = typ.Elem
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
 		}
-		return nil
-	case spec.Int64:
-		g.buf.AddImport("", "strconv")
-		if !defined {
-			g.buf.WriteFormat("var %s %s\n", out, strings.ToLower(typ.Kind.String()))
-		}
-		g.buf.WriteFormat(`if i, err := strconv.ParseInt(%s,0,0); err == nil {
-	%s = i
-}
-`, in, out)
-		return nil
-	case spec.Int8, spec.Int16, spec.Int32, spec.Int:
-		g.buf.AddImport("", "strconv")
-		if !defined {
-			g.buf.WriteFormat("var %s %s\n", out, strings.ToLower(typ.Kind.String()))
-		}
-		g.buf.WriteFormat(`if i, err := strconv.ParseInt(%s,0,0); err == nil {
-	%s = %s(i)
-}
-`, in, out, strings.ToLower(typ.Kind.String()))
-		return nil
-	case spec.Uint64:
-		g.buf.AddImport("", "strconv")
-		if !defined {
-			g.buf.WriteFormat("var %s %s\n", out, strings.ToLower(typ.Kind.String()))
-		}
-		g.buf.WriteFormat(`if i, err := strconv.ParseUint(%s,0,0); err == nil {
-	%s = i
-}
-`, in, out)
-		return nil
-	case spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint:
-		g.buf.AddImport("", "strconv")
-		if !defined {
-			g.buf.WriteFormat("var %s %s\n", out, strings.ToLower(typ.Kind.String()))
-		}
-		g.buf.WriteFormat(`if i, err := strconv.ParseUint(%s,0,0); err == nil {
-	%s = %s(i)
-}
-`, in, out, strings.ToLower(typ.Kind.String()))
-		return nil
-	case spec.Slice:
-		if typ.Elem.Kind == spec.Byte {
-			g.buf.WriteFormat("%s := []byte(%s)\n", out, in)
-			return nil
+		switch typ.Kind {
+		case spec.String:
+			return g.convertPrtString(in, out, typ)
+		case spec.Int8, spec.Int16, spec.Int32, spec.Int64, spec.Int:
+			return g.convertPrtInt64(in, out, typ)
+		case spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64, spec.Uint:
+			return g.convertPrtUint64(in, out, typ)
+		default:
 		}
 	default:
+		switch typ.Kind {
+		case spec.String:
+			return g.convertString(in, out, typ)
+		case spec.Int8, spec.Int16, spec.Int32, spec.Int64, spec.Int:
+			return g.convertInt64(in, out, typ)
+		case spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64, spec.Uint:
+			return g.convertUint64(in, out, typ)
+		case spec.Slice:
+			if typ.Elem.Kind == spec.Byte {
+				g.buf.WriteFormat("%s := []byte(%s)\n", out, in)
+				return nil
+			}
+		}
 	}
 
 	g.buf.WriteFormat("// Conversion of string to ")

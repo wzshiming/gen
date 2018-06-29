@@ -399,8 +399,8 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	if name != "" && name != strings.ToLower(kind.String()) {
 		g.api.Types[key] = sch
 		return &spec.Type{
-			Ref:  key,
-			Name: sch.Name,
+			Ref: key,
+			// Name: sch.Name,
 		}, nil
 	}
 
