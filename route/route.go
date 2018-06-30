@@ -161,6 +161,7 @@ func (g *GenRoute) GenerateRequest(req *spec.Request) error {
 	switch req.In {
 	case "body":
 		g.buf.AddImport("", "io/ioutil")
+		g.buf.AddImport("", "encoding/json")
 		g.buf.WriteFormat(`
 	// Parsing the body for %s.
 	var _%s `, req.Name, req.Name)
