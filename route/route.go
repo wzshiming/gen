@@ -129,6 +129,7 @@ func`, oper.Name, oper.Name)
 	g.buf.WriteFormat(` _%s(w http.ResponseWriter, r *http.Request) {
 `, oper.Name)
 	defer g.buf.WriteString(`
+	w.WriteHeader(204)
 	w.Write(nil)
 	return
 }
