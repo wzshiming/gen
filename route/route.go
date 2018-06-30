@@ -39,9 +39,9 @@ func (g *GenRoute) Generate(funcName string) (*srcgen.File, error) {
 
 func (g *GenRoute) GenerateRoutes(funcName string) (err error) {
 	g.buf.AddImport("", "github.com/gorilla/mux")
-
+	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
-func %s() *mux.Router {
+func %s() http.Handler {
 	router := mux.NewRouter()
 
 `, funcName)
@@ -364,8 +364,6 @@ func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
-
-	//	ffmt.P(typ)
 
 	switch typ.Kind {
 	case spec.Ptr:
