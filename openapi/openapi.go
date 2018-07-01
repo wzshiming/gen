@@ -54,14 +54,6 @@ func (g *GenOpenAPI) Generate() (*oaspec.OpenAPI, error) {
 		return nil, err
 	}
 	g.openapi.Servers = servers
-	g.openapi.Security = append(g.openapi.Security, map[string]oaspec.SecurityRequirement{
-		"api_key": oaspec.SecurityRequirement{},
-	})
-	sr := &oaspec.SecurityScheme{}
-	sr.In = "query"
-	sr.Type = "apiKey"
-	sr.Name = "api_key"
-	g.openapi.Components.SecuritySchemes["api_key"] = sr
 	return g.openapi, nil
 }
 
@@ -75,15 +67,29 @@ func (g *GenOpenAPI) Components() (err error) {
 
 	}
 
-	for k, v := range g.api.Requests {
-		par, body, err := g.Parameters(v)
+	for _, v := range g.api.Securitys {
+		err := g.SecurityScheme(v)
 		if err != nil {
 			return err
 		}
-		if par != nil {
-			g.openapi.Components.Parameters[k] = par
-		} else if body != nil {
+	}
+
+	for k, v := range g.api.Requests {
+		switch v.In {
+		case "security":
+			// No action
+		case "body":
+			body, err := g.RequestBody(v)
+			if err != nil {
+				return err
+			}
 			g.openapi.Components.RequestBodies[k] = body
+		default:
+			par, err := g.Parameters(v)
+			if err != nil {
+				return err
+			}
+			g.openapi.Components.Parameters[k] = par
 		}
 	}
 
@@ -107,15 +113,41 @@ func (g *GenOpenAPI) Components() (err error) {
 
 func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 	oper := &oaspec.Operation{}
+
 	for _, v := range ope.Requests {
-		par, body, err := g.Parameters(v)
-		if err != nil {
-			return err
+		req := v
+		if v.Ref != "" {
+			req = g.api.Requests[v.Ref]
 		}
-		if par != nil {
-			oper.Parameters = append(oper.Parameters, par)
-		} else if body != nil {
+		switch req.In {
+		case "security":
+			for _, v := range g.api.Securitys {
+				if len(v.Responses) == 0 {
+					continue
+				}
+				resp := v.Responses[0]
+				if resp.Ref != "" {
+					resp = g.api.Responses[resp.Ref]
+				}
+
+				if req.Name == resp.Name {
+					oper.Security = append(oper.Security, map[string]oaspec.SecurityRequirement{
+						v.Name: oaspec.SecurityRequirement{},
+					})
+				}
+			}
+		case "body":
+			body, err := g.RequestBody(v)
+			if err != nil {
+				return err
+			}
 			oper.RequestBody = body
+		default:
+			par, err := g.Parameters(v)
+			if err != nil {
+				return err
+			}
+			oper.Parameters = append(oper.Parameters, par)
 		}
 	}
 
@@ -205,18 +237,13 @@ func (g *GenOpenAPI) Responses(res *spec.Response) (code string, resp *oaspec.Re
 	return
 }
 
-func (g *GenOpenAPI) Parameters(req *spec.Request) (par *oaspec.Parameter, body *oaspec.RequestBody, err error) {
+func (g *GenOpenAPI) Parameters(req *spec.Request) (par *oaspec.Parameter, err error) {
 	if req.Ref != "" {
-		if _, ok := g.openapi.Components.Parameters[req.Ref]; ok {
-			return oaspec.RefParameter(req.Ref), nil, nil
-		} else if _, ok := g.openapi.Components.RequestBodies[req.Ref]; ok {
-			return nil, oaspec.RefRequestBody(req.Ref), nil
-		}
-		return nil, nil, fmt.Errorf("Responses undefined ref:%s", req.Ref)
+		return oaspec.RefParameter(req.Ref), nil
 	}
 	sch, err := g.Schemas(req.Type)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	switch req.In {
 	case "header":
@@ -227,31 +254,39 @@ func (g *GenOpenAPI) Parameters(req *spec.Request) (par *oaspec.Parameter, body 
 		par = oaspec.PathParam(req.Name, sch)
 	case "query":
 		par = oaspec.QueryParam(req.Name, sch)
-	case "body":
-		switch req.Content {
-		case "json":
-			body = oaspec.JSONRequestBody(sch)
-		case "xml":
-			body = oaspec.XMLRequestBody(sch)
-		case "textplain":
-			body = oaspec.TextPlainRequestBody(sch)
-		case "octetstream":
-			body = oaspec.OctetStreamRequestBody(sch)
-		case "urlencoded":
-			body = oaspec.URLEncodedRequestBody(sch)
-		case "formdata":
-			body = oaspec.FormDataRequestBody(sch)
-		default:
-			return nil, nil, fmt.Errorf("RequestBody undefined content:%s", req.Content)
-		}
 	default:
-		return nil, nil, fmt.Errorf("Parameters undefined in:%s", req.In)
+		return nil, fmt.Errorf("Parameters undefined in:%s", req.In)
 	}
-	if par != nil {
-		par.Description = req.Description
-	} else if body != nil {
-		body.Description = req.Description
+	par.Description = req.Description
+	return
+}
+
+func (g *GenOpenAPI) RequestBody(req *spec.Request) (body *oaspec.RequestBody, err error) {
+	if req.Ref != "" {
+		return oaspec.RefRequestBody(req.Ref), nil
 	}
+	sch, err := g.Schemas(req.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	switch req.Content {
+	case "json":
+		body = oaspec.JSONRequestBody(sch)
+	case "xml":
+		body = oaspec.XMLRequestBody(sch)
+	case "textplain":
+		body = oaspec.TextPlainRequestBody(sch)
+	case "octetstream":
+		body = oaspec.OctetStreamRequestBody(sch)
+	case "urlencoded":
+		body = oaspec.URLEncodedRequestBody(sch)
+	case "formdata":
+		body = oaspec.FormDataRequestBody(sch)
+	default:
+		return nil, fmt.Errorf("RequestBody undefined content:%s", req.Content)
+	}
+	body.Description = req.Description
 	return
 }
 
@@ -351,4 +386,21 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 		sch.Enum = append(sch.Enum, oaspec.Any(v))
 	}
 	return sch, nil
+}
+
+func (g *GenOpenAPI) SecurityScheme(sec *spec.Security) (err error) {
+	secu := &oaspec.SecurityScheme{}
+	secu.Type = sec.Schema
+	if len(sec.Requests) == 0 {
+		return nil
+	}
+	req := sec.Requests[0]
+	if req.Ref != "" {
+		req = g.api.Requests[req.Ref]
+	}
+	secu.In = req.In
+	secu.Name = req.Name
+	secu.Description = secu.Description
+	g.openapi.Components.SecuritySchemes[sec.Name] = secu
+	return
 }
