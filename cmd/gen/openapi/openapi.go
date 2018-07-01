@@ -29,6 +29,7 @@ var Command = &cli.Command{
 		&cli.StringFlag{
 			Name:    "out",
 			Aliases: []string{"o"},
+			Value:   "./openapi.json",
 		},
 		&cli.StringFlag{
 			Name:    "format",
@@ -81,6 +82,8 @@ var Command = &cli.Command{
 			if err != nil {
 				return err
 			}
+		} else {
+			fmt.Println(string(d))
 		}
 
 		if ctx.Bool("ui") {
@@ -95,8 +98,6 @@ var Command = &cli.Command{
 			fmt.Printf("Open http://127.0.0.1:8080/swagger/?url=./openapi.%s# with your browser.\n", f)
 			return http.ListenAndServe(":8080", mux)
 		}
-
-		fmt.Println(string(d))
 
 		return nil
 	},
