@@ -55,8 +55,8 @@ func (f *File) AddImport(aliase, path string) *File {
 func (f *File) Bytes() []byte {
 	buf := srcgen{}
 	buf.WriteFormat(`// Code generated; DO NOT EDIT.
+// file %s
 
-// %s
 package %s
 
 `, f.filename, f.packname)
