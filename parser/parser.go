@@ -3,7 +3,6 @@ package parser
 import (
 	"fmt"
 	"path"
-	"reflect"
 	"strings"
 
 	"github.com/wzshiming/gen/spec"
@@ -40,7 +39,11 @@ func (g *Parser) Import(pkgpath string) error {
 		v := pkg.Child(i)
 		switch v.Kind() {
 		case gotype.Func:
-			err := g.AddOperation("", nil, v)
+			err = g.AddSecurity(nil, v)
+			if err != nil {
+				return err
+			}
+			err = g.AddOperation("", nil, v)
 			if err != nil {
 				return err
 			}
@@ -55,24 +58,6 @@ func (g *Parser) Import(pkgpath string) error {
 	}
 
 	return nil
-}
-
-// GetTag [#[^#]+#]...
-func GetTag(text string) reflect.StructTag {
-	ss := []string{}
-	prev := 0
-	for i, v := range text {
-		if v != '#' {
-			continue
-		}
-		if prev == 0 {
-			prev = i
-		} else {
-			ss = append(ss, text[prev+1:i])
-			prev = 0
-		}
-	}
-	return reflect.StructTag(strings.Join(ss, " "))
 }
 
 func (g *Parser) AddPaths(t gotype.Type) (err error) {
@@ -90,14 +75,74 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	if err != nil {
 		return err
 	}
+
 	for i := 0; i != numm; i++ {
 		v := t.Methods(i)
-		err := g.AddOperation(path, sch, v)
+		err = g.AddSecurity(sch, v)
+		if err != nil {
+			return err
+		}
+	}
+
+	for i := 0; i != numm; i++ {
+		v := t.Methods(i)
+		err = g.AddOperation(path, sch, v)
 		if err != nil {
 			return err
 		}
 	}
 	return
+}
+
+func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
+	if t.Kind() != gotype.Func {
+		return fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
+	}
+
+	doc := t.Doc().Text()
+	tag := GetTag(doc)
+	name := GetName(t, tag)
+	security := tag.Get("security")
+	if security == "" {
+		return nil
+	}
+
+	secu := &spec.Security{}
+	secu.Schema = security
+	secu.Type = sch
+	secu.Description = doc
+	secu.Name = name
+
+	{
+		numin := t.NumIn()
+		for i := 0; i != numin; i++ {
+			v := t.In(i)
+			par, err := g.AddRequest("", v)
+			if err != nil {
+				return err
+			}
+			if par != nil {
+				secu.Requests = append(secu.Requests, par)
+			}
+		}
+	}
+
+	{
+		numout := t.NumOut()
+		for i := 0; i != numout; i++ {
+			v := t.Out(i)
+			resp, err := g.AddResponse(v)
+			if err != nil {
+				return err
+			}
+			secu.Responses = append(secu.Responses, resp)
+		}
+	}
+
+	key := name + "." + utils.Hash(name, security, doc)
+
+	g.api.Securitys[key] = secu
+	return nil
 }
 
 func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
@@ -107,6 +152,7 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 
 	doc := t.Doc().Text()
 	tag := GetTag(doc)
+	name := GetName(t, tag)
 	route := tag.Get("route")
 	if route == "" {
 		return nil
@@ -129,8 +175,7 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 	oper.Path = pat
 	oper.Description = doc
 	oper.Type = sch
-
-	oper.Name = t.Name()
+	oper.Name = name
 	{
 		numin := t.NumIn()
 		for i := 0; i != numin; i++ {
@@ -163,7 +208,7 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
-	name := t.Name()
+	name := GetName(t, tag)
 	code := tag.Get("code")
 	content := tag.Get("content")
 	kind := t.Elem().Kind()
@@ -205,16 +250,16 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 
 	g.api.Responses[key] = resp
 	return &spec.Response{
-		Ref:  key,
-		Name: sch.Name,
+		Ref: key,
+		//	Name: sch.Name,
 	}, nil
 }
 
 func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err error) {
-	rawname := t.Name()
+
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
-
+	name := GetName(t, tag)
 	in := tag.Get("in")
 	if in == "" {
 		t := t
@@ -225,7 +270,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
 			in = "body"
 		default:
-			if strings.Index(path, "{"+rawname+"}") == -1 {
+			if strings.Index(path, "{"+name+"}") == -1 {
 				in = "query"
 			} else {
 				in = "path"
@@ -236,11 +281,6 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	content := tag.Get("content")
 	if content == "" && in == "body" {
 		content = "json"
-	}
-
-	name, ok := tag.Lookup("name")
-	if !ok {
-		name = rawname
 	}
 
 	sch, err := g.AddType(t.Elem())
@@ -264,15 +304,16 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 
 	g.api.Requests[key] = par
 	return &spec.Request{
-		Ref:  key,
-		Name: sch.Name,
+		Ref: key,
+		// Name: sch.Name,
 	}, nil
 }
 
 func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
-	name := t.Name()
 	pkgpath := t.PkgPath()
 	doc := t.Doc().Text()
+	tag := GetTag(doc)
+	name := GetName(t, tag)
 	kind := t.Kind()
 
 	key := name + "." + utils.Hash(name, pkgpath, kind.String(), doc)
@@ -329,7 +370,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			return nil, err
 		}
 
-		typname := t.Name()
+		typname := name
 		numchi := scope.NumChild()
 		for i := 0; i != numchi; i++ {
 			v := scope.Child(i)
@@ -392,15 +433,10 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	sch.Kind = kindMapping[kind]
 	sch.Description = doc
 
-	//	tag := GetTag(doc)
-	//	if typ := tag.Get("type"); typ != "" {
-	//		sch.Kind = typ
-	//	}
 	if name != "" && name != strings.ToLower(kind.String()) {
 		g.api.Types[key] = sch
 		return &spec.Type{
 			Ref: key,
-			// Name: sch.Name,
 		}, nil
 	}
 
