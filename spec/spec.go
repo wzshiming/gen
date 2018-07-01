@@ -7,6 +7,7 @@ import (
 type API struct {
 	Package    string
 	Operations []*Operation
+	Securitys  map[string]*Security
 	Requests   map[string]*Request
 	Responses  map[string]*Response
 	Types      map[string]*Type
@@ -14,20 +15,32 @@ type API struct {
 
 func NewAPI() *API {
 	return &API{
+		Securitys: map[string]*Security{},
 		Requests:  map[string]*Request{},
 		Responses: map[string]*Response{},
 		Types:     map[string]*Type{},
 	}
 }
 
+type Security struct {
+	//	Ref         string
+	Schema      string
+	Name        string
+	Type        *Type
+	Requests    []*Request
+	Responses   []*Response
+	Description string
+}
+
 type Operation struct {
 	Method      string
 	Path        string
-	Type        *Type
 	Tags        []string
 	Name        string
+	Type        *Type
 	Requests    []*Request
 	Responses   []*Response
+	Securitys   []*Security
 	Description string
 }
 
