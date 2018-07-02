@@ -27,9 +27,11 @@ func (f *File) Save() error {
 	if f.packname == "" {
 		b, err := build.ImportDir(filepath.Dir(f.filename), 0)
 		if err != nil {
-			return err
+			// return err
+			f.packname = "client"
+		} else {
+			f.packname = b.Name
 		}
-		f.packname = b.Name
 	}
 	return ioutil.WriteFile(f.filename, f.Bytes(), 0666)
 }

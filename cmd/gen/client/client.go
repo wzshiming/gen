@@ -17,10 +17,16 @@ var Command = &cli.Command{
 			Value:   "client_gen.go",
 			Usage:   "output file.",
 		},
+		&cli.StringFlag{
+			Name:    "package",
+			Aliases: []string{"p"},
+			Usage:   "package name",
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		pkg := ctx.Args().First()
 		out := ctx.String("out")
+		packag := ctx.String("package")
 		if pkg == "" {
 			return cli.ShowSubcommandHelp(ctx)
 		}
@@ -35,6 +41,6 @@ var Command = &cli.Command{
 			return err
 		}
 
-		return d.WithFilename(out).Save()
+		return d.WithPackname(packag).WithFilename(out).Save()
 	},
 }
