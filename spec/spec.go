@@ -56,6 +56,7 @@ type Request struct {
 type Response struct {
 	Ref         string
 	Name        string
+	In          string
 	Code        string
 	Content     string
 	Type        *Type

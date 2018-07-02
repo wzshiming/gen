@@ -210,21 +210,28 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 	tag := GetTag(doc)
 	name := GetName(t, tag)
 	code := tag.Get("code")
+	in := tag.Get("in")
 	content := tag.Get("content")
 	kind := t.Elem().Kind()
-	if code == "" {
-		if kind != gotype.Error {
-			code = "200"
-		} else {
-			code = "400"
-		}
+	if in == "" {
+		in = "body"
 	}
 
-	if content == "" {
-		if kind != gotype.Error {
-			content = "json"
-		} else {
-			content = "error"
+	if in == "body" {
+		if code == "" {
+			if kind != gotype.Error {
+				code = "200"
+			} else {
+				code = "400"
+			}
+		}
+
+		if content == "" {
+			if kind != gotype.Error {
+				content = "json"
+			} else {
+				content = "error"
+			}
 		}
 	}
 
@@ -233,7 +240,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 		return nil, err
 	}
 
-	key := name + "." + utils.Hash(name, code, content, sch.Name, doc)
+	key := name + "." + utils.Hash(name, in, code, content, sch.Name, doc)
 
 	if g.api.Responses[key] != nil {
 		return &spec.Response{
@@ -243,6 +250,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 
 	resp = &spec.Response{}
 	resp.Name = name
+	resp.In = in
 	resp.Code = code
 	resp.Content = content
 	resp.Type = sch

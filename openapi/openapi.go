@@ -84,21 +84,32 @@ func (g *GenOpenAPI) Components() (err error) {
 				return err
 			}
 			g.openapi.Components.RequestBodies[k] = body
-		default:
+		case "header", "cookie", "path", "query":
 			par, err := g.Parameters(v)
 			if err != nil {
 				return err
 			}
 			g.openapi.Components.Parameters[k] = par
+		default:
+			// No action
 		}
 	}
 
 	for k, v := range g.api.Responses {
-		_, resp, err := g.Responses(v)
-		if err != nil {
-			return err
+		switch v.In {
+		case "cookie":
+			// No action
+		case "header":
+			// No action
+		case "body":
+			_, resp, err := g.Responses(v)
+			if err != nil {
+				return err
+			}
+			g.openapi.Components.Responses[k] = resp
+		default:
+			// No action
 		}
-		g.openapi.Components.Responses[k] = resp
 	}
 
 	for _, v := range g.api.Operations {
@@ -142,23 +153,53 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 				return err
 			}
 			oper.RequestBody = body
-		default:
+		case "header", "cookie", "path", "query":
 			par, err := g.Parameters(v)
 			if err != nil {
 				return err
 			}
 			oper.Parameters = append(oper.Parameters, par)
+		default:
+			// No action
 		}
 	}
 
 	oper.Responses = map[string]*oaspec.Response{}
-	for _, v := range ope.Responses {
-		code, resp, err := g.Responses(v)
-		if err != nil {
-			return err
+	headers := []*oaspec.Header{}
+	for _, resp := range ope.Responses {
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
 		}
-		oper.Responses[code] = resp
+		switch resp.In {
+		case "cookie":
+			// TODO: Process the returned cookie
+		case "header":
+			head, err := g.ResponsesHeader(resp)
+			if err != nil {
+				return err
+			}
+			headers = append(headers, head)
+		case "body":
+			code, resp, err := g.Responses(resp)
+			if err != nil {
+				return err
+			}
+
+			if len(headers) != 0 {
+				if resp.Headers == nil {
+					resp.Headers = map[string]*oaspec.Header{}
+				}
+				for _, head := range headers {
+					resp.Headers[head.Name] = head
+				}
+			}
+
+			oper.Responses[code] = resp
+		default:
+			// No action
+		}
 	}
+
 	oper.Description = ope.Description
 
 	if g.openapi.Paths[ope.Path] == nil {
@@ -206,6 +247,18 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 	}
 
 	return
+}
+
+func (g *GenOpenAPI) ResponsesHeader(res *spec.Response) (head *oaspec.Header, err error) {
+	sch, err := g.Schemas(res.Type)
+	if err != nil {
+		return nil, err
+	}
+	head = &oaspec.Header{}
+	head.In = "header"
+	head.Name = res.Name
+	head.Schema = sch
+	return head, nil
 }
 
 func (g *GenOpenAPI) Responses(res *spec.Response) (code string, resp *oaspec.Response, err error) {
