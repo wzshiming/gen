@@ -1,36 +1,37 @@
 package run
 
 import (
+	"fmt"
+
 	"github.com/wzshiming/gen/run"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
 var Command = &cli.Command{
-	Name: "run",
+	Name:      "run",
+	Usage:     "Run package",
+	ArgsUsage: "[package]",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "package",
+		&cli.UintFlag{
+			Name:    "port",
 			Aliases: []string{"p"},
-		},
-		&cli.StringFlag{
-			Name:  "port",
-			Value: ":8080",
+			Value:   8080,
+			Usage:   "listening addrs.",
 		},
 		&cli.StringFlag{
 			Name:    "format",
 			Aliases: []string{"f"},
 			Value:   "json",
-			Usage:   "It has to be json or yaml for openapi",
+			Usage:   "json or yaml.",
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		p := ctx.String("package")
-		port := ctx.String("port")
-		f := ctx.String("format")
-		if p == "" {
-			return cli.ShowAppHelp(ctx)
+		pkg := ctx.Args().First()
+		port := ctx.Uint("port")
+		format := ctx.String("format")
+		if pkg == "" {
+			return cli.ShowSubcommandHelp(ctx)
 		}
-
-		return run.Run(p, port, f)
+		return run.Run(pkg, fmt.Sprintf(":%d", port), format)
 	},
 }

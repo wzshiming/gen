@@ -7,40 +7,40 @@ import (
 )
 
 var Command = &cli.Command{
-	Name: "route",
+	Name:      "route",
+	Usage:     "Generate routing source code for functions",
+	ArgsUsage: "[package]",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "package",
-			Aliases: []string{"p"},
-		},
 		&cli.StringFlag{
 			Name:    "out",
 			Aliases: []string{"o"},
 			Value:   "router_gen.go",
+			Usage:   "file name.",
 		},
 		&cli.StringFlag{
 			Name:    "name",
 			Aliases: []string{"n"},
 			Value:   "Router",
+			Usage:   "routing function name.",
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		p := ctx.String("package")
-		o := ctx.String("out")
-		n := ctx.String("name")
-		if p == "" {
-			return cli.ShowAppHelp(ctx)
+		pkg := ctx.Args().First()
+		out := ctx.String("out")
+		name := ctx.String("name")
+		if pkg == "" {
+			return cli.ShowSubcommandHelp(ctx)
 		}
 
 		def := parser.NewParser()
-		err := def.Import(p)
+		err := def.Import(pkg)
 		if err != nil {
 			return err
 		}
-		d, err := route.NewGenRoute(def.API()).Generate(n)
+		d, err := route.NewGenRoute(def.API()).Generate(name)
 		if err != nil {
 			return err
 		}
-		return d.WithFilename(o).Save()
+		return d.WithFilename(out).Save()
 	},
 }

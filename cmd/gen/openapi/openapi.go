@@ -16,48 +16,54 @@ import (
 )
 
 var Command = &cli.Command{
-	Name: "openapi",
+	Name:      "openapi",
+	Usage:     "Generate openapi document for functions",
+	ArgsUsage: "[package]",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "package",
-			Aliases: []string{"p"},
-		},
 		&cli.StringSliceFlag{
 			Name:    "servers",
 			Aliases: []string{"s"},
+		},
+		&cli.UintFlag{
+			Name:    "port",
+			Aliases: []string{"p"},
+			Value:   8080,
+			Usage:   "listening addrs.",
 		},
 		&cli.StringFlag{
 			Name:    "out",
 			Aliases: []string{"o"},
 			Value:   "./openapi.json",
+			Usage:   "output file.",
 		},
 		&cli.StringFlag{
 			Name:    "format",
 			Aliases: []string{"f"},
 			Value:   "json",
-			Usage:   "It has to be json or yaml",
+			Usage:   "json or yaml.",
 		},
 		&cli.BoolFlag{
 			Name:    "ui",
 			Aliases: []string{"u"},
-			Usage:   "Show the API web page",
+			Usage:   "show the API web page.",
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		p := ctx.String("package")
-		s := ctx.StringSlice("servers")
-		o := ctx.String("out")
-		f := ctx.String("format")
-		if p == "" {
-			return cli.ShowAppHelp(ctx)
+		pkg := ctx.Args().First()
+		servers := ctx.StringSlice("servers")
+		out := ctx.String("out")
+		format := ctx.String("format")
+		port := ctx.Uint("port")
+		if pkg == "" {
+			return cli.ShowSubcommandHelp(ctx)
 		}
 
 		def := parser.NewParser()
-		err := def.Import(p)
+		err := def.Import(pkg)
 		if err != nil {
 			return err
 		}
-		api, err := openapi.NewGenOpenAPI(def.API()).WithServices(s...).Generate()
+		api, err := openapi.NewGenOpenAPI(def.API()).WithServices(servers...).Generate()
 		if err != nil {
 			return err
 		}
@@ -66,7 +72,7 @@ var Command = &cli.Command{
 		if err != nil {
 			return err
 		}
-		switch f {
+		switch format {
 		case "json":
 
 		case "yaml":
@@ -75,10 +81,10 @@ var Command = &cli.Command{
 				return err
 			}
 		default:
-			return fmt.Errorf("undefined format %s", f)
+			return fmt.Errorf("undefined format %s", format)
 		}
-		if o != "" {
-			err := ioutil.WriteFile(o, d, 0666)
+		if out != "" {
+			err := ioutil.WriteFile(out, d, 0666)
 			if err != nil {
 				return err
 			}
@@ -92,11 +98,11 @@ var Command = &cli.Command{
 
 			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.Handle))
 
-			mux.HandleFunc("/swagger/openapi."+f, func(w http.ResponseWriter, r *http.Request) {
-				http.ServeContent(w, r, "openapi."+f, time.Time{}, bytes.NewReader(d))
+			mux.HandleFunc("/swagger/openapi."+format, func(w http.ResponseWriter, r *http.Request) {
+				http.ServeContent(w, r, "openapi."+format, time.Time{}, bytes.NewReader(d))
 			})
-			fmt.Printf("Open http://127.0.0.1:8080/swagger/?url=./openapi.%s# with your browser.\n", f)
-			return http.ListenAndServe(":8080", mux)
+			fmt.Printf("Open http://127.0.0.1:%d/swagger/?url=./openapi.%s# with your browser.\n", port, format)
+			return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 		}
 
 		return nil

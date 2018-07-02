@@ -14,12 +14,22 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		os.Stderr.Write([]byte(err.Error()))
+		os.Exit(2)
 		return
 	}
 }
 
 var app = &cli.App{
-	Name: "gen",
+	Name:    "gen",
+	Version: "0.0.X",
+	Authors: []*cli.Author{
+		{
+			Name:  "wzshiming",
+			Email: "wzshiming@foxmail.com",
+		},
+	},
+	Usage:     "generated source code tool for micro services",
+	ArgsUsage: "[package]",
 	Commands: []*cli.Command{
 		client.Command,
 		route.Command,

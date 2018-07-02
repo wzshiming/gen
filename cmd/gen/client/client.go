@@ -7,27 +7,26 @@ import (
 )
 
 var Command = &cli.Command{
-	Name: "client",
+	Name:      "client",
+	Usage:     "Generate client source code for functions",
+	ArgsUsage: "[package]",
 	Flags: []cli.Flag{
-		&cli.StringFlag{
-			Name:    "package",
-			Aliases: []string{"p"},
-		},
 		&cli.StringFlag{
 			Name:    "out",
 			Aliases: []string{"o"},
 			Value:   "client_gen.go",
+			Usage:   "output file.",
 		},
 	},
 	Action: func(ctx *cli.Context) error {
-		p := ctx.String("package")
-		o := ctx.String("out")
-		if p == "" {
-			return cli.ShowAppHelp(ctx)
+		pkg := ctx.Args().First()
+		out := ctx.String("out")
+		if pkg == "" {
+			return cli.ShowSubcommandHelp(ctx)
 		}
 
 		def := parser.NewParser()
-		err := def.Import(p)
+		err := def.Import(pkg)
 		if err != nil {
 			return err
 		}
@@ -36,6 +35,6 @@ var Command = &cli.Command{
 			return err
 		}
 
-		return d.WithFilename(o).Save()
+		return d.WithFilename(out).Save()
 	},
 }
