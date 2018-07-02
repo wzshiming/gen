@@ -5,6 +5,10 @@ Because the source code is generated, none of this affects runtime performance
 The differences caused by each change in the tool are shown directly in the generated source code  
 generating clients is also supported  
 
+[![Build Status](https://travis-ci.org/wzshiming/gen.svg?branch=master)](https://travis-ci.org/wzshiming/gen)
+[![Go Report Card](https://goreportcard.com/badge/github.com/wzshiming/gen)](https://goreportcard.com/report/github.com/wzshiming/gen)
+[![GitHub license](https://img.shields.io/github/license/wzshiming/gen.svg)](https://github.com/wzshiming/gen/blob/master/LICENSE)
+
 - [English](https://github.com/wzshiming/gen/blob/master/README.md)
 - [简体中文](https://github.com/wzshiming/gen/blob/master/README_cn.md)
 
