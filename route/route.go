@@ -1,8 +1,6 @@
 package route
 
 import (
-	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/wzshiming/gen/model"
@@ -127,63 +125,4 @@ func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 	g.buf.WriteFormat(`%s)
 `, name)
 	return
-}
-
-func (g *GenRoute) GenerateResponse(resp *spec.Response) error {
-	if resp.Ref != "" {
-		resp = g.api.Responses[resp.Ref]
-	}
-	contentType := ""
-	errResp := func() {
-		g.buf.AddImport("", "net/http")
-		g.buf.WriteFormat(`
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-`)
-	}
-
-	text := ""
-	if i, err := strconv.Atoi(resp.Code); err == nil {
-		text = http.StatusText(i)
-	}
-	g.buf.WriteFormat(`
-	// Response code %s %s for %s.
-	if _%s != `, resp.Code, text, resp.Name, resp.Name)
-	g.TypesZero(resp.Type)
-	g.buf.WriteFormat(`{`)
-	switch resp.Content {
-	case "json":
-		g.buf.AddImport("", "encoding/json")
-		contentType = "application/json; charset=utf-8"
-		g.buf.WriteFormat(`
-	data, err := json.Marshal(_%s)`, resp.Name)
-		errResp()
-	case "xml":
-		g.buf.AddImport("", "encoding/xml")
-		contentType = "application/xml; charset=utf-8"
-		g.buf.WriteFormat(`
-	data, err := xml.Marshal(_%s)`, resp.Name)
-		errResp()
-	case "error":
-		g.buf.AddImport("", "net/http")
-		g.buf.WriteFormat(`
-	http.Error(w, _%s.Error(), %s)
-	return
-}
-`, resp.Name, resp.Code)
-		return nil
-	default:
-		contentType = "text/plain; charset=utf-8"
-	}
-
-	g.buf.WriteFormat(`
-		w.Header().Set("Content-Type","%s")
-		w.WriteHeader(%s)
-		w.Write(data)
-		return
-	}
-`, contentType, resp.Code)
-	return nil
 }
