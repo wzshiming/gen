@@ -61,7 +61,7 @@ func (g *Parser) Import(pkgpath string) error {
 }
 
 func (g *Parser) AddPaths(t gotype.Type) (err error) {
-	numm := t.NumMethods()
+	numm := t.NumMethod()
 	if numm == 0 {
 		return nil
 	}
@@ -77,7 +77,7 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	}
 
 	for i := 0; i != numm; i++ {
-		v := t.Methods(i)
+		v := t.Method(i)
 		err = g.AddSecurity(sch, v)
 		if err != nil {
 			return err
@@ -85,7 +85,7 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	}
 
 	for i := 0; i != numm; i++ {
-		v := t.Methods(i)
+		v := t.Method(i)
 		err = g.AddOperation(path, sch, v)
 		if err != nil {
 			return err
