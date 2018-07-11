@@ -270,11 +270,11 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	name := GetName(t, tag)
 	in := tag.Get("in")
 	if in == "" {
-		t := t
-		for t.Elem().Kind() == gotype.Ptr {
+		t := t.Elem()
+		for t.Kind() == gotype.Ptr {
 			t = t.Elem()
 		}
-		switch t.Elem().Kind() {
+		switch t.Kind() {
 		case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
 			in = "body"
 		default:
@@ -296,7 +296,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		return nil, err
 	}
 
-	key := name + "." + utils.Hash(name, in, sch.Name, doc)
+	key := name + "." + utils.Hash(name, in, sch.Name, sch.Kind.String(), doc)
 
 	if g.api.Requests[key] != nil {
 		return &spec.Request{
