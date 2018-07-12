@@ -19,14 +19,17 @@ type GenRoute struct {
 func NewGenRoute(api *spec.API) *GenRoute {
 	buf := &srcgen.File{}
 	return &GenRoute{
-		api:      api,
-		buf:      buf,
-		GenModel: *model.NewGenModel(api, buf),
+		api: api,
+		buf: buf,
 	}
 }
 
-func (g *GenRoute) Generate(funcName string) (*srcgen.File, error) {
-	g.buf.WithPackname(g.api.Package)
+func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) {
+	if pkg == "" {
+		pkg = g.api.Package
+	}
+	g.buf.WithPackname(pkg)
+	g.GenModel = *model.NewGenModel(g.api, g.buf, outpkg)
 	err := g.GenerateRoutes(funcName)
 	if err != nil {
 		return nil, err

@@ -21,7 +21,7 @@ func NewGenClient(api *spec.API) *GenClient {
 	return &GenClient{
 		api:      api,
 		buf:      buf,
-		GenModel: *model.NewGenModel(api, buf),
+		GenModel: *model.NewGenModel(api, buf, ""),
 	}
 }
 

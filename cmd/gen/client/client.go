@@ -3,6 +3,7 @@ package client
 import (
 	"github.com/wzshiming/gen/client"
 	"github.com/wzshiming/gen/parser"
+	"github.com/wzshiming/gotype"
 	cli "gopkg.in/urfave/cli.v2"
 )
 
@@ -31,7 +32,8 @@ var Command = &cli.Command{
 			return cli.ShowSubcommandHelp(ctx)
 		}
 
-		def := parser.NewParser()
+		imp := gotype.NewImporter(gotype.WithCommentLocator())
+		def := parser.NewParser(imp)
 		err := def.Import(pkg)
 		if err != nil {
 			return err

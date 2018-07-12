@@ -12,6 +12,7 @@ import (
 
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
+	"github.com/wzshiming/gotype"
 	"github.com/wzshiming/openapi/util"
 )
 
@@ -45,7 +46,8 @@ func Run(pkg string, port string, format string) error {
 }
 
 func file(pkg string, port string, format string) ([]byte, error) {
-	def := parser.NewParser()
+	imp := gotype.NewImporter(gotype.WithCommentLocator())
+	def := parser.NewParser(imp)
 	err := def.Import(pkg)
 	if err != nil {
 		return nil, err

@@ -11,15 +11,18 @@ import (
 
 // GenModel is the generating generating
 type GenModel struct {
-	api *spec.API
-	buf *srcgen.File
+	pkgpath string
+	api     *spec.API
+	buf     *srcgen.File
 }
 
-func NewGenModel(api *spec.API, buf *srcgen.File) *GenModel {
+func NewGenModel(api *spec.API, buf *srcgen.File, pkgpath string) *GenModel {
 	return &GenModel{
-		api: api,
-		buf: buf,
+		api:     api,
+		buf:     buf,
+		pkgpath: pkgpath,
 	}
+
 }
 
 func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
@@ -49,6 +52,15 @@ func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
 
 func (g *GenModel) Types(typ *spec.Type) (err error) {
 	if typ.Ref != "" {
+
+		if g.pkgpath != "" {
+			if reftyp := g.api.Types[typ.Ref]; reftyp.PkgPath != "" && reftyp.PkgPath != g.pkgpath {
+				pkgname := SplitPkg(reftyp.PkgPath)
+				g.buf.AddImport(pkgname, reftyp.PkgPath)
+				g.buf.WriteFormat("%s.", pkgname)
+			}
+		}
+
 		g.buf.WriteString(utils.GetName(typ.Ref))
 		return nil
 	}
@@ -113,4 +125,15 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		g.buf.WriteString(strings.ToLower(typ.Kind.String()))
 	}
 	return
+}
+
+func SplitPkg(path string) (name string) {
+	i := strings.LastIndex(path, "/")
+	path = path[i+1:]
+	i = strings.LastIndex(path, ".")
+	if i == -1 {
+		return path
+	}
+	path = path[:i+1]
+	return path
 }

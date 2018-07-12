@@ -11,6 +11,7 @@ import (
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
 	"github.com/wzshiming/gen/ui/swaggerui"
+	"github.com/wzshiming/gotype"
 	"github.com/wzshiming/openapi/util"
 	cli "gopkg.in/urfave/cli.v2"
 )
@@ -58,7 +59,8 @@ var Command = &cli.Command{
 			return cli.ShowSubcommandHelp(ctx)
 		}
 
-		def := parser.NewParser()
+		imp := gotype.NewImporter(gotype.WithCommentLocator())
+		def := parser.NewParser(imp)
 		err := def.Import(pkg)
 		if err != nil {
 			return err
