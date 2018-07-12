@@ -1,6 +1,7 @@
 package route
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/wzshiming/gen/model"
@@ -63,7 +64,13 @@ func %s() http.Handler {
 }
 `)
 
-	for _, v := range g.api.Requests {
+	reqKey := make([]string, 0, len(g.api.Requests))
+	for k := range g.api.Requests {
+		reqKey = append(reqKey, k)
+	}
+	sort.Strings(reqKey)
+	for _, k := range reqKey {
+		v := g.api.Requests[k]
 		switch v.In {
 		case "security":
 		default:
@@ -74,7 +81,13 @@ func %s() http.Handler {
 		}
 	}
 
-	for _, v := range g.api.Securitys {
+	secuKey := make([]string, 0, len(g.api.Securitys))
+	for k := range g.api.Securitys {
+		secuKey = append(secuKey, k)
+	}
+	sort.Strings(secuKey)
+	for _, k := range secuKey {
+		v := g.api.Securitys[k]
 		err = g.GenerateSecurityFunction(v)
 		if err != nil {
 			return err

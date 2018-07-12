@@ -44,12 +44,12 @@ func (g *GenClient) Generate() (*srcgen.File, error) {
 
 func (g *GenClient) GenerateSchemas() (err error) {
 	schemas := g.api.Types
-	ks := make([]string, 0, len(schemas))
-	for k, _ := range schemas {
-		ks = append(ks, k)
+	schKey := make([]string, 0, len(schemas))
+	for k := range schemas {
+		schKey = append(schKey, k)
 	}
-	sort.Strings(ks)
-	for _, k := range ks {
+	sort.Strings(schKey)
+	for _, k := range schKey {
 		v := schemas[k]
 		g.buf.WriteString(utils.CommentLine(v.Description))
 		g.buf.WriteString("type ")

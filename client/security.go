@@ -1,12 +1,20 @@
 package client
 
 import (
+	"sort"
+
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/utils"
 )
 
 func (g *GenClient) GenerateSecuritys() (err error) {
-	for _, secu := range g.api.Securitys {
+	secuKey := make([]string, 0, len(g.api.Securitys))
+	for k := range g.api.Securitys {
+		secuKey = append(secuKey, k)
+	}
+	sort.Strings(secuKey)
+	for _, k := range secuKey {
+		secu := g.api.Securitys[k]
 		err = g.GenerateSecurity(secu)
 		if err != nil {
 			return err
