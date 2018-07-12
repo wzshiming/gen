@@ -38,7 +38,7 @@ func (g *Parser) Import(pkgpath string) error {
 	for i := 0; i != numchi; i++ {
 		v := pkg.Child(i)
 		switch v.Kind() {
-		case gotype.Func:
+		case gotype.Declaration:
 			err = g.AddSecurity(nil, v)
 			if err != nil {
 				return err
@@ -52,7 +52,7 @@ func (g *Parser) Import(pkgpath string) error {
 			if err != nil {
 				return err
 			}
-		case gotype.Interface, gotype.Scope, gotype.Invalid, gotype.Var:
+		case gotype.Interface, gotype.Scope, gotype.Invalid:
 			// No action
 		}
 	}
@@ -95,13 +95,17 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 }
 
 func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
+	name := t.Name()
+	if t.Kind() == gotype.Declaration {
+		t = t.Declaration()
+	}
 	if t.Kind() != gotype.Func {
-		return fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
+		return nil
 	}
 
 	doc := t.Doc().Text()
 	tag := GetTag(doc)
-	name := GetName(t, tag)
+	name = GetName(name, tag)
 	security := tag.Get("security")
 	if security == "" {
 		return nil
@@ -146,13 +150,17 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 }
 
 func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
+	name := t.Name()
+	if t.Kind() == gotype.Declaration {
+		t = t.Declaration()
+	}
 	if t.Kind() != gotype.Func {
-		return fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
+		return nil
 	}
 
 	doc := t.Doc().Text()
 	tag := GetTag(doc)
-	name := GetName(t, tag)
+	name = GetName(name, tag)
 	route := tag.Get("route")
 	if route == "" {
 		return nil
@@ -206,13 +214,19 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 }
 
 func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
+	name := t.Name()
+	if t.Kind() != gotype.Declaration {
+		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s", t.Kind().String())
+	}
+
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
-	name := GetName(t, tag)
+	name = GetName(name, tag)
 	code := tag.Get("code")
 	in := tag.Get("in")
 	content := tag.Get("content")
-	kind := t.Elem().Kind()
+	t = t.Declaration()
+	kind := t.Kind()
 	if in == "" {
 		in = "body"
 	}
@@ -235,7 +249,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 		}
 	}
 
-	sch, err := g.AddType(t.Elem())
+	sch, err := g.AddType(t)
 	if err != nil {
 		return nil, err
 	}
@@ -264,13 +278,18 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 }
 
 func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err error) {
+	name := t.Name()
+	if t.Kind() != gotype.Declaration {
+		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s", t.Kind().String())
+	}
 
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
-	name := GetName(t, tag)
+	name = GetName(name, tag)
 	in := tag.Get("in")
+	t = t.Declaration()
 	if in == "" {
-		t := t.Elem()
+		t := t
 		for t.Kind() == gotype.Ptr {
 			t = t.Elem()
 		}
@@ -291,7 +310,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		content = "json"
 	}
 
-	sch, err := g.AddType(t.Elem())
+	sch, err := g.AddType(t)
 	if err != nil {
 		return nil, err
 	}
@@ -318,10 +337,11 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 }
 
 func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
+	name := t.Name()
 	pkgpath := t.PkgPath()
 	doc := t.Doc().Text()
 	tag := GetTag(doc)
-	name := GetName(t, tag)
+	name = GetName(name, tag)
 	kind := t.Kind()
 
 	key := name + "." + utils.Hash(name, pkgpath, kind.String(), doc)
@@ -382,10 +402,11 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		numchi := scope.NumChild()
 		for i := 0; i != numchi; i++ {
 			v := scope.Child(i)
-			if v.Kind() != gotype.Var {
+			if v.Kind() != gotype.Declaration {
 				continue
 			}
-			if v.Elem().Name() == typname {
+			v = v.Declaration()
+			if v.Name() == typname {
 				name := v.Name()
 				if name == "_" {
 					continue
@@ -434,7 +455,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			Elem: sch,
 		}
 	default:
-		return nil, fmt.Errorf("Gen: unsupported type: %s", t.Kind().String())
+		return nil, fmt.Errorf("Gen.AddType: unsupported type: %s", t.Kind().String())
 	}
 
 	sch.Name = name
