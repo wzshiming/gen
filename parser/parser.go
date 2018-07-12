@@ -151,6 +151,7 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 
 func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
+	doc := t.Doc().Text()
 	if t.Kind() == gotype.Declaration {
 		t = t.Declaration()
 	}
@@ -158,7 +159,6 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 		return nil
 	}
 
-	doc := t.Doc().Text()
 	tag := GetTag(doc)
 	name = GetName(name, tag)
 	route := tag.Get("route")
@@ -214,11 +214,11 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 }
 
 func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
-	name := t.Name()
+
 	if t.Kind() != gotype.Declaration {
 		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s\n", t.Kind().String())
 	}
-
+	name := t.Name()
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
 	name = GetName(name, tag)
@@ -278,11 +278,11 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 }
 
 func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err error) {
-	name := t.Name()
+
 	if t.Kind() != gotype.Declaration {
 		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s\n", t.Kind().String())
 	}
-
+	name := t.Name()
 	doc := t.Comment().Text()
 	tag := GetTag(doc)
 	name = GetName(name, tag)
