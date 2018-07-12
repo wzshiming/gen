@@ -352,6 +352,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	}
 
 	sch = &spec.Type{}
+	sch.PkgPath = pkgpath
 	sch.Name = name
 	sch.Description = doc
 

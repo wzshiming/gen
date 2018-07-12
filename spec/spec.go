@@ -65,6 +65,7 @@ type Response struct {
 
 type Type struct {
 	Ref         string
+	PkgPath     string
 	Name        string
 	Kind        Kind
 	Key         *Type
