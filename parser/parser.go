@@ -351,19 +351,17 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		}, nil
 	}
 
+	sch = &spec.Type{}
+	sch.Name = name
+	sch.Description = doc
+
 	if t.IsGoroot() && pkgpath == "time" && name == "Time" {
-		sch := &spec.Type{
-			Name: name,
-			Kind: spec.Time,
-		}
+		sch.Kind = spec.Time
 		return sch, nil
 	}
 
 	switch kind {
 	case gotype.Struct:
-
-		sch = &spec.Type{}
-
 		// Field
 		{
 			num := t.NumField()
@@ -391,7 +389,6 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		gotype.Int8, gotype.Int16, gotype.Int32, gotype.Int64, gotype.Int,
 		gotype.Uint8, gotype.Uint16, gotype.Uint32, gotype.Uint64, gotype.Uint,
 		gotype.Byte, gotype.Rune:
-		sch = &spec.Type{}
 
 		scope, err := g.imp.Import(t.PkgPath())
 		if err != nil {
@@ -415,7 +412,6 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 				sch.Enum = append(sch.Enum, value)
 			}
 		}
-
 	case gotype.Map:
 		schk, err := g.AddType(t.Key())
 		if err != nil {
@@ -425,42 +421,32 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		if err != nil {
 			return nil, err
 		}
-		sch = &spec.Type{
-			Key:  schk,
-			Elem: schv,
-		}
+		sch.Key = schk
+		sch.Elem = schv
 	case gotype.Slice:
-		sch, err = g.AddType(t.Elem())
+		schv, err := g.AddType(t.Elem())
 		if err != nil {
 			return nil, err
 		}
-		sch = &spec.Type{
-			Elem: sch,
-		}
+		sch.Elem = schv
 	case gotype.Array:
-		sch, err = g.AddType(t.Elem())
+		schv, err := g.AddType(t.Elem())
 		if err != nil {
 			return nil, err
 		}
-		sch = &spec.Type{
-			Elem: sch,
-			Len:  t.Len(),
-		}
+		sch.Elem = schv
+		sch.Len = t.Len()
 	case gotype.Ptr:
-		sch, err = g.AddType(t.Elem())
+		schv, err := g.AddType(t.Elem())
 		if err != nil {
 			return nil, err
 		}
-		sch = &spec.Type{
-			Elem: sch,
-		}
+		sch.Elem = schv
 	default:
 		return nil, fmt.Errorf("Gen.AddType: unsupported type: %s", t.Kind().String())
 	}
 
-	sch.Name = name
 	sch.Kind = kindMapping[kind]
-	sch.Description = doc
 
 	if name != "" && name != strings.ToLower(kind.String()) {
 		g.api.Types[key] = sch
