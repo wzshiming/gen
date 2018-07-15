@@ -17,9 +17,7 @@
 - [X] 生成路由
 - [X] 生成客户端
   - [X] Golang
-  - [ ] JavaScript (For Web)
-  - [ ] Java (For Android)
-  - [ ] Swift (For iOS)
+  - [ ] JavaScript
 - [X] 生成文档
   - [ ] Swagger 2
   - [X] [OpenAPI 3](https://github.com/OAI/OpenAPI-Style-Guide)

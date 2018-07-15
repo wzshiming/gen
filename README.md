@@ -17,9 +17,7 @@ generating clients is also supported
 - [X] Generate router
 - [X] Generate client
   - [X] Golang
-  - [ ] JavaScript (For Web)
-  - [ ] Java (For Android)
-  - [ ] Swift (For iOS)
+  - [ ] JavaScript
 - [X] Generate documentation
   - [ ] Swagger 2
   - [X] [OpenAPI 3](https://github.com/OAI/OpenAPI-Style-Guide)
