@@ -49,12 +49,6 @@ func`, name, oper.Name)
 	}
 	g.buf.WriteFormat(` %s(w http.ResponseWriter, r *http.Request) {
 `, name)
-	defer g.buf.WriteString(`
-	w.WriteHeader(204)
-	w.Write(nil)
-	return
-}
-`)
 
 	for _, req := range oper.Requests {
 		err = g.GenerateOperationRequest(req)
@@ -70,6 +64,42 @@ func`, name, oper.Name)
 		err = g.GenerateResponse(resp)
 		if err != nil {
 			return err
+		}
+	}
+
+	defer g.buf.WriteString(`
+		return
+}
+`)
+
+	switch len(oper.Responses) {
+	case 1:
+		resp := oper.Responses[0]
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		typ := resp.Type
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		if typ.Kind != spec.Error {
+			break
+		}
+		fallthrough
+	case 0:
+		g.buf.WriteString(`
+	w.WriteHeader(204)
+	w.Write(nil)
+`)
+	default:
+		for _, resp := range oper.Responses {
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+			if resp.In == "body" {
+				g.GenerateResponseBodyItem(resp)
+				break
+			}
 		}
 	}
 	return
