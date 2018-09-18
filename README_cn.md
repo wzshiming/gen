@@ -28,7 +28,7 @@
 
 ## 示例
 
-1. 安装 gen 工具 `go get -u -v github.com/wzshiming/gen/cmd/gen`
+1. 安装 gen 工具 `go get -v github.com/wzshiming/gen/cmd/gen`
 2. 添加 gen 工具到 $PATH
 3. 执行 `gen run github.com/wzshiming/gen/examples/basics/service`
 4. 在浏览器中打开 [http://127.0.0.1:8080/swagger/?url=./openapi.json#](http://127.0.0.1:8080/swagger/?url=./openapi.json#)
