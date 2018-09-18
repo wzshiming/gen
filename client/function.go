@@ -54,7 +54,7 @@ SetXML(_%s)`, req.Name)
 		}
 	}
 	g.buf.WriteFormat(`.
-%s("%s")`, namecase.ToPascal(oper.Method), oper.Path)
+%s("%s")`, namecase.ToUpperHump(oper.Method), oper.Path)
 
 	g.GenerateErrror(oper.Responses)
 	return nil
