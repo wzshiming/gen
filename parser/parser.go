@@ -369,6 +369,9 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			for i := 0; i != num; i++ {
 				v := t.Field(i)
 				name := v.Name()
+				if !IsExported(name) {
+					continue
+				}
 				tag := v.Tag()
 				val, err := g.AddType(v.Elem())
 				if err != nil {

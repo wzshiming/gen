@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"go/ast"
 	"reflect"
 	"strings"
 )
@@ -29,4 +30,8 @@ func GetTag(text string) reflect.StructTag {
 		}
 	}
 	return reflect.StructTag(strings.Join(ss, " "))
+}
+
+func IsExported(name string) bool {
+	return ast.IsExported(name)
 }
