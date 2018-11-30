@@ -15,7 +15,7 @@ func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 			typ = g.api.Types[typ.Ref]
 		}
 
-		g.buf.WriteFormat("%s.", GetGlobalVarName(typ.Name))
+		g.buf.WriteFormat("%s.", GetVarName(typ.Name))
 	}
 	g.buf.WriteFormat("%s(", secu.Name)
 	for i, req := range secu.Requests {

@@ -6,8 +6,8 @@ import (
 	"github.com/wzshiming/namecase"
 )
 
-func GetGlobalVarName(name string) string {
-	return "_" + namecase.ToCamel(fmt.Sprintf("global_%s", name))
+func GetVarName(name string) string {
+	return "_" + namecase.ToCamel(fmt.Sprintf("var_%s", name))
 }
 
 func GetRouteName(name string) string {
