@@ -10,6 +10,10 @@ func GetGlobalVarName(name string) string {
 	return "_" + namecase.ToCamel(fmt.Sprintf("global_%s", name))
 }
 
+func GetRouteName(name string) string {
+	return namecase.ToPascal(fmt.Sprintf("route_%s", name))
+}
+
 func GetOperationFunctionName(name string) string {
 	return "_" + namecase.ToCamel(fmt.Sprintf("operation_%s", name))
 }

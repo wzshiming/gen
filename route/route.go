@@ -43,6 +43,13 @@ func (g *GenRoute) GenerateRoutes(funcName string) (err error) {
 	g.buf.AddImport("", "net/http")
 
 	m := map[string]bool{}
+	g.buf.WriteFormat(`
+// %s is all routing for package
+// generated do not edit.
+func %s() http.Handler {
+	router := mux.NewRouter()
+`, funcName, funcName)
+
 	for _, v := range g.api.Operations {
 		err = g.GenerateRouteTypes(v, m)
 		if err != nil {
@@ -50,13 +57,10 @@ func (g *GenRoute) GenerateRoutes(funcName string) (err error) {
 		}
 	}
 
-	g.buf.WriteFormat(`
-// %s is generated do not edit.
-func %s() http.Handler {
-	router := mux.NewRouter()
-
-`, funcName, funcName)
 	for _, v := range g.api.Operations {
+		if v.Type != nil {
+			continue
+		}
 		err = g.GenerateRoute(v)
 		if err != nil {
 			return err
@@ -66,6 +70,40 @@ func %s() http.Handler {
 	return router
 }
 `)
+
+	var t *spec.Type
+	for _, v := range g.api.Operations {
+		typ := v.Type
+		if typ == nil {
+			continue
+		}
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+
+		if typ != t {
+			if t != nil {
+				g.buf.WriteString(`
+}
+`)
+			}
+			t = typ
+			name := GetRouteName(t.Name)
+			g.buf.WriteFormat(`
+// %s is routing for %s
+func %s(router *mux.Router,%s *%s) {
+`, name, t.Name, name, GetGlobalVarName(t.Name), t.Name)
+		}
+		err = g.GenerateRoute(v)
+		if err != nil {
+			return err
+		}
+	}
+	if t != nil {
+		g.buf.WriteString(`
+}
+`)
+	}
 
 	reqKey := make([]string, 0, len(g.api.Requests))
 	for k := range g.api.Requests {
@@ -118,8 +156,11 @@ func (g *GenRoute) GenerateRouteTypes(oper *spec.Operation, m map[string]bool) (
 	if m[typ.Name] {
 		return
 	}
+
+	name := GetGlobalVarName(typ.Name)
 	g.buf.WriteFormat("// %s Define the method scope\n", typ.Name)
-	g.buf.WriteFormat("var %s %s\n", GetGlobalVarName(typ.Name), typ.Name)
+	g.buf.WriteFormat("var %s %s\n", name, typ.Name)
+	g.buf.WriteFormat("%s(router, &%s)", GetRouteName(typ.Name), name)
 	m[typ.Name] = true
 	return
 }
