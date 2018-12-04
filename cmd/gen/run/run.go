@@ -1,37 +1,34 @@
 package run
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/run"
-	cli "gopkg.in/urfave/cli.v2"
 )
 
-var Command = &cli.Command{
-	Name:      "run",
-	Usage:     "Run package",
-	ArgsUsage: "[package]",
-	Flags: []cli.Flag{
-		&cli.UintFlag{
-			Name:    "port",
-			Aliases: []string{"p"},
-			Value:   8080,
-			Usage:   "listening addrs.",
-		},
-		&cli.StringFlag{
-			Name:    "format",
-			Aliases: []string{"f"},
-			Value:   "json",
-			Usage:   "json or yaml.",
-		},
-	},
-	Action: func(ctx *cli.Context) error {
-		pkg := ctx.Args().First()
-		port := ctx.Uint("port")
-		format := ctx.String("format")
-		if pkg == "" {
-			return cli.ShowSubcommandHelp(ctx)
+var (
+	port   uint
+	format string
+)
+
+func init() {
+	flag := Cmd.Flags()
+	flag.UintVarP(&port, "port", "p", 8080, "listening port")
+	flag.StringVarP(&format, "format", "f", "json", "json or yaml")
+}
+
+var Cmd = &cobra.Command{
+	Use:   "run [flags] package",
+	Short: "Run package",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return errors.New("Miss package path")
 		}
-		return run.Run(pkg, fmt.Sprintf(":%d", port), format)
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return run.Run(args[0], fmt.Sprintf(":%d", port), format)
 	},
 }

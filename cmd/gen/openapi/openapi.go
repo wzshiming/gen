@@ -3,65 +3,51 @@ package openapi
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
 
+	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
 	"github.com/wzshiming/gen/ui/swaggerui"
 	"github.com/wzshiming/gotype"
 	"github.com/wzshiming/openapi/util"
-	cli "gopkg.in/urfave/cli.v2"
 )
 
-var Command = &cli.Command{
-	Name:      "openapi",
-	Usage:     "Generate openapi document for functions",
-	ArgsUsage: "[package]",
-	Flags: []cli.Flag{
-		&cli.StringSliceFlag{
-			Name:    "servers",
-			Aliases: []string{"s"},
-		},
-		&cli.UintFlag{
-			Name:    "port",
-			Aliases: []string{"p"},
-			Value:   8080,
-			Usage:   "listening addrs.",
-		},
-		&cli.StringFlag{
-			Name:    "out",
-			Aliases: []string{"o"},
-			Value:   "./openapi.json",
-			Usage:   "output file.",
-		},
-		&cli.StringFlag{
-			Name:    "format",
-			Aliases: []string{"f"},
-			Value:   "json",
-			Usage:   "json or yaml.",
-		},
-		&cli.BoolFlag{
-			Name:    "ui",
-			Aliases: []string{"u"},
-			Usage:   "show the API web page.",
-		},
-	},
-	Action: func(ctx *cli.Context) error {
-		pkg := ctx.Args().First()
-		servers := ctx.StringSlice("servers")
-		out := ctx.String("out")
-		format := ctx.String("format")
-		port := ctx.Uint("port")
-		if pkg == "" {
-			return cli.ShowSubcommandHelp(ctx)
-		}
+var (
+	servers []string
+	port    uint
+	out     string
+	format  string
+	ui      bool
+)
 
+func init() {
+	flag := Cmd.Flags()
+	flag.StringSliceVarP(&servers, "servers", "s", nil, "")
+	flag.UintVarP(&port, "port", "p", 8080, "listening port")
+	flag.StringVarP(&out, "out", "o", "openapi.json", "output file name")
+	flag.StringVarP(&format, "format", "f", "json", "json or yaml")
+	flag.BoolVarP(&ui, "ui", "u", false, "show the API ui page")
+
+}
+
+var Cmd = &cobra.Command{
+	Use:   "openapi [flags] package",
+	Short: "Generate openapi document for functions",
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) == 0 {
+			return errors.New("Miss package path")
+		}
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
 		imp := gotype.NewImporter(gotype.WithCommentLocator())
 		def := parser.NewParser(imp)
-		err := def.Import(pkg)
+		err := def.Import(args[0])
 		if err != nil {
 			return err
 		}
@@ -94,7 +80,7 @@ var Command = &cli.Command{
 			fmt.Println(string(d))
 		}
 
-		if ctx.Bool("ui") {
+		if ui {
 
 			mux := &http.ServeMux{}
 
@@ -106,7 +92,7 @@ var Command = &cli.Command{
 			fmt.Printf("Open http://127.0.0.1:%d/swagger/?url=./openapi.%s# with your browser.\n", port, format)
 			return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 		}
-
 		return nil
+
 	},
 }
