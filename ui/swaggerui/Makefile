@@ -3,7 +3,7 @@
 SWAGGERUI_URL := https://codeload.github.com/swagger-api/swagger-ui/tar.gz/v3.20.1
 
 swaggerui.go: swaggerui go-bindata
-	cd swaggerui && go-bindata --nocompress --nomemcopy --pkg swaggerui -o ../swaggerui.go ./
+	cd swaggerui && go-bindata --nomemcopy --pkg swaggerui -o ../swaggerui.go ./
 
 swaggerui: swaggerui.tar.gz
 	mkdir $@
