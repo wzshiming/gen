@@ -2,7 +2,6 @@ package route
 
 import (
 	"errors"
-	"path"
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/parser"
@@ -36,7 +35,7 @@ var Cmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		imp := gotype.NewImporter(gotype.WithCommentLocator())
 		impPath := ""
-		if outpath, _ := imp.ImportBuild(path.Dir(path.Join(args[0], out))); outpath != nil {
+		if outpath, _ := imp.ImportBuild(args[0]); outpath != nil {
 			impPath = outpath.ImportPath
 		}
 		def := parser.NewParser(imp)
