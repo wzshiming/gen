@@ -1,13 +1,11 @@
 package openapi
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/openapi"
@@ -84,11 +82,7 @@ var Cmd = &cobra.Command{
 
 			mux := &http.ServeMux{}
 
-			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.Handle))
-
-			mux.HandleFunc("/swagger/openapi."+format, func(w http.ResponseWriter, r *http.Request) {
-				http.ServeContent(w, r, "openapi."+format, time.Time{}, bytes.NewReader(d))
-			})
+			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi."+format, d)))
 			fmt.Printf("Open http://127.0.0.1:%d/swagger/?url=./openapi.%s# with your browser.\n", port, format)
 			return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 		}

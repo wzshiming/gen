@@ -101,26 +101,20 @@ import (
 	"net/http"
 	"github.com/wzshiming/gen/ui/swaggerui"
 	"github.com/urfave/negroni"
-	"bytes"
-	"time"
 	"fmt"
 	o "{{ .Package }}"
 )
 
 func main() {
 	mux := &http.ServeMux{}
-
-	mux.Handle("/", o.Router())	
-	mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.Handle))
-	mux.HandleFunc("/swagger/openapi.{{ .Format }}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, "openapi.{{ .Format }}", time.Time{}, bytes.NewReader(openapi))
-	})
-	fmt.Printf("Open {{ .Server }}/swagger/?url=./openapi.{{ .Format }}# with your browser.\n")
+	mux.Handle("/", o.Router())
+	mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.{{ .Format }}", openapi)))
+	fmt.Printf("Open {{ .Server }}/swagger/?url=openapi.{{ .Format }}# with your browser.\n")
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
-  	n.UseHandler(mux)
+	n.UseHandler(mux)
 	err := http.ListenAndServe("{{ .Port }}", n)
 	if err != nil {
-		fmt.Println(err)	
+		fmt.Println(err)
 	}
 	return
 }
