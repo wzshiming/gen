@@ -216,7 +216,7 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 
 	if t.Kind() != gotype.Declaration {
-		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s\n", t.Kind().String())
+		return nil, fmt.Errorf("Gen.AddResponse: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
 	name := t.Name()
 	doc := t.Comment().Text()
@@ -280,7 +280,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err error) {
 
 	if t.Kind() != gotype.Declaration {
-		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s\n", t.Kind().String())
+		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
 	name := t.Name()
 	doc := t.Comment().Text()
@@ -447,7 +447,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		}
 		sch.Elem = schv
 	default:
-		return nil, fmt.Errorf("Gen.AddType: unsupported type: %s\n", t.Kind().String())
+		return nil, fmt.Errorf("Gen.AddType: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
 
 	sch.Kind = kindMapping[kind]
