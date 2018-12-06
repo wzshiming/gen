@@ -412,8 +412,9 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 				if name == "_" {
 					continue
 				}
-				value := v.Value()
-				sch.Enum = append(sch.Enum, value)
+				if value := v.Value(); value != "" {
+					sch.Enum = append(sch.Enum, value)
+				}
 			}
 		}
 	case gotype.Map:
