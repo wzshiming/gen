@@ -6,6 +6,20 @@ import (
 	"strings"
 )
 
+func GetPackagePath(path string) string {
+	const (
+		src    = "/src/"
+		vendor = "/vendor/"
+	)
+	if index := strings.LastIndex(path, vendor); index != -1 {
+		return path[index+len(vendor):]
+	}
+	if index := strings.Index(path, src); index != -1 {
+		return path[index+len(src):]
+	}
+	return strings.TrimLeft(path, "/")
+}
+
 func GetName(name string) string {
 	i := strings.Index(name, ".")
 	if i == -1 {

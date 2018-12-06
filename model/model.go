@@ -7,6 +7,7 @@ import (
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/srcgen"
 	"github.com/wzshiming/gen/utils"
+	"github.com/wzshiming/namecase"
 )
 
 // GenModel is the generating generating
@@ -55,7 +56,7 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 
 		if g.pkgpath != "" {
 			if reftyp := g.api.Types[typ.Ref]; reftyp.PkgPath != "" && reftyp.PkgPath != g.pkgpath {
-				pkgname := SplitPkg(reftyp.PkgPath)
+				pkgname := namecase.ToCamel(reftyp.PkgPath)
 				g.buf.AddImport(pkgname, reftyp.PkgPath)
 				g.buf.WriteFormat("%s.", pkgname)
 			}
@@ -125,15 +126,4 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		g.buf.WriteString(strings.ToLower(typ.Kind.String()))
 	}
 	return
-}
-
-func SplitPkg(path string) (name string) {
-	i := strings.LastIndex(path, "/")
-	path = path[i+1:]
-	i = strings.LastIndex(path, ".")
-	if i == -1 {
-		return path
-	}
-	path = path[:i+1]
-	return path
 }

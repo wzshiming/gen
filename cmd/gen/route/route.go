@@ -2,10 +2,12 @@ package route
 
 import (
 	"errors"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/parser"
 	"github.com/wzshiming/gen/route"
+	"github.com/wzshiming/gen/utils"
 	"github.com/wzshiming/gotype"
 )
 
@@ -24,7 +26,7 @@ func init() {
 }
 
 var Cmd = &cobra.Command{
-	Use:   "route [flags] package",
+	Use:   "route [flags] package [package ...]",
 	Short: "Generate routing source code for functions",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
@@ -34,14 +36,15 @@ var Cmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		imp := gotype.NewImporter(gotype.WithCommentLocator())
-		impPath := ""
-		if outpath, _ := imp.ImportBuild(args[0]); outpath != nil {
-			impPath = outpath.ImportPath
-		}
+		dir, _ := filepath.Abs(out)
+		dir = filepath.Dir(dir)
+		impPath := utils.GetPackagePath(dir)
 		def := parser.NewParser(imp)
-		err := def.Import(args[0])
-		if err != nil {
-			return err
+		for _, arg := range args {
+			err := def.Import(arg)
+			if err != nil {
+				return err
+			}
 		}
 		d, err := route.NewGenRoute(def.API()).Generate(pack, impPath, name)
 		if err != nil {

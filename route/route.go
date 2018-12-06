@@ -91,8 +91,10 @@ func %s() http.Handler {
 			name := GetRouteName(t.Name)
 			g.buf.WriteFormat(`
 // %s is routing for %s
-func %s(router *mux.Router,%s *%s) {
-`, name, t.Name, name, GetVarName(t.Name), t.Name)
+func %s(router *mux.Router,%s *`, name, t.Name, name, GetVarName(t.Name))
+			g.Types(v.Type)
+			g.buf.WriteFormat(`){
+`)
 		}
 		err = g.GenerateRoute(v)
 		if err != nil {
@@ -158,9 +160,13 @@ func (g *GenRoute) GenerateRouteTypes(oper *spec.Operation, m map[string]bool) (
 	}
 
 	name := GetVarName(typ.Name)
-	g.buf.WriteFormat("// %s Define the method scope\n", typ.Name)
-	g.buf.WriteFormat("var %s %s\n", name, typ.Name)
-	g.buf.WriteFormat("%s(router, &%s)", GetRouteName(typ.Name), name)
+	g.buf.WriteFormat(`
+// %s Define the method scope
+var %s `, typ.Name, name)
+	g.Types(oper.Type)
+	g.buf.WriteFormat(`
+%s(router, &%s)
+`, GetRouteName(typ.Name), name)
 	m[typ.Name] = true
 	return
 }
