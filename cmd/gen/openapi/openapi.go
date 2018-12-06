@@ -34,7 +34,7 @@ func init() {
 }
 
 var Cmd = &cobra.Command{
-	Use:   "openapi [flags] package",
+	Use:   "openapi [flags] package [package ...]",
 	Short: "Generate openapi document for functions",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
@@ -45,9 +45,11 @@ var Cmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		imp := gotype.NewImporter(gotype.WithCommentLocator())
 		def := parser.NewParser(imp)
-		err := def.Import(args[0])
-		if err != nil {
-			return err
+		for _, arg := range args {
+			err := def.Import(arg)
+			if err != nil {
+				return err
+			}
 		}
 		api, err := openapi.NewGenOpenAPI(def.API()).WithServices(servers...).Generate()
 		if err != nil {
