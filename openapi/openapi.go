@@ -112,13 +112,41 @@ func (g *GenOpenAPI) Components() (err error) {
 		}
 	}
 
+	tmpTags := map[*spec.Type]bool{}
 	for _, v := range g.api.Operations {
 		err := g.Operations(v)
 		if err != nil {
 			return err
 		}
+		if v.Type != nil && !tmpTags[v.Type] {
+			err := g.Tags(v)
+			if err != nil {
+				return err
+			}
+			tmpTags[v.Type] = true
+		}
 	}
 
+	return nil
+}
+
+func (g *GenOpenAPI) Tags(ope *spec.Operation) (err error) {
+	sch, err := g.Schemas(ope.Type)
+	if err != nil {
+		return err
+	}
+	description := ""
+	if sch.Ref != "" {
+		description = g.openapi.Components.Schemas[sch.Ref].Description
+	} else {
+		description = sch.Description
+	}
+	for _, v := range ope.Tags {
+		g.openapi.Tags = append(g.openapi.Tags, &oaspec.Tag{
+			Name:        v,
+			Description: description,
+		})
+	}
 	return nil
 }
 
@@ -226,27 +254,11 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 		item.Trace = oper
 	}
 
-	if ope.Type != nil {
-		for _, v := range ope.Tags {
-			sch, err := g.Schemas(ope.Type)
-			if err != nil {
-				return err
-			}
-			description := ""
-			if sch.Ref != "" {
-				description = g.openapi.Components.Schemas[sch.Ref].Description
-			} else {
-				description = sch.Description
-			}
-			g.openapi.Tags = append(g.openapi.Tags, &oaspec.Tag{
-				Name:        v,
-				Description: description,
-			})
-			oper.Tags = append(oper.Tags, v)
-		}
+	for _, v := range ope.Tags {
+		oper.Tags = append(oper.Tags, v)
 	}
 
-	return
+	return nil
 }
 
 func (g *GenOpenAPI) ResponsesHeader(res *spec.Response) (head *oaspec.Header, err error) {
