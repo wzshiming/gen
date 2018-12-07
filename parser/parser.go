@@ -407,11 +407,10 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 				continue
 			}
 			v = v.Declaration()
-			if v.Name() == typname {
-				name := v.Name()
-				if name == "_" {
-					continue
-				}
+			if typname == "_" {
+				continue
+			}
+			if name := v.Name(); name == typname {
 				if value := v.Value(); value != "" {
 					sch.Enum = append(sch.Enum, value)
 				}

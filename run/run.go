@@ -71,7 +71,6 @@ func file(pkgs []string, port string, format string) ([]byte, error) {
 	}
 	switch format {
 	case "json":
-
 	case "yaml":
 		d, err = util.JSON2YAML(d)
 		if err != nil {
@@ -102,6 +101,8 @@ const temp = `//+build ignore
 
 {{ .Router }}
 
+var openapi = []byte({{ .Openapi }})
+
 func main() {
 	mux := &http.ServeMux{}
 	mux.Handle("/", Router())
@@ -115,7 +116,5 @@ func main() {
 	}
 	return
 }
-
-var openapi = []byte({{ .Openapi }})
 
 `
