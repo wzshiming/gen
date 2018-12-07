@@ -173,21 +173,28 @@ var %s `, typ.Name, name)
 
 func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 	name := GetOperationFunctionName(oper.Method, oper.Path)
-	item := ""
+
+	g.buf.WriteFormat(`
+	// Registered routing %s %s
+	router.Path("%s").
+		Methods("%s").
+`, strings.ToUpper(oper.Method), oper.Path, oper.Path, strings.ToUpper(oper.Method))
+
 	if oper.Type != nil {
 		typ := oper.Type
 		if typ.Ref != "" {
 			typ = g.api.Types[oper.Type.Ref]
 		}
-		item = GetVarName(typ.Name) + ", "
-	}
-	g.buf.WriteFormat(`
-	// Registered routing %s %s
-	router.Path("%s").
-		Methods("%s").
+		typname := GetVarName(typ.Name)
+		g.buf.WriteFormat(`
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-			%s(%sw, r)
+			%s(%s, w, r)
 		})
-`, strings.ToUpper(oper.Method), oper.Path, oper.Path, strings.ToUpper(oper.Method), name, item)
+`, name, typname)
+	} else {
+		g.buf.WriteFormat(`
+		HandlerFunc(%s)
+`, name)
+	}
 	return
 }
