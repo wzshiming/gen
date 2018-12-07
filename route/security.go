@@ -8,16 +8,7 @@ func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 	g.buf.WriteFormat(`
 		// Call %s.
 	`, secu.Name)
-	g.buf.WriteString("return ")
-	if secu.Type != nil {
-		typ := secu.Type
-		if typ.Ref != "" {
-			typ = g.api.Types[typ.Ref]
-		}
-
-		g.buf.WriteFormat("%s.", GetVarName(typ.Name))
-	}
-	g.buf.WriteFormat("%s(", secu.Name)
+	g.buf.WriteFormat("return %s(", secu.Name)
 	for i, req := range secu.Requests {
 		if req.Ref != "" {
 			req = g.api.Requests[req.Ref]
@@ -36,15 +27,8 @@ func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 	// %s Is the security of %s
-	func`, name, secu.Name)
-	//	if secu.Type != nil {
-	//		g.buf.WriteString("(s ")
-	//		g.Types(secu.Type)
-	//		g.buf.WriteString(")")
-	//	}
-	g.buf.WriteFormat(` %s(r *http.Request)`, name)
+	func %s(r *http.Request) (`, name, secu.Name, name)
 
-	g.buf.WriteString("(")
 	for i, resp := range secu.Responses {
 		if i != 0 {
 			g.buf.WriteByte(',')
@@ -55,14 +39,8 @@ func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
 		g.buf.WriteFormat("%s ", resp.Name)
 		g.Types(resp.Type)
 	}
-	g.buf.WriteString(")")
-
-	g.buf.WriteString(`{
-	`)
-	defer g.buf.WriteString(`
-	}
-	`)
-
+	g.buf.WriteString(`){
+`)
 	for _, req := range secu.Requests {
 		err = g.GenerateSecurityRequest(req)
 		if err != nil {
@@ -73,6 +51,11 @@ func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
 	if err != nil {
 		return err
 	}
+
+	g.buf.WriteString(`
+}
+`)
+
 	return
 }
 
