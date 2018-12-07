@@ -96,6 +96,7 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
 	doc := t.Doc().Text()
+	pkgpath := t.PkgPath()
 	if doc == "" {
 		return nil
 	}
@@ -114,6 +115,7 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	}
 
 	secu := &spec.Security{}
+	secu.PkgPath = pkgpath
 	secu.Schema = security
 	secu.Type = sch
 	secu.Description = doc
@@ -154,6 +156,8 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
 	doc := t.Doc().Text()
+	pkgpath := t.PkgPath()
+
 	if doc == "" {
 		return nil
 	}
@@ -183,6 +187,7 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 		oper.Tags = append(oper.Tags, basePath)
 		pat = path.Join(basePath, pat)
 	}
+	oper.PkgPath = pkgpath
 	oper.Method = method
 	oper.Path = pat
 	oper.Description = doc

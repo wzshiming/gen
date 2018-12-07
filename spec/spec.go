@@ -24,6 +24,7 @@ func NewAPI() *API {
 
 type Security struct {
 	//	Ref         string
+	PkgPath     string
 	Schema      string
 	Name        string
 	Type        *Type
@@ -33,6 +34,7 @@ type Security struct {
 }
 
 type Operation struct {
+	PkgPath     string
 	Method      string
 	Path        string
 	Tags        []string

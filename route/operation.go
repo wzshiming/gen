@@ -20,7 +20,10 @@ func (g *GenRoute) GenerateOperationCall(oper *spec.Operation) error {
 	g.buf.WriteString(":= ")
 	if oper.Type != nil {
 		g.buf.WriteString("s.")
+	} else {
+		g.PkgPath(oper.PkgPath)
 	}
+
 	g.buf.WriteFormat("%s(", oper.Name)
 	for i, req := range oper.Requests {
 		if req.Ref != "" {
@@ -137,26 +140,32 @@ var _%s `, req.Name)
 `)
 		case 1:
 			secu := secus[0]
+			name := GetSecurityFunctionName(secu.Name)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(r)`, secu.Name, req.Name, GetSecurityFunctionName(secu.Name))
-			g.buf.WriteString(`
+_%s, err := %s(r)
 if err != nil {
 	http.Error(w, err.Error(), 403)
 	return
 }
-`)
+`, secu.Name, req.Name, name)
 		default:
 			secu := secus[0]
+			name := GetSecurityFunctionName(secu.Name)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(r)`, secu.Name, req.Name, GetSecurityFunctionName(secu.Name))
+_%s, err := %s(r)`, secu.Name, req.Name, name)
 			for _, secu := range secus[1:] {
 				g.buf.WriteFormat(`
 if err != nil {
 	// Permission verification call %s.
-	_%s, err = %s(r)
-}`, secu.Name, req.Name, GetSecurityFunctionName(secu.Name))
+	_%s, err = %s(r)`, secu.Name, req.Name, name)
+			}
+
+			for range secus[1:] {
+				g.buf.WriteString(`
+}
+`)
 			}
 
 			g.buf.WriteString(`

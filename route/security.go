@@ -7,8 +7,9 @@ import (
 func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 	g.buf.WriteFormat(`
 		// Call %s.
-	`, secu.Name)
-	g.buf.WriteFormat("return %s(", secu.Name)
+return `, secu.Name)
+	g.PkgPath(secu.PkgPath)
+	g.buf.WriteFormat("%s(", secu.Name)
 	for i, req := range secu.Requests {
 		if req.Ref != "" {
 			req = g.api.Requests[req.Ref]
@@ -64,15 +65,13 @@ func (g *GenRoute) GenerateSecurityRequest(req *spec.Request) error {
 		req = g.api.Requests[req.Ref]
 	}
 
+	name := GetRequestFunctionName(req.Name, req.In)
 	g.buf.WriteFormat(`
 // Parsing %s.
-_%s, err := %s(r)`, req.Name, req.Name, GetRequestFunctionName(req.Name, req.In))
-	g.buf.WriteString(`
+_%s, err := %s(r)
 if err != nil {
-	return `)
-
-	g.buf.WriteString(`
+	return
 }
-`)
+`, req.Name, req.Name, name)
 	return nil
 }

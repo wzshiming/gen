@@ -50,17 +50,27 @@ func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
 	return nil
 }
 
+func (g *GenModel) PkgPath(path string) bool {
+	if g.pkgpath == "" || path == g.pkgpath {
+		return false
+	}
+	pkgname := namecase.ToCamel(path)
+	g.buf.AddImport(pkgname, path)
+	g.buf.WriteFormat("%s.", pkgname)
+	return true
+}
+
+func (g *GenModel) Paths(typ *spec.Type) bool {
+	reftyp, ok := g.api.Types[typ.Ref]
+	if !ok {
+		return false
+	}
+	return g.PkgPath(reftyp.PkgPath)
+}
+
 func (g *GenModel) Types(typ *spec.Type) (err error) {
 	if typ.Ref != "" {
-
-		if g.pkgpath != "" {
-			if reftyp := g.api.Types[typ.Ref]; reftyp.PkgPath != "" && reftyp.PkgPath != g.pkgpath {
-				pkgname := namecase.ToCamel(reftyp.PkgPath)
-				g.buf.AddImport(pkgname, reftyp.PkgPath)
-				g.buf.WriteFormat("%s.", pkgname)
-			}
-		}
-
+		g.Paths(typ)
 		g.buf.WriteString(utils.GetName(typ.Ref))
 		return nil
 	}
