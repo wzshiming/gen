@@ -36,19 +36,19 @@ func (g *GenRoute) GenerateOperationCall(oper *spec.Operation) error {
 }
 
 func (g *GenRoute) GenerateOperationFunction(oper *spec.Operation) (err error) {
-	name := GetOperationFunctionName(oper.Name)
+	name := GetOperationFunctionName(oper.Method, oper.Path)
 
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
-// %s Is the route of %s 
-func`, name, oper.Name)
+// %s Is the route of %s
+func %s(`, name, oper.Name, name)
 	if oper.Type != nil {
-		g.buf.WriteString("(s ")
+		g.buf.WriteString("s *")
 		g.Types(oper.Type)
-		g.buf.WriteString(")")
+		g.buf.WriteString(", ")
 	}
-	g.buf.WriteFormat(` %s(w http.ResponseWriter, r *http.Request) {
-`, name)
+	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) {
+`)
 
 	for _, req := range oper.Requests {
 		err = g.GenerateOperationRequest(req)

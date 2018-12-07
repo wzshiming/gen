@@ -14,8 +14,8 @@ func GetRouteName(name string) string {
 	return namecase.ToPascal(fmt.Sprintf("route_%s", name))
 }
 
-func GetOperationFunctionName(name string) string {
-	return "_" + namecase.ToCamel(fmt.Sprintf("operation_%s", name))
+func GetOperationFunctionName(method, name string) string {
+	return "_" + namecase.ToCamel(fmt.Sprintf("operation_%s_%s", method, name))
 }
 
 func GetRequestFunctionName(name, in string) string {
