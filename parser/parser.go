@@ -37,6 +37,9 @@ func (g *Parser) Import(pkgpath string) error {
 
 	for i := 0; i != numchi; i++ {
 		v := pkg.Child(i)
+		if !IsExported(v.Name()) {
+			continue
+		}
 		switch v.Kind() {
 		case gotype.Declaration:
 			err = g.AddSecurity(nil, v)
@@ -78,14 +81,10 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 
 	for i := 0; i != numm; i++ {
 		v := t.Method(i)
-		err = g.AddSecurity(sch, v)
-		if err != nil {
-			return err
+		if !IsExported(v.Name()) {
+			continue
 		}
-	}
 
-	for i := 0; i != numm; i++ {
-		v := t.Method(i)
 		err = g.AddOperation(path, sch, v)
 		if err != nil {
 			return err
