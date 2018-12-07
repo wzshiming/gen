@@ -23,7 +23,6 @@ func NewGenModel(api *spec.API, buf *srcgen.File, pkgpath string) *GenModel {
 		buf:     buf,
 		pkgpath: pkgpath,
 	}
-
 }
 
 func (g *GenModel) TypesZero(typ *spec.Type) (err error) {

@@ -12,12 +12,13 @@ import (
 
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
+	"github.com/wzshiming/gen/route"
 	"github.com/wzshiming/gotype"
 	"github.com/wzshiming/openapi/util"
 )
 
-func Run(pkg string, port string, format string) error {
-	f, err := file(pkg, port, format)
+func Run(pkgs []string, port string, format string) error {
+	f, err := file(pkgs, port, format)
 	if err != nil {
 		return err
 	}
@@ -27,15 +28,7 @@ func Run(pkg string, port string, format string) error {
 		return err
 	}
 
-	cmd := exec.Command("go", "generate", pkg)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("go", "run", path)
+	cmd := exec.Command("go", "run", path)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	err = cmd.Run()
@@ -45,15 +38,27 @@ func Run(pkg string, port string, format string) error {
 	return nil
 }
 
-func file(pkg string, port string, format string) ([]byte, error) {
+func file(pkgs []string, port string, format string) ([]byte, error) {
 	imp := gotype.NewImporter(gotype.WithCommentLocator())
 	def := parser.NewParser(imp)
-	err := def.Import(pkg)
-	if err != nil {
-		return nil, err
+
+	for _, pkg := range pkgs {
+		err := def.Import(pkg)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	server := "http://127.0.0.1" + port
+
+	router, err := route.NewGenRoute(def.API()).Generate("main", ".", "Router")
+	if err != nil {
+		return nil, err
+	}
+	router.AddImport("", "net/http")
+	router.AddImport("", "fmt")
+	router.AddImport("", "github.com/urfave/negroni")
+	router.AddImport("", "github.com/wzshiming/gen/ui/swaggerui")
 
 	api, err := openapi.NewGenOpenAPI(def.API()).WithServices(server).Generate()
 	if err != nil {
@@ -78,11 +83,11 @@ func file(pkg string, port string, format string) ([]byte, error) {
 
 	buf := bytes.NewBuffer(nil)
 	err = tpl.Execute(buf, map[string]interface{}{
-		"Package": pkg,
 		"Openapi": "`" + string(d) + "`",
 		"Format":  format,
 		"Server":  server,
 		"Port":    port,
+		"Router":  router,
 	})
 	if err != nil {
 		return nil, err
@@ -95,19 +100,11 @@ var tpl = template.Must(template.New("").Parse(temp))
 
 const temp = `//+build ignore
 
-package main
-
-import (
-	"net/http"
-	"github.com/wzshiming/gen/ui/swaggerui"
-	"github.com/urfave/negroni"
-	"fmt"
-	o "{{ .Package }}"
-)
+{{ .Router }}
 
 func main() {
 	mux := &http.ServeMux{}
-	mux.Handle("/", o.Router())
+	mux.Handle("/", Router())
 	mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.{{ .Format }}", openapi)))
 	fmt.Printf("Open {{ .Server }}/swagger/?url=openapi.{{ .Format }}# with your browser.\n")
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())

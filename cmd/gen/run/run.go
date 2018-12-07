@@ -20,7 +20,7 @@ func init() {
 }
 
 var Cmd = &cobra.Command{
-	Use:   "run [flags] package",
+	Use:   "run [flags] package [package ...]",
 	Short: "Run package",
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
@@ -29,6 +29,6 @@ var Cmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return run.Run(args[0], fmt.Sprintf(":%d", port), format)
+		return run.Run(args, fmt.Sprintf(":%d", port), format)
 	},
 }
