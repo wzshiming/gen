@@ -70,11 +70,7 @@ func %s(`, name, oper.Name, name)
 		}
 	}
 
-	defer g.buf.WriteString(`
-		return
-}
-`)
-
+	noCtx := true
 	switch len(oper.Responses) {
 	case 1:
 		resp := oper.Responses[0]
@@ -86,25 +82,33 @@ func %s(`, name, oper.Name, name)
 			typ = g.api.Types[typ.Ref]
 		}
 		if typ.Kind != spec.Error {
-			break
+			noCtx = false
 		}
-		fallthrough
 	case 0:
-		g.buf.WriteString(`
-	w.WriteHeader(204)
-	w.Write(nil)
-`)
+		// No action
 	default:
 		for _, resp := range oper.Responses {
 			if resp.Ref != "" {
 				resp = g.api.Responses[resp.Ref]
 			}
-			if resp.In == "body" {
+			if resp.In == "body" && resp.Content != "error" {
 				g.GenerateResponseBodyItem(resp)
+				noCtx = false
 				break
 			}
 		}
 	}
+	if noCtx {
+		g.buf.WriteString(`
+	w.WriteHeader(204)
+	w.Write(nil)
+`)
+	}
+
+	g.buf.WriteString(`
+		return
+}
+`)
 	return
 }
 
