@@ -21,22 +21,13 @@ func NewGenOpenAPI(api *spec.API) *GenOpenAPI {
 			OpenAPI:    "3.0.1",
 			Components: oaspec.NewComponents(),
 			Paths:      oaspec.Paths{},
-			Info: &oaspec.Info{
-				Title:       "OpenAPI Demo",
-				Description: "Demo of github.com/wzshiming/openapi",
-				Contact: &oaspec.Contact{
-					Name:  "wzshiming",
-					URL:   "https://github.com/wzshiming",
-					Email: "wzshiming@foxmail.com",
-				},
-				License: &oaspec.License{
-					Name: "MIT",
-					URL:  "https://github.com/wzshiming/openapi/blob/master/LICENSE",
-				},
-				Version: "0.0.1",
-			},
 		},
 	}
+}
+
+func (g *GenOpenAPI) SetInfo(info *oaspec.Info) *GenOpenAPI {
+	g.openapi.Info = info
+	return g
 }
 
 func (g *GenOpenAPI) WithServices(servers ...string) *GenOpenAPI {
@@ -54,6 +45,19 @@ func (g *GenOpenAPI) Generate() (*oaspec.OpenAPI, error) {
 		return nil, err
 	}
 	g.openapi.Servers = servers
+
+	if g.openapi.Info == nil {
+		g.openapi.Info = &oaspec.Info{
+			Title:       "OpenAPI Demo",
+			Description: "Automatically generated",
+			Version:     "0.0.1",
+			Contact: &oaspec.Contact{
+				Name: "wzshiming",
+				URL:  "https://github.com/wzshiming/gen",
+			},
+		}
+	}
+
 	return g.openapi, nil
 }
 
