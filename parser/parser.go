@@ -96,6 +96,10 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 
 func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
+	doc := t.Doc().Text()
+	if doc == "" {
+		return nil
+	}
 	if t.Kind() == gotype.Declaration {
 		t = t.Declaration()
 	}
@@ -103,7 +107,6 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 		return nil
 	}
 
-	doc := t.Doc().Text()
 	tag := GetTag(doc)
 	name = GetName(name, tag)
 	security := tag.Get("security")
@@ -152,13 +155,15 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
 	doc := t.Doc().Text()
+	if doc == "" {
+		return nil
+	}
 	if t.Kind() == gotype.Declaration {
 		t = t.Declaration()
 	}
 	if t.Kind() != gotype.Func {
 		return nil
 	}
-
 	tag := GetTag(doc)
 	name = GetName(name, tag)
 	route := tag.Get("route")

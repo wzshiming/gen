@@ -133,6 +133,8 @@ func (g *GenRoute) GenerateOperationRequest(req *spec.Request) error {
 // Permission verification undefined.
 var _%s `, req.Name)
 			g.Types(req.Type)
+			g.buf.WriteFormat(`
+`)
 		case 1:
 			secu := secus[0]
 			g.buf.WriteFormat(`
