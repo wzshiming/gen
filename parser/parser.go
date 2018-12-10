@@ -28,6 +28,22 @@ func (g *Parser) API() *spec.API {
 }
 
 func (g *Parser) Import(pkgpath string) error {
+	if !strings.HasSuffix(pkgpath, "/...") {
+		return g.importOnce(pkgpath)
+	}
+
+	pkgs := utils.PackageOmitted(pkgpath)
+	for _, out := range pkgs {
+		err := g.importOnce(out)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (g *Parser) importOnce(pkgpath string) error {
 	pkg, err := g.imp.Import(pkgpath)
 	if err != nil {
 		return err

@@ -3,8 +3,48 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"go/build"
+	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 )
+
+func PackageOmitted(pkgpath string) []string {
+	dirs := build.Default.SrcDirs()
+	pkgpath = strings.TrimSuffix(pkgpath, "/...")
+
+	dir := ""
+	for _, d := range dirs {
+		fi, err := os.Stat(path.Join(d, pkgpath))
+		if err == nil && fi.IsDir() {
+			dir = d
+			break
+		}
+	}
+
+	pkgs := []string{pkgpath}
+	outs := []string{}
+	for i := 0; i != len(pkgs); i++ {
+		pkg := pkgs[i]
+		fis, err := ioutil.ReadDir(path.Join(dir, pkg))
+		if err != nil {
+			continue
+		}
+
+		curr := true
+		for _, fi := range fis {
+			name := fi.Name()
+			if fi.IsDir() {
+				pkgs = append(pkgs, path.Join(pkg, name))
+			} else if curr && strings.HasSuffix(name, ".go") {
+				outs = append(outs, pkg)
+				curr = false
+			}
+		}
+	}
+	return outs
+}
 
 func GetPackagePath(path string) string {
 	const (
