@@ -297,11 +297,37 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	name = GetName(name, tag)
 	in := tag.Get("in")
 	t = t.Declaration()
+
 	if in == "" {
 		t := t
+		ps := 0
 		for t.Kind() == gotype.Ptr {
 			t = t.Elem()
+			ps++
 		}
+
+		{
+			name := t.Name()
+			pkgpath := t.PkgPath()
+			switch pkgpath {
+			case "net/http":
+				switch name {
+				case "Request":
+					if ps == 1 {
+						return &spec.Request{
+							In:   "none",
+							Name: fmt.Sprintf("*%s.%s", pkgpath, name),
+						}, nil
+					}
+				case "ResponseWriter":
+					return &spec.Request{
+						In:   "none",
+						Name: fmt.Sprintf("%s.%s", pkgpath, name),
+					}, nil
+				}
+			}
+		}
+
 		switch t.Kind() {
 		case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
 			in = "body"

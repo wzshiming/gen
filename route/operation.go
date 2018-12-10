@@ -32,7 +32,16 @@ func (g *GenRoute) GenerateOperationCall(oper *spec.Operation) error {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		g.buf.WriteString("_" + req.Name)
+		if req.In == "none" {
+			switch req.Name {
+			case "*net/http.Request":
+				g.buf.WriteString("r")
+			case "net/http.ResponseWriter":
+				g.buf.WriteString("w")
+			}
+		} else {
+			g.buf.WriteString("_" + req.Name)
+		}
 	}
 	g.buf.WriteString(")\n")
 	return nil
@@ -118,6 +127,9 @@ func (g *GenRoute) GenerateOperationRequest(req *spec.Request) error {
 	}
 
 	switch req.In {
+	case "none":
+	// No action
+
 	case "security":
 		secus := []*spec.Security{}
 		for _, secu := range g.api.Securitys {

@@ -12,7 +12,7 @@ func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
 	funcname := GetRequestFunctionName(req.Name, req.In)
 
 	g.buf.WriteFormat(`
-// %s Parsing the %s for of %s 
+// %s Parsing the %s for of %s
 func %s(r *http.Request) `, funcname, req.In, req.Name, funcname)
 
 	g.buf.WriteString("(")
@@ -61,7 +61,10 @@ func %s(r *http.Request) `, funcname, req.In, req.Name, funcname)
 		g.Convert("_"+req.Name, req.Name, req.Type)
 
 	case "security":
-		// No action
+	// No action
+	case "none":
+	// No action
+
 	default:
 		return fmt.Errorf("undefine in %s", req.In)
 	}
