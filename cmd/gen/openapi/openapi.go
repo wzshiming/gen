@@ -12,6 +12,7 @@ import (
 	"github.com/wzshiming/gen/parser"
 	"github.com/wzshiming/gen/ui/swaggerui"
 	"github.com/wzshiming/gotype"
+	oaspec "github.com/wzshiming/openapi/spec"
 	"github.com/wzshiming/openapi/util"
 )
 
@@ -21,6 +22,7 @@ var (
 	out     string
 	format  string
 	ui      bool
+	info    string
 )
 
 func init() {
@@ -30,7 +32,7 @@ func init() {
 	flag.StringVarP(&out, "out", "o", "openapi.json", "output file name")
 	flag.StringVarP(&format, "format", "f", "json", "json or yaml")
 	flag.BoolVarP(&ui, "ui", "u", false, "show the API ui page")
-
+	flag.StringVarP(&info, "info", "i", "", "Info")
 }
 
 var Cmd = &cobra.Command{
@@ -51,7 +53,26 @@ var Cmd = &cobra.Command{
 				return err
 			}
 		}
-		api, err := openapi.NewGenOpenAPI(def.API()).WithServices(servers...).Generate()
+
+		var oainfo *oaspec.Info
+
+		if info != "" {
+			fil, err := ioutil.ReadFile(info)
+			if err != nil {
+				return err
+			}
+			fil, err = util.YAML2JSON(fil)
+
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(fil, &oainfo)
+			if err != nil {
+				return err
+			}
+		}
+
+		api, err := openapi.NewGenOpenAPI(def.API()).WithServices(servers...).SetInfo(oainfo).Generate()
 		if err != nil {
 			return err
 		}
