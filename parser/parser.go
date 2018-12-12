@@ -59,6 +59,10 @@ func (g *Parser) importOnce(pkgpath string) error {
 		}
 		switch v.Kind() {
 		case gotype.Declaration:
+			err = g.AddMiddleware(nil, v)
+			if err != nil {
+				return err
+			}
 			err = g.AddSecurity(nil, v)
 			if err != nil {
 				return err
@@ -68,7 +72,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 				return err
 			}
 		default:
-			err := g.AddPaths(v)
+			err = g.AddPaths(v)
 			if err != nil {
 				return err
 			}
@@ -85,7 +89,11 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	if numm == 0 {
 		return nil
 	}
-	tag := GetTag(t.Doc().Text())
+	doc := t.Doc().Text()
+	if doc == "" {
+		return nil
+	}
+	tag := GetTag(doc)
 	path := tag.Get("path")
 	if path == "" {
 		return nil
@@ -101,6 +109,10 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 		if !IsExported(v.Name()) {
 			continue
 		}
+		err = g.AddMiddleware(sch, v)
+		if err != nil {
+			return err
+		}
 		err = g.AddSecurity(sch, v)
 		if err != nil {
 			return err
@@ -111,6 +123,46 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 		}
 	}
 	return
+}
+
+func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
+	name := t.Name()
+	doc := t.Doc().Text()
+	pkgpath := t.PkgPath()
+	if doc == "" {
+		return nil
+	}
+	if t.Kind() == gotype.Declaration {
+		t = t.Declaration()
+	}
+	if t.Kind() != gotype.Func {
+		return nil
+	}
+
+	tag := GetTag(doc)
+	name = GetName(name, tag)
+	middleware := tag.Get("middleware")
+	if middleware == "" {
+		return nil
+	}
+
+	midd := &spec.Middleware{}
+	midd.PkgPath = pkgpath
+	midd.Schema = middleware
+	midd.Type = sch
+	midd.Description = doc
+	midd.Name = name
+
+	reqs, err := g.AddRequests("", t)
+	midd.Requests = reqs
+
+	resps, err := g.AddResponses(t)
+	midd.Responses = resps
+
+	key := name + "." + utils.Hash(name, middleware, doc)
+
+	g.api.Middlewares[key] = midd
+	return nil
 }
 
 func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
