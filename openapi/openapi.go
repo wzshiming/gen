@@ -366,6 +366,8 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	switch typ.Kind {
 	default:
 		sch = oaspec.StrFmtProperty(strings.ToLower(typ.Kind.String()))
+	case spec.Time:
+		sch = oaspec.DateTimeProperty()
 	case spec.String:
 		sch = oaspec.StringProperty()
 	case spec.Bool:
