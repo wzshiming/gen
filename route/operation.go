@@ -48,7 +48,7 @@ func (g *GenRoute) GenerateOperationCall(oper *spec.Operation) error {
 }
 
 func (g *GenRoute) GenerateOperationFunction(oper *spec.Operation) (err error) {
-	name := GetOperationFunctionName(oper.Method, oper.Path)
+	name := g.GetOperationFunctionName(oper)
 
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
@@ -156,7 +156,7 @@ var _%s `, req.Name)
 `)
 		case 1:
 			secu := secus[0]
-			name := GetSecurityFunctionName(secu.Name)
+			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
 _%s, err := %s(r)
@@ -167,7 +167,7 @@ if err != nil {
 `, secu.Name, req.Name, name)
 		default:
 			secu := secus[0]
-			name := GetSecurityFunctionName(secu.Name)
+			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
 _%s, err := %s(r)`, secu.Name, req.Name, name)
@@ -194,7 +194,7 @@ if err != nil {
 	default:
 		g.buf.WriteFormat(`
 // Parsing %s.
-_%s, err := %s(r)`, req.Name, req.Name, GetRequestFunctionName(req.Name, req.In))
+_%s, err := %s(r)`, req.Name, req.Name, g.GetRequestFunctionName(req))
 		g.buf.WriteString(`
 if err != nil {
 	http.Error(w, err.Error(), 500)

@@ -9,7 +9,7 @@ import (
 func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
 	g.buf.AddImport("", "net/http")
 
-	funcname := GetRequestFunctionName(req.Name, req.In)
+	funcname := g.GetRequestFunctionName(req)
 
 	g.buf.WriteFormat(`
 // %s Parsing the %s for of %s

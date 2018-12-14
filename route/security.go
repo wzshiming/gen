@@ -24,7 +24,7 @@ return `, secu.Name)
 }
 
 func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
-	name := GetSecurityFunctionName(secu.Name)
+	name := g.GetSecurityFunctionName(secu)
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 	// %s Is the security of %s
@@ -65,7 +65,7 @@ func (g *GenRoute) GenerateSecurityRequest(req *spec.Request) error {
 		req = g.api.Requests[req.Ref]
 	}
 
-	name := GetRequestFunctionName(req.Name, req.In)
+	name := g.GetRequestFunctionName(req)
 	g.buf.WriteFormat(`
 // Parsing %s.
 _%s, err := %s(r)

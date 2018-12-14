@@ -88,10 +88,10 @@ func %s() http.Handler {
 `)
 			}
 			t = typ
-			name := GetRouteName(t.Name)
+			name := g.GetRouteName(t)
 			g.buf.WriteFormat(`
 // %s is routing for %s
-func %s(router *mux.Router,%s *`, name, t.Name, name, GetVarName(t.Name))
+func %s(router *mux.Router,%s *`, name, t.Name, name, g.GetVarName(t))
 			g.Types(v.Type)
 			g.buf.WriteFormat(`){
 `)
@@ -159,20 +159,20 @@ func (g *GenRoute) GenerateRouteTypes(oper *spec.Operation, m map[string]bool) (
 		return
 	}
 
-	name := GetVarName(typ.Name)
+	name := g.GetVarName(typ)
 	g.buf.WriteFormat(`
 // %s Define the method scope
 var %s `, typ.Name, name)
 	g.Types(oper.Type)
 	g.buf.WriteFormat(`
 %s(router, &%s)
-`, GetRouteName(typ.Name), name)
+`, g.GetRouteName(typ), name)
 	m[typ.Name] = true
 	return
 }
 
 func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
-	name := GetOperationFunctionName(oper.Method, oper.Path)
+	name := g.GetOperationFunctionName(oper)
 
 	g.buf.WriteFormat(`
 	// Registered routing %s %s
@@ -185,7 +185,7 @@ func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 		if typ.Ref != "" {
 			typ = g.api.Types[oper.Type.Ref]
 		}
-		typname := GetVarName(typ.Name)
+		typname := g.GetVarName(typ)
 		g.buf.WriteFormat(`
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request){
 			%s(%s, w, r)
