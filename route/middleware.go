@@ -28,7 +28,7 @@ func (g *GenRoute) GenerateMiddlewareFunction(midd *spec.Middleware) (err error)
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 	// %s Is the middleware of %s
-	func %s(r *http.Request) (`, name, midd.Name, name)
+	func %s(w http.ResponseWriter, r *http.Request) (`, name, midd.Name, name)
 
 	for i, resp := range midd.Responses {
 		if i != 0 {

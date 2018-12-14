@@ -159,9 +159,9 @@ var _%s `, req.Name)
 			name := g.GetMiddlewareFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission middlewares call %s.
-_%s, err := %s(r)
+_%s, err := %s(w, r)
 if err != nil {
-	http.Error(w, err.Error(), 500)
+	http.Error(w, err.Error(), 400)
 	return
 }
 `, secu.Name, req.Name, name)
@@ -195,7 +195,7 @@ var _%s `, req.Name)
 			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(r)
+_%s, err := %s(w, r)
 if err != nil {
 	http.Error(w, err.Error(), 403)
 	return
@@ -206,12 +206,12 @@ if err != nil {
 			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(r)`, secu.Name, req.Name, name)
+_%s, err := %s(w, r)`, secu.Name, req.Name, name)
 			for _, secu := range secus[1:] {
 				g.buf.WriteFormat(`
 if err != nil {
 	// Permission verification call %s.
-	_%s, err = %s(r)`, secu.Name, req.Name, name)
+	_%s, err = %s(w, r)`, secu.Name, req.Name, name)
 			}
 
 			for range secus[1:] {
@@ -230,10 +230,10 @@ if err != nil {
 	default:
 		g.buf.WriteFormat(`
 // Parsing %s.
-_%s, err := %s(r)`, req.Name, req.Name, g.GetRequestFunctionName(req))
+_%s, err := %s(w, r)`, req.Name, req.Name, g.GetRequestFunctionName(req))
 		g.buf.WriteString(`
 if err != nil {
-	http.Error(w, err.Error(), 500)
+	http.Error(w, err.Error(), 400)
 	return
 }
 `)

@@ -13,7 +13,7 @@ func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
 
 	g.buf.WriteFormat(`
 // %s Parsing the %s for of %s
-func %s(r *http.Request) (%s `, funcname, req.In, req.Name, funcname, req.Name)
+func %s(w http.ResponseWriter, r *http.Request) (%s `, funcname, req.In, req.Name, funcname, req.Name)
 	g.Types(req.Type)
 	g.buf.WriteString(`,err error) {
 `)
