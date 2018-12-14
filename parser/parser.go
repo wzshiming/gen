@@ -252,6 +252,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 	in := tag.Get("in")
 	content := tag.Get("content")
 	t = t.Declaration()
+
 	kind := t.Kind()
 	if in == "" {
 		in = "body"
@@ -280,7 +281,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 		return nil, err
 	}
 
-	key := name + "." + utils.Hash(name, in, code, content, sch.Name, doc)
+	key := name + "." + utils.Hash(in, sch.Name, sch.Ref)
 
 	if g.api.Responses[key] != nil {
 		return &spec.Response{
@@ -316,36 +317,35 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	t = t.Declaration()
 
 	if in == "" {
-		t := t
+		tt := t
 		ps := 0
-		for t.Kind() == gotype.Ptr {
-			t = t.Elem()
+		for tt.Kind() == gotype.Ptr {
+			tt = tt.Elem()
 			ps++
 		}
 
-		{
-			name := t.Name()
-			pkgpath := t.PkgPath()
-			switch pkgpath {
-			case "net/http":
-				switch name {
-				case "Request":
-					if ps == 1 {
-						return &spec.Request{
-							In:   "none",
-							Name: fmt.Sprintf("*%s.%s", pkgpath, name),
-						}, nil
-					}
-				case "ResponseWriter":
+		tname := tt.Name()
+		tpkgpath := tt.PkgPath()
+
+		switch tpkgpath {
+		case "net/http":
+			switch tname {
+			case "Request":
+				if ps == 1 {
 					return &spec.Request{
 						In:   "none",
-						Name: fmt.Sprintf("%s.%s", pkgpath, name),
+						Name: fmt.Sprintf("*%s.%s", tpkgpath, tname),
 					}, nil
 				}
+			case "ResponseWriter":
+				return &spec.Request{
+					In:   "none",
+					Name: fmt.Sprintf("%s.%s", tpkgpath, tname),
+				}, nil
 			}
 		}
 
-		switch t.Kind() {
+		switch tt.Kind() {
 		case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
 			in = "body"
 		default:
@@ -367,7 +367,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		return nil, err
 	}
 
-	key := name + "." + utils.Hash(name, in, sch.Name, sch.Kind.String(), doc)
+	key := name + "." + utils.Hash(in, sch.Name, sch.Ref)
 
 	if g.api.Requests[key] != nil {
 		return &spec.Request{
@@ -396,7 +396,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	name = GetName(name, tag)
 	kind := t.Kind()
 
-	key := name + "." + utils.Hash(name, pkgpath, kind.String(), doc)
+	key := name + "." + utils.Hash(name, pkgpath, t.String())
 	if g.api.Types[key] != nil {
 		return &spec.Type{
 			Ref: key,

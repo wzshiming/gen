@@ -4,6 +4,9 @@ import (
 	"go/ast"
 	"reflect"
 	"strings"
+
+	"github.com/wzshiming/gen/utils"
+	"github.com/wzshiming/gotype"
 )
 
 func GetName(t string, tag reflect.StructTag) string {
@@ -34,4 +37,16 @@ func GetTag(text string) reflect.StructTag {
 
 func IsExported(name string) bool {
 	return ast.IsExported(name)
+}
+
+func GetTypeHash(typ gotype.Type) string {
+	tp := 0
+	for typ.Kind() == gotype.Ptr {
+		tp++
+		typ = typ.Elem()
+	}
+
+	pkgpath := typ.PkgPath()
+	name := typ.Name()
+	return strings.Repeat("_", tp) + name + "." + utils.Hash(name, pkgpath)
 }
