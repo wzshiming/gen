@@ -446,25 +446,23 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		gotype.Uint8, gotype.Uint16, gotype.Uint32, gotype.Uint64, gotype.Uint,
 		gotype.Byte, gotype.Rune:
 
-		scope, err := g.imp.Import(t.PkgPath())
-		if err != nil {
-			return nil, err
-		}
+		if name != "_" {
+			scope, err := g.imp.Import(t.PkgPath())
+			if err != nil {
+				return nil, err
+			}
 
-		typname := name
-		numchi := scope.NumChild()
-		for i := 0; i != numchi; i++ {
-			v := scope.Child(i)
-			if v.Kind() != gotype.Declaration {
-				continue
-			}
-			v = v.Declaration()
-			if typname == "_" {
-				continue
-			}
-			if name := v.Name(); name == typname {
-				if value := v.Value(); value != "" {
-					sch.Enum = append(sch.Enum, value)
+			numchi := scope.NumChild()
+			for i := 0; i != numchi; i++ {
+				v := scope.Child(i)
+				if v.Kind() != gotype.Declaration {
+					continue
+				}
+				v = v.Declaration()
+				if typname := v.Name(); name == typname {
+					if value := v.Value(); value != "" {
+						sch.Enum = append(sch.Enum, value)
+					}
 				}
 			}
 		}
