@@ -7,7 +7,21 @@ import (
 func (g *GenRoute) GenerateMiddlewareCall(midd *spec.Middleware) error {
 	g.buf.WriteFormat(`
 		// Call %s.
-return `, midd.Name)
+`, midd.Name)
+	errFlag := false
+	for i, resp := range midd.Responses {
+		if i != 0 {
+			g.buf.WriteByte(',')
+		}
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		if !errFlag && resp.Name == "err" {
+			errFlag = true
+		}
+		g.buf.WriteFormat("%s ", resp.Name)
+	}
+	g.buf.WriteString(` = `)
 	g.PkgPath(midd.PkgPath)
 	g.buf.WriteFormat("%s(", midd.Name)
 	for i, req := range midd.Requests {
@@ -19,7 +33,19 @@ return `, midd.Name)
 		}
 		g.buf.WriteString("_" + req.Name)
 	}
-	g.buf.WriteString(")\n")
+	g.buf.WriteString(`)
+`)
+	if errFlag {
+		g.buf.WriteString(`
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+`)
+	}
+	g.buf.WriteString(`
+	return
+`)
 	return nil
 }
 

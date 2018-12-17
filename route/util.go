@@ -29,7 +29,7 @@ func (g *GenRoute) GetRequestFunctionName(req *spec.Request) string {
 }
 
 func (g *GenRoute) GetSecurityFunctionName(secu *spec.Security) string {
-	return "_" + namecase.ToCamel(fmt.Sprintf("security_%s_%", secu.Schema, secu.Name))
+	return "_" + namecase.ToCamel(fmt.Sprintf("security_%s_%s", secu.Schema, secu.Name))
 }
 
 func (g *GenRoute) GetMiddlewareFunctionName(midd *spec.Middleware) string {

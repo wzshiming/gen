@@ -22,7 +22,6 @@ func %s(w http.ResponseWriter, r *http.Request) (%s `, funcname, req.In, req.Nam
 		return err
 	}
 	g.buf.WriteString(`
-
 	return
 }`)
 	return nil
@@ -35,17 +34,31 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 		g.buf.AddImport("", "io/ioutil")
 		g.buf.AddImport("", "encoding/json")
 		g.buf.WriteFormat(`
-	if body, err := ioutil.ReadAll(r.Body); err == nil {
+	var body []byte
+	body, err = ioutil.ReadAll(r.Body)
+	if err == nil {
 		r.Body.Close()
-		json.Unmarshal(body, &%s)
+		err = json.Unmarshal(body, &%s)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
 	}
 `, req.Name)
 
 	case "cookie":
+		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
-	if cookie, err := r.Cookie("%s"); err == nil {`, req.Name)
+	var cookie *http.Cookie
+	cookie, err = r.Cookie("%s")
+	if err == nil {`, req.Name)
 		g.Convert(`cookie.Value`, req.Name, req.Type)
-		g.buf.WriteFormat(`}
+		g.buf.WriteFormat(`
+	}
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
 `)
 
 	case "query":

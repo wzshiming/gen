@@ -161,7 +161,6 @@ var _%s `, req.Name)
 // Permission middlewares call %s.
 _%s, err := %s(w, r)
 if err != nil {
-	http.Error(w, err.Error(), 400)
 	return
 }
 `, secu.Name, req.Name, name)
@@ -197,7 +196,6 @@ var _%s `, req.Name)
 // Permission verification call %s.
 _%s, err := %s(w, r)
 if err != nil {
-	http.Error(w, err.Error(), 403)
 	return
 }
 `, secu.Name, req.Name, name)
@@ -222,7 +220,6 @@ if err != nil {
 
 			g.buf.WriteString(`
 if err != nil {
-	http.Error(w, err.Error(), 403)
 	return
 }
 `)
@@ -233,7 +230,6 @@ if err != nil {
 _%s, err := %s(w, r)`, req.Name, req.Name, g.GetRequestFunctionName(req))
 		g.buf.WriteString(`
 if err != nil {
-	http.Error(w, err.Error(), 400)
 	return
 }
 `)
