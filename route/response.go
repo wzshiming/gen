@@ -80,8 +80,13 @@ func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
 	http.Error(w, _%s.Error(), %s)
 `, resp.Name, resp.Code)
 		return nil
-	default:
+	case "":
 		contentType = "text/plain; charset=utf-8"
+	default:
+		g.buf.WriteFormat(`
+	data := _%s
+`, resp.Name)
+		contentType = resp.Content
 	}
 
 	g.buf.WriteFormat(`
