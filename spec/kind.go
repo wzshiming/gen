@@ -6,6 +6,7 @@ type Kind uint8
 const (
 	Invalid Kind = iota
 
+	predeclaredTypesBeg
 	Bool
 	Int
 	Int8
@@ -25,6 +26,8 @@ const (
 	String
 	Byte
 	Rune
+	predeclaredTypesEnd
+
 	Error
 
 	Array
@@ -39,3 +42,7 @@ const (
 	Time
 	Duration
 )
+
+func (k Kind) IsPredeclared() bool {
+	return k > predeclaredTypesBeg && k < predeclaredTypesEnd
+}

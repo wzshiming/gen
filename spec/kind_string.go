@@ -4,9 +4,9 @@ package spec
 
 import "strconv"
 
-const _Kind_name = "InvalidBoolIntInt8Int16Int32Int64UintUint8Uint16Uint32Uint64UintptrFloat32Float64Complex64Complex128StringByteRuneErrorArrayChanFuncInterfaceMapPtrSliceStructTimeDuration"
+const _Kind_name = "InvalidpredeclaredTypesBegBoolIntInt8Int16Int32Int64UintUint8Uint16Uint32Uint64UintptrFloat32Float64Complex64Complex128StringByteRunepredeclaredTypesEndErrorArrayChanFuncInterfaceMapPtrSliceStructTimeDuration"
 
-var _Kind_index = [...]uint8{0, 7, 11, 14, 18, 23, 28, 33, 37, 42, 48, 54, 60, 67, 74, 81, 90, 100, 106, 110, 114, 119, 124, 128, 132, 141, 144, 147, 152, 158, 162, 170}
+var _Kind_index = [...]uint8{0, 7, 26, 30, 33, 37, 42, 47, 52, 56, 61, 67, 73, 79, 86, 93, 100, 109, 119, 125, 129, 133, 152, 157, 162, 166, 170, 179, 182, 185, 190, 196, 200, 208}
 
 func (i Kind) String() string {
 	if i >= Kind(len(_Kind_index)-1) {
