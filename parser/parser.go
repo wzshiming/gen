@@ -311,7 +311,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 		return nil, err
 	}
 
-	key := name + "." + utils.Hash(in, sch.Name, sch.Ref)
+	key := name + "." + utils.Hash(in, sch.Name, sch.Ref, doc)
 
 	if g.api.Responses[key] != nil {
 		return &spec.Response{
@@ -409,7 +409,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		return nil, err
 	}
 
-	key := name + "." + utils.Hash(in, sch.Name, sch.Ref)
+	key := name + "." + utils.Hash(in, sch.Name, sch.Ref, doc)
 
 	if g.api.Requests[key] != nil {
 		return &spec.Request{
@@ -437,7 +437,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	name = GetName(name, tag)
 	kind := t.Kind()
 
-	key := name + "." + utils.Hash(name, pkgpath, t.String())
+	key := name + "." + utils.Hash(name, pkgpath, t.String(), doc)
 	if g.api.Types[key] != nil {
 		return &spec.Type{
 			Ref: key,
