@@ -9,11 +9,16 @@ import (
 func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
 	g.buf.AddImport("", "net/http")
 
-	funcname := g.GetRequestFunctionName(req)
+	name := g.GetRequestFunctionName(req)
+
+	if g.only[name] {
+		return nil
+	}
+	g.only[name] = true
 
 	g.buf.WriteFormat(`
 // %s Parsing the %s for of %s
-func %s(w http.ResponseWriter, r *http.Request) (%s `, funcname, req.In, req.Name, funcname, req.Name)
+func %s(w http.ResponseWriter, r *http.Request) (%s `, name, req.In, req.Name, name, req.Name)
 	g.Types(req.Type)
 	g.buf.WriteString(`,err error) {
 `)

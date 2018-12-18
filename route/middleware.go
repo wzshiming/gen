@@ -51,6 +51,12 @@ func (g *GenRoute) GenerateMiddlewareCall(midd *spec.Middleware) error {
 
 func (g *GenRoute) GenerateMiddlewareFunction(midd *spec.Middleware) (err error) {
 	name := g.GetMiddlewareFunctionName(midd)
+
+	if g.only[name] {
+		return nil
+	}
+	g.only[name] = true
+
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 	// %s Is the middleware of %s

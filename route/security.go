@@ -51,6 +51,12 @@ func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 
 func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
 	name := g.GetSecurityFunctionName(secu)
+
+	if g.only[name] {
+		return nil
+	}
+	g.only[name] = true
+
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 	// %s Is the security of %s

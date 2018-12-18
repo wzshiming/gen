@@ -50,6 +50,11 @@ func (g *GenRoute) GenerateOperationCall(oper *spec.Operation) error {
 func (g *GenRoute) GenerateOperationFunction(oper *spec.Operation) (err error) {
 	name := g.GetOperationFunctionName(oper)
 
+	if g.only[name] {
+		return nil
+	}
+	g.only[name] = true
+
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 // %s Is the route of %s

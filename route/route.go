@@ -14,13 +14,15 @@ type GenRoute struct {
 	api *spec.API
 	buf *srcgen.File
 	model.GenModel
+	only map[string]bool
 }
 
 func NewGenRoute(api *spec.API) *GenRoute {
 	buf := &srcgen.File{}
 	return &GenRoute{
-		api: api,
-		buf: buf,
+		api:  api,
+		buf:  buf,
+		only: map[string]bool{},
 	}
 }
 
