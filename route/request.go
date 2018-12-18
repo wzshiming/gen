@@ -13,33 +13,52 @@ func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
 
 	g.buf.WriteFormat(`
 // %s Parsing the %s for of %s
-func %s(r *http.Request) `, funcname, req.In, req.Name, funcname)
-
-	g.buf.WriteString("(")
-	g.buf.WriteFormat("%s ", req.Name)
+func %s(w http.ResponseWriter, r *http.Request) (%s `, funcname, req.In, req.Name, funcname, req.Name)
 	g.Types(req.Type)
-
-	g.buf.WriteString(",err error)")
-
-	g.buf.WriteString("{")
-	defer g.buf.WriteString(`return
+	g.buf.WriteString(`,err error) {
+`)
+	err := g.GenerateRequestVar(req)
+	if err != nil {
+		return err
+	}
+	g.buf.WriteString(`
+	return
 }`)
+	return nil
+}
+
+func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 
 	switch req.In {
 	case "body":
 		g.buf.AddImport("", "io/ioutil")
 		g.buf.AddImport("", "encoding/json")
 		g.buf.WriteFormat(`
-	if body, err := ioutil.ReadAll(r.Body); err == nil {
+	var body []byte
+	body, err = ioutil.ReadAll(r.Body)
+	if err == nil {
 		r.Body.Close()
-		json.Unmarshal(body, &%s)
+		err = json.Unmarshal(body, &%s)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
 	}
 `, req.Name)
+
 	case "cookie":
+		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
-	if cookie, err := r.Cookie("%s"); err == nil {`, req.Name)
+	var cookie *http.Cookie
+	cookie, err = r.Cookie("%s")
+	if err == nil {`, req.Name)
 		g.Convert(`cookie.Value`, req.Name, req.Type)
-		g.buf.WriteFormat(`}
+		g.buf.WriteFormat(`
+	}
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
 `)
 
 	case "query":
@@ -60,14 +79,8 @@ func %s(r *http.Request) `, funcname, req.In, req.Name, funcname)
 `, req.Name, req.Name)
 		g.Convert("_"+req.Name, req.Name, req.Type)
 
-	case "security":
-	// No action
-	case "none":
-	// No action
-
 	default:
 		return fmt.Errorf("undefine in %s", req.In)
 	}
-	g.buf.WriteString("\n")
 	return nil
 }

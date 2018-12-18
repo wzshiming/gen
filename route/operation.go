@@ -128,8 +128,43 @@ func (g *GenRoute) GenerateOperationRequest(req *spec.Request) error {
 
 	switch req.In {
 	case "none":
-	// No action
+		// No action
 
+	case "middleware":
+		midds := []*spec.Middleware{}
+		for _, midd := range g.api.Middlewares {
+			if len(midd.Responses) == 0 {
+				continue
+			}
+			resp := midd.Responses[0]
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+
+			if resp.Name != req.Name {
+				continue
+			}
+			midds = append(midds, midd)
+		}
+		switch len(midds) {
+		case 0:
+			g.buf.WriteFormat(`
+// Permission middleware undefined.
+var _%s `, req.Name)
+			g.Types(req.Type)
+			g.buf.WriteFormat(`
+`)
+		case 1:
+			secu := midds[0]
+			name := g.GetMiddlewareFunctionName(secu)
+			g.buf.WriteFormat(`
+// Permission middlewares call %s.
+_%s, err := %s(w, r)
+if err != nil {
+	return
+}
+`, secu.Name, req.Name, name)
+		}
 	case "security":
 		secus := []*spec.Security{}
 		for _, secu := range g.api.Securitys {
@@ -159,9 +194,8 @@ var _%s `, req.Name)
 			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(r)
+_%s, err := %s(w, r)
 if err != nil {
-	http.Error(w, err.Error(), 403)
 	return
 }
 `, secu.Name, req.Name, name)
@@ -170,12 +204,12 @@ if err != nil {
 			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(r)`, secu.Name, req.Name, name)
+_%s, err := %s(w, r)`, secu.Name, req.Name, name)
 			for _, secu := range secus[1:] {
 				g.buf.WriteFormat(`
 if err != nil {
 	// Permission verification call %s.
-	_%s, err = %s(r)`, secu.Name, req.Name, name)
+	_%s, err = %s(w, r)`, secu.Name, req.Name, name)
 			}
 
 			for range secus[1:] {
@@ -186,7 +220,6 @@ if err != nil {
 
 			g.buf.WriteString(`
 if err != nil {
-	http.Error(w, err.Error(), 403)
 	return
 }
 `)
@@ -194,10 +227,9 @@ if err != nil {
 	default:
 		g.buf.WriteFormat(`
 // Parsing %s.
-_%s, err := %s(r)`, req.Name, req.Name, g.GetRequestFunctionName(req))
+_%s, err := %s(w, r)`, req.Name, req.Name, g.GetRequestFunctionName(req))
 		g.buf.WriteString(`
 if err != nil {
-	http.Error(w, err.Error(), 500)
 	return
 }
 `)

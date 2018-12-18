@@ -59,6 +59,10 @@ func (g *Parser) importOnce(pkgpath string) error {
 		}
 		switch v.Kind() {
 		case gotype.Declaration:
+			err = g.AddMiddleware(nil, v)
+			if err != nil {
+				return err
+			}
 			err = g.AddSecurity(nil, v)
 			if err != nil {
 				return err
@@ -68,7 +72,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 				return err
 			}
 		default:
-			err := g.AddPaths(v)
+			err = g.AddPaths(v)
 			if err != nil {
 				return err
 			}
@@ -85,7 +89,11 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	if numm == 0 {
 		return nil
 	}
-	tag := GetTag(t.Doc().Text())
+	doc := t.Doc().Text()
+	if doc == "" {
+		return nil
+	}
+	tag := GetTag(doc)
 	path := tag.Get("path")
 	if path == "" {
 		return nil
@@ -101,13 +109,60 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 		if !IsExported(v.Name()) {
 			continue
 		}
-
+		err = g.AddMiddleware(sch, v)
+		if err != nil {
+			return err
+		}
+		err = g.AddSecurity(sch, v)
+		if err != nil {
+			return err
+		}
 		err = g.AddOperation(path, sch, v)
 		if err != nil {
 			return err
 		}
 	}
 	return
+}
+
+func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
+	name := t.Name()
+	doc := t.Doc().Text()
+	pkgpath := t.PkgPath()
+	if doc == "" {
+		return nil
+	}
+	if t.Kind() == gotype.Declaration {
+		t = t.Declaration()
+	}
+	if t.Kind() != gotype.Func {
+		return nil
+	}
+
+	tag := GetTag(doc)
+	name = GetName(name, tag)
+	middleware := tag.Get("middleware")
+	if middleware == "" {
+		return nil
+	}
+
+	midd := &spec.Middleware{}
+	midd.PkgPath = pkgpath
+	midd.Schema = middleware
+	midd.Type = sch
+	midd.Description = doc
+	midd.Name = name
+
+	reqs, err := g.AddRequests("", t)
+	midd.Requests = reqs
+
+	resps, err := g.AddResponses(t)
+	midd.Responses = resps
+
+	key := name + "." + utils.Hash(name, middleware, doc)
+
+	g.api.Middlewares[key] = midd
+	return nil
 }
 
 func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
@@ -138,31 +193,11 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	secu.Description = doc
 	secu.Name = name
 
-	{
-		numin := t.NumIn()
-		for i := 0; i != numin; i++ {
-			v := t.In(i)
-			par, err := g.AddRequest("", v)
-			if err != nil {
-				return err
-			}
-			if par != nil {
-				secu.Requests = append(secu.Requests, par)
-			}
-		}
-	}
+	reqs, err := g.AddRequests("", t)
+	secu.Requests = reqs
 
-	{
-		numout := t.NumOut()
-		for i := 0; i != numout; i++ {
-			v := t.Out(i)
-			resp, err := g.AddResponse(v)
-			if err != nil {
-				return err
-			}
-			secu.Responses = append(secu.Responses, resp)
-		}
-	}
+	resps, err := g.AddResponses(t)
+	secu.Responses = resps
 
 	key := name + "." + utils.Hash(name, security, doc)
 
@@ -210,33 +245,28 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 	oper.Description = doc
 	oper.Type = sch
 	oper.Name = name
-	{
-		numin := t.NumIn()
-		for i := 0; i != numin; i++ {
-			v := t.In(i)
-			par, err := g.AddRequest(pat, v)
-			if err != nil {
-				return err
-			}
-			if par != nil {
-				oper.Requests = append(oper.Requests, par)
-			}
-		}
-	}
 
-	{
-		numout := t.NumOut()
-		for i := 0; i != numout; i++ {
-			v := t.Out(i)
-			resp, err := g.AddResponse(v)
-			if err != nil {
-				return err
-			}
-			oper.Responses = append(oper.Responses, resp)
-		}
-	}
+	reqs, err := g.AddRequests(pat, t)
+	oper.Requests = reqs
+
+	resps, err := g.AddResponses(t)
+	oper.Responses = resps
+
 	g.api.Operations = append(g.api.Operations, oper)
 	return nil
+}
+
+func (g *Parser) AddResponses(t gotype.Type) (resps []*spec.Response, err error) {
+	numout := t.NumOut()
+	for i := 0; i != numout; i++ {
+		v := t.Out(i)
+		resp, err := g.AddResponse(v)
+		if err != nil {
+			return nil, err
+		}
+		resps = append(resps, resp)
+	}
+	return resps, nil
 }
 
 func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
@@ -300,8 +330,20 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 	g.api.Responses[key] = resp
 	return &spec.Response{
 		Ref: key,
-		//	Name: sch.Name,
 	}, nil
+}
+
+func (g *Parser) AddRequests(path string, t gotype.Type) (reqs []*spec.Request, err error) {
+	numin := t.NumIn()
+	for i := 0; i != numin; i++ {
+		v := t.In(i)
+		req, err := g.AddRequest(path, v)
+		if err != nil {
+			return nil, err
+		}
+		reqs = append(reqs, req)
+	}
+	return reqs, nil
 }
 
 func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err error) {
@@ -384,7 +426,6 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	g.api.Requests[key] = par
 	return &spec.Request{
 		Ref: key,
-		// Name: sch.Name,
 	}, nil
 }
 

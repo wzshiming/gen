@@ -116,6 +116,8 @@ func %s(router *mux.Router,%s *`, name, t.Name, name, g.GetVarName(t))
 		v := g.api.Requests[k]
 		switch v.In {
 		case "security":
+		case "middleware":
+		case "none":
 		default:
 			err = g.GenerateRequestFunction(v)
 			if err != nil {
@@ -124,16 +126,35 @@ func %s(router *mux.Router,%s *`, name, t.Name, name, g.GetVarName(t))
 		}
 	}
 
-	secuKey := make([]string, 0, len(g.api.Securitys))
-	for k := range g.api.Securitys {
-		secuKey = append(secuKey, k)
+	{
+		middKey := make([]string, 0, len(g.api.Middlewares))
+		for k := range g.api.Middlewares {
+			middKey = append(middKey, k)
+		}
+		sort.Strings(middKey)
+
+		for _, k := range middKey {
+			v := g.api.Middlewares[k]
+			err = g.GenerateMiddlewareFunction(v)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	sort.Strings(secuKey)
-	for _, k := range secuKey {
-		v := g.api.Securitys[k]
-		err = g.GenerateSecurityFunction(v)
-		if err != nil {
-			return err
+
+	{
+		secuKey := make([]string, 0, len(g.api.Securitys))
+		for k := range g.api.Securitys {
+			secuKey = append(secuKey, k)
+		}
+
+		sort.Strings(secuKey)
+		for _, k := range secuKey {
+			v := g.api.Securitys[k]
+			err = g.GenerateSecurityFunction(v)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

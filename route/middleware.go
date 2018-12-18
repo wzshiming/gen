@@ -4,12 +4,12 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
+func (g *GenRoute) GenerateMiddlewareCall(midd *spec.Middleware) error {
 	g.buf.WriteFormat(`
 		// Call %s.
-`, secu.Name)
+`, midd.Name)
 	errFlag := false
-	for i, resp := range secu.Responses {
+	for i, resp := range midd.Responses {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
@@ -22,9 +22,9 @@ func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 		g.buf.WriteFormat("%s ", resp.Name)
 	}
 	g.buf.WriteString(` = `)
-	g.PkgPath(secu.PkgPath)
-	g.buf.WriteFormat("%s(", secu.Name)
-	for i, req := range secu.Requests {
+	g.PkgPath(midd.PkgPath)
+	g.buf.WriteFormat("%s(", midd.Name)
+	for i, req := range midd.Requests {
 		if req.Ref != "" {
 			req = g.api.Requests[req.Ref]
 		}
@@ -38,25 +38,25 @@ func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 	if errFlag {
 		g.buf.WriteString(`
 	if err != nil {
-		http.Error(w, err.Error(), 403)
+		http.Error(w, err.Error(), 400)
 		return
 	}
 `)
 	}
 	g.buf.WriteString(`
-		return
+	return
 `)
 	return nil
 }
 
-func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
-	name := g.GetSecurityFunctionName(secu)
+func (g *GenRoute) GenerateMiddlewareFunction(midd *spec.Middleware) (err error) {
+	name := g.GetMiddlewareFunctionName(midd)
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
-	// %s Is the security of %s
-	func %s(w http.ResponseWriter, r *http.Request) (`, name, secu.Name, name)
+	// %s Is the middleware of %s
+	func %s(w http.ResponseWriter, r *http.Request) (`, name, midd.Name, name)
 
-	for i, resp := range secu.Responses {
+	for i, resp := range midd.Responses {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
@@ -68,13 +68,13 @@ func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
 	}
 	g.buf.WriteString(`){
 `)
-	for _, req := range secu.Requests {
+	for _, req := range midd.Requests {
 		err = g.GenerateOperationRequest(req)
 		if err != nil {
 			return err
 		}
 	}
-	err = g.GenerateSecurityCall(secu)
+	err = g.GenerateMiddlewareCall(midd)
 	if err != nil {
 		return err
 	}

@@ -26,6 +26,40 @@ func (g *GenClient) GenerateClient() (err error) {
 	return
 }
 
+func (g *GenClient) MergeMiddlewareRequests(sreq []*spec.Request) (reqs []*spec.Request, err error) {
+	for _, req := range sreq {
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
+		}
+		switch req.In {
+		case "security":
+			// No action
+		case "middleware":
+			for _, v := range g.api.Middlewares {
+				if len(v.Responses) == 0 {
+					continue
+				}
+				resp := v.Responses[0]
+				if resp.Ref != "" {
+					resp = g.api.Responses[resp.Ref]
+				}
+
+				if req.Name == resp.Name {
+					r, err := g.MergeMiddlewareRequests(v.Requests)
+					if err != nil {
+						return nil, err
+					}
+					reqs = append(reqs, r...)
+				}
+			}
+
+		case "header", "path", "query", "body":
+			reqs = append(reqs, req)
+		}
+	}
+	return reqs, nil
+}
+
 func (g *GenClient) GenerateOperations(oper *spec.Operation) (err error) {
 
 	g.buf.WriteString(utils.CommentLine(oper.Description))
@@ -41,17 +75,9 @@ func (g *GenClient) GenerateOperations(oper *spec.Operation) (err error) {
 	}
 	g.buf.WriteString(utils.GetName(oper.Name))
 	g.buf.WriteByte('(')
-	reqs := []*spec.Request{}
-	for _, req := range oper.Requests {
-		if req.Ref != "" {
-			req = g.api.Requests[req.Ref]
-		}
-		switch req.In {
-		case "security":
-			// No action
-		case "header", "path", "query", "body":
-			reqs = append(reqs, req)
-		}
+	reqs, err := g.MergeMiddlewareRequests(oper.Requests)
+	if err != nil {
+		return err
 	}
 	for i, req := range reqs {
 		if i != 0 {

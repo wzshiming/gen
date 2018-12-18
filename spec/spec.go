@@ -5,21 +5,34 @@ import (
 )
 
 type API struct {
-	Package    string
-	Operations []*Operation
-	Securitys  map[string]*Security
-	Requests   map[string]*Request
-	Responses  map[string]*Response
-	Types      map[string]*Type
+	Package     string
+	Operations  []*Operation
+	Middlewares map[string]*Middleware
+	Securitys   map[string]*Security
+	Requests    map[string]*Request
+	Responses   map[string]*Response
+	Types       map[string]*Type
 }
 
 func NewAPI() *API {
 	return &API{
-		Securitys: map[string]*Security{},
-		Requests:  map[string]*Request{},
-		Responses: map[string]*Response{},
-		Types:     map[string]*Type{},
+		Middlewares: map[string]*Middleware{},
+		Securitys:   map[string]*Security{},
+		Requests:    map[string]*Request{},
+		Responses:   map[string]*Response{},
+		Types:       map[string]*Type{},
 	}
+}
+
+type Middleware struct {
+	Ref         string
+	PkgPath     string
+	Schema      string
+	Name        string
+	Type        *Type
+	Requests    []*Request
+	Responses   []*Response
+	Description string
 }
 
 type Security struct {

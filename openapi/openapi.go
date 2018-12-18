@@ -106,7 +106,7 @@ func (g *GenOpenAPI) Components() (err error) {
 		case "header":
 			// No action
 		case "body":
-			_, resp, err := g.Responses(v)
+			_, resp, err := g.ResponsesBody(v)
 			if err != nil {
 				return err
 			}
@@ -154,15 +154,31 @@ func (g *GenOpenAPI) Tags(ope *spec.Operation) (err error) {
 	return nil
 }
 
-func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
-	oper := &oaspec.Operation{}
+func (g *GenOpenAPI) Requests(oper *oaspec.Operation, reqs []*spec.Request) (err error) {
 
-	for _, v := range ope.Requests {
+	for _, v := range reqs {
 		req := v
 		if v.Ref != "" {
 			req = g.api.Requests[v.Ref]
 		}
 		switch req.In {
+		case "middleware":
+			for _, v := range g.api.Middlewares {
+				if len(v.Responses) == 0 {
+					continue
+				}
+				resp := v.Responses[0]
+				if resp.Ref != "" {
+					resp = g.api.Responses[resp.Ref]
+				}
+
+				if req.Name == resp.Name {
+					err := g.Requests(oper, v.Requests)
+					if err != nil {
+						return err
+					}
+				}
+			}
 		case "security":
 			for _, v := range g.api.Securitys {
 				if len(v.Responses) == 0 {
@@ -196,9 +212,13 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 		}
 	}
 
+	return nil
+}
+
+func (g *GenOpenAPI) Responses(oper *oaspec.Operation, resps []*spec.Response) (err error) {
 	oper.Responses = map[string]*oaspec.Response{}
 	headers := []*oaspec.Header{}
-	for _, resp := range ope.Responses {
+	for _, resp := range resps {
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
 		}
@@ -212,7 +232,7 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 			}
 			headers = append(headers, head)
 		case "body":
-			code, resp, err := g.Responses(resp)
+			code, resp, err := g.ResponsesBody(resp)
 			if err != nil {
 				return err
 			}
@@ -230,6 +250,22 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 		default:
 			// No action
 		}
+	}
+
+	return nil
+}
+
+func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
+	oper := &oaspec.Operation{}
+
+	err = g.Requests(oper, ope.Requests)
+	if err != nil {
+		return err
+	}
+
+	err = g.Responses(oper, ope.Responses)
+	if err != nil {
+		return err
 	}
 
 	oper.Description = ope.Description
@@ -277,7 +313,7 @@ func (g *GenOpenAPI) ResponsesHeader(res *spec.Response) (head *oaspec.Header, e
 	return head, nil
 }
 
-func (g *GenOpenAPI) Responses(res *spec.Response) (code string, resp *oaspec.Response, err error) {
+func (g *GenOpenAPI) ResponsesBody(res *spec.Response) (code string, resp *oaspec.Response, err error) {
 	if res.Ref != "" {
 		return g.api.Responses[res.Ref].Code, oaspec.RefResponse(res.Ref), nil
 	}
