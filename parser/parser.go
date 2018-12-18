@@ -89,7 +89,7 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 	if numm == 0 {
 		return nil
 	}
-	doc := t.Doc().Text()
+	doc := strings.TrimSpace(t.Doc().Text())
 	if doc == "" {
 		return nil
 	}
@@ -127,7 +127,7 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 
 func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
-	doc := t.Doc().Text()
+	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
 	if doc == "" {
 		return nil
@@ -167,7 +167,7 @@ func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 
 func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
-	doc := t.Doc().Text()
+	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
 	if doc == "" {
 		return nil
@@ -207,7 +207,7 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 
 func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
 	name := t.Name()
-	doc := t.Doc().Text()
+	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
 
 	if doc == "" {
@@ -275,7 +275,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 		return nil, fmt.Errorf("Gen.AddResponse: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
 	name := t.Name()
-	doc := t.Comment().Text()
+	doc := strings.TrimSpace(t.Comment().Text())
 	tag := GetTag(doc)
 	name = GetName(name, tag)
 	code := tag.Get("code")
@@ -352,7 +352,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
 	name := t.Name()
-	doc := t.Comment().Text()
+	doc := strings.TrimSpace(t.Comment().Text())
 	tag := GetTag(doc)
 	name = GetName(name, tag)
 	in := tag.Get("in")
@@ -432,7 +432,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	name := t.Name()
 	pkgpath := t.PkgPath()
-	doc := t.Doc().Text()
+	doc := strings.TrimSpace(t.Doc().Text())
 	tag := GetTag(doc)
 	name = GetName(name, tag)
 	kind := t.Kind()
