@@ -487,7 +487,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		gotype.Uint8, gotype.Uint16, gotype.Uint32, gotype.Uint64, gotype.Uint,
 		gotype.Byte, gotype.Rune:
 
-		if name != "_" {
+		if name != "_" && name != strings.ToLower(kind.String()) {
 			scope, err := g.imp.Import(t.PkgPath())
 			if err != nil {
 				return nil, err
