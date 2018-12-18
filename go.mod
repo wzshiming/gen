@@ -7,7 +7,7 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/wzshiming/go-bindata v4.0.0+incompatible
-	github.com/wzshiming/gotype v0.2.3
+	github.com/wzshiming/gotype v0.2.4
 	github.com/wzshiming/namecase v3.0.4+incompatible
 	github.com/wzshiming/openapi v0.0.0-20181205034111-24ff26c8bcf5
 	github.com/wzshiming/requests v1.1.0

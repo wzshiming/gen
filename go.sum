@@ -12,6 +12,8 @@ github.com/wzshiming/go-bindata v4.0.0+incompatible h1:5BZIS0dluCpQeVz5H3s2ac00m
 github.com/wzshiming/go-bindata v4.0.0+incompatible/go.mod h1:I1JLfFr6JaehMPaEaLpSv6+fbyyZGxYDkdBDRjKfHzM=
 github.com/wzshiming/gotype v0.2.3 h1:y1K67pk21Y3XaSXb2+7axYUF6xCmlXpUmYzmcwADbL4=
 github.com/wzshiming/gotype v0.2.3/go.mod h1:P0t9DFmwzTST7oUbGw7IaW8DAQxgkCfi7WnGY/+COs4=
+github.com/wzshiming/gotype v0.2.4 h1:uNCnRNu74WnApIkRhIXzyzI0Qe+AlK5tso+DRv9jC/Y=
+github.com/wzshiming/gotype v0.2.4/go.mod h1:P0t9DFmwzTST7oUbGw7IaW8DAQxgkCfi7WnGY/+COs4=
 github.com/wzshiming/namecase v3.0.4+incompatible h1:6MPkBmlrCwvqU4WefTHb1rz9PXOdzdm5CxbuOCwEO/o=
 github.com/wzshiming/namecase v3.0.4+incompatible/go.mod h1:q3P1U6voOD8f/qupop2s7rFCYotZHayowv3UqVj1hBQ=
 github.com/wzshiming/openapi v0.0.0-20181205034111-24ff26c8bcf5 h1:7JPLqJVED+w/M2a5KbaNtxhGlaEfRtS42gklQNbygrA=
