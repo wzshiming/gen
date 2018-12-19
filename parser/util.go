@@ -20,16 +20,16 @@ func GetName(t string, tag reflect.StructTag) string {
 // GetTag [#[^#]+#]...
 func GetTag(text string) reflect.StructTag {
 	ss := []string{}
-	prev := 0
+	prev := -1
 	for i, v := range text {
 		if v != '#' {
 			continue
 		}
-		if prev == 0 {
+		if prev == -1 {
 			prev = i
 		} else {
 			ss = append(ss, text[prev+1:i])
-			prev = 0
+			prev = -1
 		}
 	}
 	return reflect.StructTag(strings.Join(ss, " "))
