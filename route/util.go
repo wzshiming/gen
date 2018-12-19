@@ -16,7 +16,14 @@ func (g *GenRoute) GetRouteName(typ *spec.Type) string {
 }
 
 func (g *GenRoute) GetOperationFunctionName(oper *spec.Operation) string {
-	return "_" + namecase.ToCamel(fmt.Sprintf("operation_%s_%s_%s", oper.Method, oper.PkgPath, oper.Name))
+	typname := ""
+	if typ := oper.Type; typ != nil {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		typname = typ.Name
+	}
+	return "_" + namecase.ToCamel(fmt.Sprintf("operation_%s_%s_%s_%s", oper.Method, oper.PkgPath, typname, oper.Name))
 }
 
 func (g *GenRoute) GetRequestFunctionName(req *spec.Request) string {
@@ -29,9 +36,23 @@ func (g *GenRoute) GetRequestFunctionName(req *spec.Request) string {
 }
 
 func (g *GenRoute) GetSecurityFunctionName(secu *spec.Security) string {
-	return "_" + namecase.ToCamel(fmt.Sprintf("security_%s_%s", secu.Schema, secu.Name))
+	typname := ""
+	if typ := secu.Type; typ != nil {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		typname = typ.Name
+	}
+	return "_" + namecase.ToCamel(fmt.Sprintf("security_%s_%s_%s_%s", secu.Schema, secu.PkgPath, typname, secu.Name))
 }
 
 func (g *GenRoute) GetMiddlewareFunctionName(midd *spec.Middleware) string {
-	return "_" + namecase.ToCamel(fmt.Sprintf("middleware_%s", midd.Name))
+	typname := ""
+	if typ := midd.Type; typ != nil {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		typname = typ.Name
+	}
+	return "_" + namecase.ToCamel(fmt.Sprintf("middleware_%s_%s_%s_%s", midd.Schema, midd.PkgPath, typname, midd.Name))
 }
