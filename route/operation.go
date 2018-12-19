@@ -164,11 +164,15 @@ var _%s `, req.Name)
 			name := g.GetMiddlewareFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission middlewares call %s.
-_%s, err := %s(w, r)
+_%s, err := %s(`, secu.Name, req.Name, name)
+			if secu.Type != nil {
+				g.buf.WriteString(`s, `)
+			}
+			g.buf.WriteString(`w, r)
 if err != nil {
 	return
 }
-`, secu.Name, req.Name, name)
+`)
 		}
 	case "security":
 		secus := []*spec.Security{}
@@ -199,22 +203,34 @@ var _%s `, req.Name)
 			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(w, r)
+_%s, err := %s(`, secu.Name, req.Name, name)
+			if secu.Type != nil {
+				g.buf.WriteString(`s, `)
+			}
+			g.buf.WriteString(`w, r)
 if err != nil {
 	return
 }
-`, secu.Name, req.Name, name)
+`)
 		default:
 			secu := secus[0]
 			name := g.GetSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
-_%s, err := %s(w, r)`, secu.Name, req.Name, name)
+_%s, err := %s(`, secu.Name, req.Name, name)
+			if secu.Type != nil {
+				g.buf.WriteString(`s, `)
+			}
+			g.buf.WriteString(`w, r)`)
 			for _, secu := range secus[1:] {
 				g.buf.WriteFormat(`
 if err != nil {
 	// Permission verification call %s.
-	_%s, err = %s(w, r)`, secu.Name, req.Name, name)
+	_%s, err = %s(`, secu.Name, req.Name, name)
+				if secu.Type != nil {
+					g.buf.WriteString(`s, `)
+				}
+				g.buf.WriteString(`w, r)`)
 			}
 
 			for range secus[1:] {

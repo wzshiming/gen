@@ -22,7 +22,11 @@ func (g *GenRoute) GenerateMiddlewareCall(midd *spec.Middleware) error {
 		g.buf.WriteFormat("%s ", resp.Name)
 	}
 	g.buf.WriteString(` = `)
-	g.PkgPath(midd.PkgPath)
+	if midd.Type == nil {
+		g.PkgPath(midd.PkgPath)
+	} else {
+		g.buf.WriteString(`s.`)
+	}
 	g.buf.WriteFormat("%s(", midd.Name)
 	for i, req := range midd.Requests {
 		if req.Ref != "" {
@@ -59,8 +63,14 @@ func (g *GenRoute) GenerateMiddlewareFunction(midd *spec.Middleware) (err error)
 
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
-	// %s Is the middleware of %s
-	func %s(w http.ResponseWriter, r *http.Request) (`, name, midd.Name, name)
+// %s Is the middleware of %s
+func %s(`, name, midd.Name, name)
+	if midd.Type != nil {
+		g.buf.WriteString("s *")
+		g.Types(midd.Type)
+		g.buf.WriteString(", ")
+	}
+	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) (`)
 
 	for i, resp := range midd.Responses {
 		if i != 0 {

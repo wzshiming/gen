@@ -22,7 +22,11 @@ func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 		g.buf.WriteFormat("%s ", resp.Name)
 	}
 	g.buf.WriteString(` = `)
-	g.PkgPath(secu.PkgPath)
+	if secu.Type == nil {
+		g.PkgPath(secu.PkgPath)
+	} else {
+		g.buf.WriteString(`s.`)
+	}
 	g.buf.WriteFormat("%s(", secu.Name)
 	for i, req := range secu.Requests {
 		if req.Ref != "" {
@@ -59,8 +63,14 @@ func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
 
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
-	// %s Is the security of %s
-	func %s(w http.ResponseWriter, r *http.Request) (`, name, secu.Name, name)
+// %s Is the security of %s
+func %s(`, name, secu.Name, name)
+	if secu.Type != nil {
+		g.buf.WriteString("s *")
+		g.Types(secu.Type)
+		g.buf.WriteString(", ")
+	}
+	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) (`)
 
 	for i, resp := range secu.Responses {
 		if i != 0 {
