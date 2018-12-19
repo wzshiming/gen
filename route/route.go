@@ -197,11 +197,15 @@ var %s `, typ.Name, name)
 func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 	name := g.GetOperationFunctionName(oper)
 
+	methods := strings.Split(oper.Method, ",")
+	for i := range methods {
+		methods[i] = `"` + strings.ToUpper(methods[i]) + `"`
+	}
+
 	g.buf.WriteFormat(`
 	// Registered routing %s %s
-	router.Path("%s").
-		Methods("%s").
-`, strings.ToUpper(oper.Method), oper.Path, oper.Path, strings.ToUpper(oper.Method))
+	router.Methods(%s).Path("%s").
+`, strings.ToUpper(oper.Method), oper.Path, strings.Join(methods, ", "), oper.Path)
 
 	if oper.Type != nil {
 		typ := oper.Type

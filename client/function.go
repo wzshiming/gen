@@ -1,6 +1,8 @@
 package client
 
 import (
+	"strings"
+
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/namecase"
 )
@@ -54,7 +56,7 @@ SetXML(_%s)`, req.Name)
 		}
 	}
 	g.buf.WriteFormat(`.
-%s("%s")`, namecase.ToUpperHump(oper.Method), oper.Path)
+%s("%s")`, namecase.ToUpperHump(strings.SplitN(oper.Method, ",", 2)[0]), oper.Path)
 
 	g.GenerateErrror(oper.Responses)
 	return nil
@@ -120,7 +122,7 @@ if err != nil {
 			g.buf.WriteString("err")
 		}
 	}
-	g.buf.WriteString(`	
+	g.buf.WriteString(`
 }
 `)
 	return

@@ -275,23 +275,25 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 	}
 	item := g.openapi.Paths[ope.Path]
 
-	switch ope.Method {
-	case "get":
-		item.Get = oper
-	case "put":
-		item.Put = oper
-	case "post":
-		item.Post = oper
-	case "delete":
-		item.Delete = oper
-	case "options":
-		item.Options = oper
-	case "head":
-		item.Head = oper
-	case "patch":
-		item.Patch = oper
-	case "trace":
-		item.Trace = oper
+	for _, method := range strings.Split(ope.Method, ",") {
+		switch strings.ToLower(method) {
+		case "get":
+			item.Get = oper
+		case "put":
+			item.Put = oper
+		case "post":
+			item.Post = oper
+		case "delete":
+			item.Delete = oper
+		case "options":
+			item.Options = oper
+		case "head":
+			item.Head = oper
+		case "patch":
+			item.Patch = oper
+		case "trace":
+			item.Trace = oper
+		}
 	}
 
 	for _, v := range ope.Tags {
