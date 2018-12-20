@@ -146,6 +146,12 @@ func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 		return nil
 	}
 
+	path := ""
+	route := tag.Get("route")
+	if route != "" {
+		_, path, _ = GetRoute(route)
+	}
+
 	midd := &spec.Middleware{}
 	midd.PkgPath = pkgpath
 	midd.Schema = middleware
@@ -153,7 +159,7 @@ func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	midd.Description = doc
 	midd.Name = name
 
-	reqs, err := g.AddRequests("", t)
+	reqs, err := g.AddRequests(path, t)
 	midd.Requests = reqs
 
 	resps, err := g.AddResponses(t)
@@ -225,14 +231,10 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 	if route == "" {
 		return nil
 	}
-	rs := strings.SplitN(route, " ", 2)
-	if len(rs) != 2 {
+	method, pat, ok := GetRoute(route)
+	if !ok {
 		return nil
 	}
-
-	pat := strings.TrimSpace(rs[1])
-
-	method := strings.ToLower(strings.TrimSpace(rs[0]))
 
 	oper := &spec.Operation{}
 	if basePath != "" {
@@ -391,7 +393,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
 			in = "body"
 		default:
-			if strings.Index(path, "{"+name+"}") == -1 {
+			if path == "" || strings.Index(path, "{"+name+"}") == -1 {
 				in = "query"
 			} else {
 				in = "path"

@@ -50,3 +50,12 @@ func GetTypeHash(typ gotype.Type) string {
 	name := typ.Name()
 	return strings.Repeat("_", tp) + name + "." + utils.Hash(name, pkgpath)
 }
+
+// GetRoute
+func GetRoute(route string) (method, path string, ok bool) {
+	rs := strings.SplitN(route, " ", 2)
+	if len(rs) != 2 {
+		return "", "", false
+	}
+	return strings.TrimSpace(strings.ToUpper(rs[0])), strings.TrimSpace(rs[1]), true
+}
