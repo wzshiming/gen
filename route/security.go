@@ -21,7 +21,9 @@ func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
 		}
 		g.buf.WriteFormat("%s ", resp.Name)
 	}
-	g.buf.WriteString(` = `)
+	if len(secu.Responses) != 0 {
+		g.buf.WriteString(` = `)
+	}
 	if secu.Type == nil {
 		g.PkgPath(secu.PkgPath)
 	} else {

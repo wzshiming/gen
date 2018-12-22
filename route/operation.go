@@ -17,7 +17,9 @@ func (g *GenRoute) GenerateOperationCall(oper *spec.Operation) error {
 		}
 		g.buf.WriteString("_" + resp.Name)
 	}
-	g.buf.WriteString(":= ")
+	if len(oper.Responses) != 0 {
+		g.buf.WriteString(":= ")
+	}
 	if oper.Type != nil {
 		g.buf.WriteString("s.")
 	} else {

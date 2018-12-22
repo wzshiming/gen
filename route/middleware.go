@@ -21,7 +21,9 @@ func (g *GenRoute) GenerateMiddlewareCall(midd *spec.Middleware) error {
 		}
 		g.buf.WriteFormat("%s ", resp.Name)
 	}
-	g.buf.WriteString(` = `)
+	if len(midd.Responses) != 0 {
+		g.buf.WriteString(` = `)
+	}
 	if midd.Type == nil {
 		g.PkgPath(midd.PkgPath)
 	} else {
