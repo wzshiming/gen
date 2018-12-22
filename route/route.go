@@ -86,6 +86,7 @@ func %s() http.Handler {
 		if typ != t {
 			if t != nil {
 				g.buf.WriteString(`
+	return router
 }
 `)
 			}
@@ -93,9 +94,9 @@ func %s() http.Handler {
 			name := g.GetRouteName(t)
 			g.buf.WriteFormat(`
 // %s is routing for %s
-func %s(router *mux.Router,%s *`, name, t.Name, name, g.GetVarName(t))
+func %s(router *mux.Router, %s *`, name, t.Name, name, g.GetVarName(t))
 			g.Types(v.Type)
-			g.buf.WriteFormat(`){
+			g.buf.WriteFormat(`) *mux.Router {
 `)
 		}
 		err = g.GenerateRoute(v)
@@ -105,6 +106,7 @@ func %s(router *mux.Router,%s *`, name, t.Name, name, g.GetVarName(t))
 	}
 	if t != nil {
 		g.buf.WriteString(`
+	return router
 }
 `)
 	}
