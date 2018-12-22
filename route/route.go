@@ -97,6 +97,9 @@ func %s() http.Handler {
 func %s(router *mux.Router, %s *`, name, t.Name, name, g.GetVarName(t))
 			g.Types(v.Type)
 			g.buf.WriteFormat(`) *mux.Router {
+	if router == nil {
+		router = mux.NewRouter()
+	}
 `)
 		}
 		err = g.GenerateRoute(v)
