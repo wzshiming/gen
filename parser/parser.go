@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"path"
 	"strings"
 
 	"github.com/wzshiming/gen/spec"
@@ -239,7 +238,7 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 	oper := &spec.Operation{}
 	if basePath != "" {
 		oper.Tags = append(oper.Tags, namecase.ToCamel(basePath))
-		pat = path.Join(basePath, pat)
+		pat = Join(basePath, pat)
 	}
 	oper.PkgPath = pkgpath
 	oper.Method = method

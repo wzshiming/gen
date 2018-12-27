@@ -2,6 +2,7 @@ package parser
 
 import (
 	"go/ast"
+	"path"
 	"reflect"
 	"strings"
 
@@ -53,9 +54,28 @@ func GetTypeHash(typ gotype.Type) string {
 
 // GetRoute
 func GetRoute(route string) (method, path string, ok bool) {
-	rs := strings.SplitN(route, " ", 2)
+	rs := strings.SplitN(strings.TrimSpace(route), " ", 2)
 	if len(rs) != 2 {
 		return "", "", false
 	}
-	return strings.TrimSpace(strings.ToUpper(rs[0])), strings.TrimSpace(rs[1]), true
+	path = strings.TrimSpace(rs[1])
+	if path == "" {
+		return "", "", false
+	}
+	method = strings.TrimSpace(strings.ToUpper(rs[0]))
+	if method == "" {
+		return "", "", false
+	}
+	return method, path, true
+}
+
+func Join(p1, p2 string) string {
+	if p2 == "" {
+		return p1
+	}
+	p := path.Join(p1, p2)
+	if p2[len(p2)-1] == '/' {
+		p += "/"
+	}
+	return p
 }
