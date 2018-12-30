@@ -472,12 +472,15 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 				if err != nil {
 					return nil, err
 				}
+
+				desc := v.Doc().Text() + "\n" + v.Comment().Text()
+				desc = strings.TrimSpace(desc)
 				field := &spec.Field{
 					Name:        name,
 					Type:        val,
 					Tag:         tag,
 					Anonymous:   v.IsAnonymous(),
-					Description: v.Doc().Text() + "\n" + v.Comment().Text(),
+					Description: desc,
 				}
 
 				sch.Fields = append(sch.Fields, field)
