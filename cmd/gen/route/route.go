@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/openapi"
@@ -95,17 +96,19 @@ var Cmd = &cobra.Command{
 			}
 			switch format {
 			case "json":
-
+				doc := "// " + strings.Join(strings.Split(string(dc), "\n"), "\n// ")
+				dd, _ := json.Marshal(api)
+				d.WriteFormat("%s\nvar OpenAPI=`%s`\n", doc, string(dd))
 			case "yaml":
 				dc, err = util.JSON2YAML(dc)
 				if err != nil {
 					return err
 				}
+				d.WriteFormat("var OpenAPI=`\n%s\n`\n", string(dc))
 			default:
 				return fmt.Errorf("undefined format %s", format)
 			}
 
-			d.WriteFormat("var OpenAPI=`%s`", string(dc))
 		}
 
 		return d.WithFilename(out).Save()
