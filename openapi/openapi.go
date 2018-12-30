@@ -466,7 +466,7 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 			if err != nil {
 				return nil, err
 			}
-			val.Description += v.Description
+			val.Description += "\n" + v.Description
 			if v.Anonymous {
 				sch.AllOf = append(sch.AllOf, val)
 				continue

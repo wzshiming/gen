@@ -451,6 +451,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	sch.Description = doc
 
 	if t.IsGoroot() && pkgpath == "time" && name == "Time" {
+		sch.Description = "This is the time string in RFC3339 format"
 		sch.Kind = spec.Time
 		return sch, nil
 	}
@@ -476,7 +477,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 					Type:        val,
 					Tag:         tag,
 					Anonymous:   v.IsAnonymous(),
-					Description: v.Doc().Text() + v.Comment().Text(),
+					Description: v.Doc().Text() + "\n" + v.Comment().Text(),
 				}
 
 				sch.Fields = append(sch.Fields, field)
