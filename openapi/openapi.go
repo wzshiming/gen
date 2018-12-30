@@ -512,7 +512,7 @@ func (g *GenOpenAPI) SecurityScheme(sec *spec.Security) (err error) {
 	}
 	secu.In = req.In
 	secu.Name = req.Name
-	secu.Description = secu.Description
+	secu.Description = sec.Description
 	g.openapi.Components.SecuritySchemes[sec.Name] = secu
 	return
 }
