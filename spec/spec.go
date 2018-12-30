@@ -87,7 +87,7 @@ type Type struct {
 	Elem        *Type
 	Fields      []*Field
 	Len         int
-	Enum        []string
+	Enum        []*Enum
 	Description string
 }
 
@@ -96,5 +96,10 @@ type Field struct {
 	Type        *Type
 	Tag         reflect.StructTag
 	Anonymous   bool
+	Description string
+}
+
+type Enum struct {
+	Value       string
 	Description string
 }

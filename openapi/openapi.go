@@ -492,7 +492,10 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	}
 	sch.Description = typ.Description
 	for _, v := range typ.Enum {
-		sch.Enum = append(sch.Enum, oaspec.Any(v))
+		sch.Enum = append(sch.Enum, oaspec.Any(v.Value))
+		if v.Description != "" {
+			sch.Description += "\n" + v.Value + ":" + v.Description
+		}
 	}
 	return sch, nil
 }
