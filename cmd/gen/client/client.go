@@ -10,13 +10,16 @@ import (
 )
 
 var (
-	out, pack string
+	out  string
+	pack string
+	way  string
 )
 
 func init() {
 	flag := Cmd.Flags()
 	flag.StringVarP(&out, "out", "o", "client_gen.go", "output file")
 	flag.StringVarP(&pack, "package", "p", "", "package name")
+	flag.StringVarP(&way, "way", "w", "", "way to export")
 }
 
 var Cmd = &cobra.Command{
@@ -33,7 +36,7 @@ var Cmd = &cobra.Command{
 		def := parser.NewParser(imp)
 
 		for _, pkg := range args {
-			err := def.Import(pkg)
+			err := def.Import(pkg, way)
 			if err != nil {
 				return err
 			}

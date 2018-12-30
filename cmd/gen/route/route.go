@@ -26,6 +26,7 @@ var (
 	format   string
 	info     string
 	openapiF bool
+	way      string
 )
 
 func init() {
@@ -37,6 +38,7 @@ func init() {
 	flag.StringSliceVarP(&servers, "servers", "s", nil, "")
 	flag.StringVarP(&format, "format", "f", "json", "json or yaml")
 	flag.StringVarP(&info, "info", "i", "", "Info")
+	flag.StringVarP(&way, "way", "w", "", "way to export")
 }
 
 var Cmd = &cobra.Command{
@@ -55,7 +57,7 @@ var Cmd = &cobra.Command{
 		impPath := utils.GetPackagePath(dir)
 		def := parser.NewParser(imp)
 		for _, arg := range args {
-			err := def.Import(arg)
+			err := def.Import(arg, way)
 			if err != nil {
 				return err
 			}
@@ -108,6 +110,24 @@ var Cmd = &cobra.Command{
 			default:
 				return fmt.Errorf("undefined format %s", format)
 			}
+
+			d.AddImport("", "github.com/wzshiming/gen/ui/swaggerui")
+			d.AddImport("", "github.com/gorilla/mux")
+			d.AddImport("", "os")
+			d.AddImport("", "unsafe")
+
+			d.WriteFormat(`
+// RouteOpenAPI
+func RouteOpenAPI(router *mux.Router) *mux.Router {
+	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", swaggerui.HandleWith(func(path string) ([]byte, error) {
+		if path == "openapi.%s" {
+			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
+		}
+		return nil, os.ErrNotExist
+	})))
+	return router
+}
+`, format)
 
 		}
 

@@ -11,12 +11,14 @@ import (
 var (
 	port   uint
 	format string
+	way    string
 )
 
 func init() {
 	flag := Cmd.Flags()
 	flag.UintVarP(&port, "port", "p", 8080, "listening port")
 	flag.StringVarP(&format, "format", "f", "json", "json or yaml")
+	flag.StringVarP(&way, "way", "w", "", "way to export")
 }
 
 var Cmd = &cobra.Command{
@@ -29,6 +31,6 @@ var Cmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return run.Run(args, fmt.Sprintf(":%d", port), format)
+		return run.Run(args, fmt.Sprintf(":%d", port), format, way)
 	},
 }

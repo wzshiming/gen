@@ -23,6 +23,7 @@ var (
 	format  string
 	ui      bool
 	info    string
+	way     string
 )
 
 func init() {
@@ -33,6 +34,7 @@ func init() {
 	flag.StringVarP(&format, "format", "f", "json", "json or yaml")
 	flag.BoolVarP(&ui, "ui", "u", false, "show the API ui page")
 	flag.StringVarP(&info, "info", "i", "", "Info")
+	flag.StringVarP(&way, "way", "w", "", "way to export")
 }
 
 var Cmd = &cobra.Command{
@@ -48,7 +50,7 @@ var Cmd = &cobra.Command{
 		imp := gotype.NewImporter(gotype.WithCommentLocator())
 		def := parser.NewParser(imp)
 		for _, arg := range args {
-			err := def.Import(arg)
+			err := def.Import(arg, way)
 			if err != nil {
 				return err
 			}

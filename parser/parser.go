@@ -12,14 +12,16 @@ import (
 
 // Parser is the parse type generating definitions
 type Parser struct {
-	imp *gotype.Importer
-	api *spec.API
+	imp  *gotype.Importer
+	api  *spec.API
+	ways map[string]bool
 }
 
 func NewParser(imp *gotype.Importer) *Parser {
 	return &Parser{
-		imp: imp,
-		api: spec.NewAPI(),
+		imp:  imp,
+		api:  spec.NewAPI(),
+		ways: map[string]bool{},
 	}
 }
 
@@ -27,9 +29,15 @@ func (g *Parser) API() *spec.API {
 	return g.api
 }
 
-func (g *Parser) Import(pkgpath string) error {
+func (g *Parser) Import(pkgpath string, ways string) error {
 	if !strings.HasSuffix(pkgpath, "/...") {
 		return g.importOnce(pkgpath)
+	}
+
+	if ways != "" {
+		for _, way := range strings.Split(ways, ",") {
+			g.ways[way] = true
+		}
 	}
 
 	pkgs := utils.PackageOmitted(pkgpath)
@@ -41,6 +49,22 @@ func (g *Parser) Import(pkgpath string) error {
 	}
 
 	return nil
+}
+
+func (g *Parser) isWay(way string) bool {
+	if way == "" {
+		return true
+	}
+	pre := 0
+	for i, c := range way {
+		if c == ',' {
+			if g.ways[way[pre:i]] {
+				return true
+			}
+			pre = i + 1
+		}
+	}
+	return g.ways[way[pre:]]
 }
 
 func (g *Parser) importOnce(pkgpath string) error {
@@ -58,6 +82,15 @@ func (g *Parser) importOnce(pkgpath string) error {
 		}
 		switch v.Kind() {
 		case gotype.Declaration:
+
+			if len(g.ways) != 0 {
+				doc := v.Doc().Text()
+				tag := GetTag(doc)
+				if !g.isWay(tag.Get("way")) {
+					continue
+				}
+			}
+
 			err = g.AddMiddleware(nil, v)
 			if err != nil {
 				return err
@@ -71,6 +104,15 @@ func (g *Parser) importOnce(pkgpath string) error {
 				return err
 			}
 		default:
+
+			if len(g.ways) != 0 {
+				doc := v.Doc().Text()
+				tag := GetTag(doc)
+				if !g.isWay(tag.Get("way")) {
+					continue
+				}
+			}
+
 			err = g.AddPaths(v)
 			if err != nil {
 				return err
@@ -108,6 +150,15 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 		if !IsExported(v.Name()) {
 			continue
 		}
+
+		if len(g.ways) != 0 {
+			doc := v.Doc().Text()
+			tag := GetTag(doc)
+			if !g.isWay(tag.Get("way")) {
+				continue
+			}
+		}
+
 		err = g.AddMiddleware(sch, v)
 		if err != nil {
 			return err

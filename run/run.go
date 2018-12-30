@@ -19,8 +19,8 @@ import (
 	"github.com/wzshiming/openapi/util"
 )
 
-func Run(pkgs []string, port string, format string) error {
-	f, err := file(pkgs, port, format)
+func Run(pkgs []string, port string, format string, way string) error {
+	f, err := file(pkgs, port, format, way)
 	if err != nil {
 		return err
 	}
@@ -40,12 +40,12 @@ func Run(pkgs []string, port string, format string) error {
 	return nil
 }
 
-func file(pkgs []string, port string, format string) ([]byte, error) {
+func file(pkgs []string, port string, format string, way string) ([]byte, error) {
 	imp := gotype.NewImporter(gotype.WithCommentLocator())
 	def := parser.NewParser(imp)
 
 	for _, pkg := range pkgs {
-		err := def.Import(pkg)
+		err := def.Import(pkg, way)
 		if err != nil {
 			return nil, err
 		}
