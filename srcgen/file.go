@@ -25,10 +25,15 @@ func (f *File) Save() error {
 	}
 
 	if f.packname == "" {
-		b, err := build.ImportDir(filepath.Dir(f.filename), 0)
+		dir := filepath.Dir(f.filename)
+		b, err := build.ImportDir(dir, 0)
 		if err != nil {
-			// return err
-			f.packname = "client"
+			_, dir = filepath.Split(dir)
+			if dir == "." || dir == ".." || dir == "" {
+				f.packname = "main"
+			} else {
+				f.packname = dir
+			}
 		} else {
 			f.packname = b.Name
 		}
