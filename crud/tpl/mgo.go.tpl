@@ -4,11 +4,12 @@ package < .Package >
 
 import (
 	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 // < .CrudUpper >WithID is < .CrudUpper > with ID
 type < .CrudUpper >WithID struct {
-	ID string `bson:"_id,omitempty" json:"< .CrudLower >_id"`
+	ID bson.ObjectId `bson:"_id,omitempty" json:"< .CrudLower >_id"`
 	< .CrudUpper > `bson:",inline"`
 }
 
