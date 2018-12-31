@@ -27,9 +27,6 @@ func NewGenRoute(api *spec.API) *GenRoute {
 }
 
 func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) {
-	if pkg == "" {
-		pkg = g.api.Package
-	}
 	g.buf.WithPackname(pkg)
 	g.GenModel = *model.NewGenModel(g.api, g.buf, outpkg)
 	err := g.GenerateRoutes(funcName)
