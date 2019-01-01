@@ -29,17 +29,17 @@ func (b *< .CrudUpper >Service) Create(< .CrudLower > *< .CrudUpper >) (err erro
 }
 
 // Update the < .CrudUpper > #route:"PUT /{< .CrudLower >_id}"#
-func (s *< .CrudUpper >Service) Update(< .CrudLower >_id string, < .CrudLower > *< .CrudUpper >) (err error) {
+func (s *< .CrudUpper >Service) Update(< .CrudLower >_id bson.ObjectId, < .CrudLower > *< .CrudUpper >) (err error) {
 	return s.db.UpdateId(< .CrudLower >_id, < .CrudLower >)
 }
 
 // Delete the < .CrudUpper > #route:"DELETE /{< .CrudLower >_id}"#
-func (s *< .CrudUpper >Service) Delete(< .CrudLower >_id string) (err error) {
+func (s *< .CrudUpper >Service) Delete(< .CrudLower >_id bson.ObjectId) (err error) {
 	return s.db.RemoveId(< .CrudLower >_id)
 }
 
 // Get the < .CrudUpper > #route:"GET /{< .CrudLower >_id}"#
-func (s *< .CrudUpper >Service) Get(< .CrudLower >_id string) (< .CrudLower > *< .CrudUpper >, err error) {
+func (s *< .CrudUpper >Service) Get(< .CrudLower >_id bson.ObjectId) (< .CrudLower > *< .CrudUpper >, err error) {
 	q := s.db.FindId(< .CrudLower >_id)
 	err = q.One(&< .CrudLower >)
 	if err != nil {
