@@ -617,6 +617,13 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		return nil, fmt.Errorf("Gen.AddType: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
 
+	if text, ok := g.importChild("encoding", "TextUnmarshaler"); ok && gotype.Implements(t, text) {
+		sch.IsTextUnmarshaler = true
+	}
+	if text, ok := g.importChild("encoding", "TextMarshaler"); ok && gotype.Implements(t, text) {
+		sch.IsTextMarshaler = true
+	}
+
 	sch.Kind = kindMapping[kind]
 
 	if name != "" && name != strings.ToLower(kind.String()) {

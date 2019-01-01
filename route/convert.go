@@ -80,6 +80,12 @@ func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
 		typ = g.api.Types[typ.Ref]
 	}
 
+	if typ.IsTextUnmarshaler {
+		g.buf.AddImport("", "unsafe")
+		g.buf.WriteFormat(`err = %s.UnmarshalText(*(*[]byte)(unsafe.Pointer(&%s)))`, out, in)
+		return nil
+	}
+
 	switch typ.Kind {
 	case spec.Ptr:
 		typ = typ.Elem

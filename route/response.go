@@ -80,13 +80,28 @@ func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
 	http.Error(w, _%s.Error(), %s)
 `, resp.Name, resp.Code)
 		return nil
-	case "":
-		contentType = "text/plain; charset=utf-8"
 	default:
-		g.buf.WriteFormat(`
+		typ := resp.Type
+		if typ.IsTextMarshaler {
+			g.buf.WriteFormat(`
+	data, err := _%s.MarshalText()
+`, resp.Name)
+		} else if typ.Kind == spec.Slice && typ.Elem.Kind == spec.Byte {
+			g.buf.WriteFormat(`
 	data := _%s
 `, resp.Name)
+		} else {
+			g.buf.AddImport("", "unsafe")
+			g.buf.WriteFormat(`
+	str := fmt.Sprint(_%s)
+	data := *(*[]byte)(unsafe.Pointer(&str))
+`, resp.Name)
+		}
+
 		contentType = resp.Content
+		if contentType == "" {
+			contentType = "text/plain; charset=utf-8"
+		}
 	}
 
 	g.buf.WriteFormat(`

@@ -89,6 +89,9 @@ type Type struct {
 	Len         int
 	Enum        []*Enum
 	Description string
+
+	IsTextUnmarshaler bool
+	IsTextMarshaler   bool
 }
 
 type Field struct {
