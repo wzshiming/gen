@@ -499,6 +499,7 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 			sch.Description += "\n" + v.Value + ":" + v.Description
 		}
 	}
+	sch.Description = strings.TrimSpace(sch.Description)
 	return sch, nil
 }
 
