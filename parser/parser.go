@@ -426,42 +426,49 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	t = t.Declaration()
 
 	if in == "" {
-		tt := t
-		ps := 0
-		for tt.Kind() == gotype.Ptr {
-			tt = tt.Elem()
-			ps++
-		}
 
-		tname := tt.Name()
-		tpkgpath := tt.PkgPath()
-
-		switch tpkgpath {
-		case "net/http":
-			switch tname {
-			case "Request":
-				if ps == 1 {
-					return &spec.Request{
-						In:   "none",
-						Name: fmt.Sprintf("*%s.%s", tpkgpath, tname),
-					}, nil
-				}
-			case "ResponseWriter":
+		switch t.Kind() {
+		case gotype.Ptr:
+			if req, ok := g.importChild("net/http", "Request"); ok && gotype.Equal(t.Elem(), req) {
 				return &spec.Request{
 					In:   "none",
-					Name: fmt.Sprintf("%s.%s", tpkgpath, tname),
+					Name: "*net/http.Request",
+				}, nil
+			}
+
+		case gotype.Interface:
+			if resp, ok := g.importChild("net/http", "ResponseWriter"); ok && gotype.Implements(resp, t) {
+				return &spec.Request{
+					In:   "none",
+					Name: "net/http.ResponseWriter",
 				}, nil
 			}
 		}
 
-		switch tt.Kind() {
-		case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
-			in = "body"
-		default:
+		if text, ok := g.importChild("encoding", "TextUnmarshaler"); ok && gotype.Implements(t, text) {
 			if path == "" || strings.Index(path, "{"+name+"}") == -1 {
 				in = "query"
 			} else {
 				in = "path"
+			}
+		} else {
+
+			tt := t
+			if tt.Kind() == gotype.Ptr {
+				tt = tt.Elem()
+			}
+
+			switch tt.Kind() {
+			case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
+				in = "body"
+			case gotype.Interface:
+				in = "middleware"
+			default:
+				if path == "" || strings.Index(path, "{"+name+"}") == -1 {
+					in = "query"
+				} else {
+					in = "path"
+				}
 			}
 		}
 	}
