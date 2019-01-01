@@ -12,16 +12,18 @@ import (
 
 // Parser is the parse type generating definitions
 type Parser struct {
-	imp  *gotype.Importer
-	api  *spec.API
-	ways map[string]bool
+	imp    *gotype.Importer
+	api    *spec.API
+	ways   map[string]bool
+	consts map[string]gotype.Type
 }
 
 func NewParser(imp *gotype.Importer) *Parser {
 	return &Parser{
-		imp:  imp,
-		api:  spec.NewAPI(),
-		ways: map[string]bool{},
+		imp:    imp,
+		api:    spec.NewAPI(),
+		ways:   map[string]bool{},
+		consts: map[string]gotype.Type{},
 	}
 }
 
@@ -65,6 +67,19 @@ func (g *Parser) isWay(way string) bool {
 		}
 	}
 	return g.ways[way[pre:]]
+}
+
+func (g *Parser) importChild(pkgpath, name string) (gotype.Type, bool) {
+	t, ok := g.consts[name]
+	if ok {
+		return t, true
+	}
+
+	pkg, err := g.imp.Import(pkgpath)
+	if err != nil {
+		return nil, false
+	}
+	return pkg.ChildByName(name)
 }
 
 func (g *Parser) importOnce(pkgpath string) error {
@@ -501,7 +516,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	sch.Name = name
 	sch.Description = doc
 
-	if t.IsGoroot() && pkgpath == "time" && name == "Time" {
+	if time, ok := g.importChild("time", "Time"); ok && gotype.Equal(time, t) {
 		sch.Description = "This is the time string in RFC3339 format"
 		sch.Kind = spec.Time
 		return sch, nil
