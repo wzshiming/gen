@@ -26,16 +26,27 @@ func NewGenModel(api *spec.API, buf *srcgen.File, pkgpath string) *GenModel {
 }
 
 func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
+	typ0 := typ
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
 	switch typ.Kind {
-	case spec.Ptr, spec.Slice, spec.Array, spec.Map, spec.Error, spec.Chan, spec.Interface:
+	case spec.Ptr, spec.Slice, spec.Map, spec.Error, spec.Chan, spec.Interface:
 		g.buf.WriteString("nil")
+	case spec.Array:
+		g.buf.WriteString("(")
+		err = g.Types(typ0)
+		if err != nil {
+			return err
+		}
+		g.buf.WriteString("{})")
 	case spec.String:
 		g.buf.WriteString("\"\"")
 	case spec.Struct:
-		g.Types(typ)
+		err = g.Types(typ0)
+		if err != nil {
+			return err
+		}
 		g.buf.WriteString("{}")
 	case spec.Int, spec.Int8, spec.Int16, spec.Int32, spec.Int64,
 		spec.Uint, spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64,

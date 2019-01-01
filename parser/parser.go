@@ -424,50 +424,60 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	name = GetName(name, tag)
 	in := tag.Get("in")
 	t = t.Declaration()
-
-	if in == "" {
-
-		switch t.Kind() {
-		case gotype.Ptr:
-			if req, ok := g.importChild("net/http", "Request"); ok && gotype.Equal(t.Elem(), req) {
-				return &spec.Request{
-					In:   "none",
-					Name: "*net/http.Request",
-				}, nil
-			}
-
-		case gotype.Interface:
-			if resp, ok := g.importChild("net/http", "ResponseWriter"); ok && gotype.Implements(resp, t) {
-				return &spec.Request{
-					In:   "none",
-					Name: "net/http.ResponseWriter",
-				}, nil
-			}
+	switch t.Kind() {
+	case gotype.Ptr:
+		if req, ok := g.importChild("net/http", "Request"); ok && gotype.Equal(t.Elem(), req) {
+			return &spec.Request{
+				In:   "none",
+				Name: "*net/http.Request",
+			}, nil
 		}
 
-		if text, ok := g.importChild("encoding", "TextUnmarshaler"); ok && gotype.Implements(t, text) {
-			if path == "" || strings.Index(path, "{"+name+"}") == -1 {
-				in = "query"
-			} else {
+	case gotype.Interface:
+		if resp, ok := g.importChild("net/http", "ResponseWriter"); ok && gotype.Implements(resp, t) {
+			return &spec.Request{
+				In:   "none",
+				Name: "net/http.ResponseWriter",
+			}, nil
+		}
+	}
+
+	sch, err := g.AddType(t)
+	if err != nil {
+		return nil, err
+	}
+
+	if in == "" {
+		typ := sch
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+
+		if typ.IsJSONUnmarshaler {
+			in = "body"
+		} else if typ.IsTextUnmarshaler {
+			if path != "" && strings.Index(path, "{"+name+"}") != -1 {
 				in = "path"
+			} else {
+				in = "query"
 			}
 		} else {
-
-			tt := t
-			if tt.Kind() == gotype.Ptr {
-				tt = tt.Elem()
+			if typ.Kind == spec.Ptr {
+				typ = typ.Elem
+				if typ.Ref != "" {
+					typ = g.api.Types[typ.Ref]
+				}
 			}
-
-			switch tt.Kind() {
-			case gotype.Array, gotype.Slice, gotype.Map, gotype.Struct:
+			switch typ.Kind {
+			case spec.Array, spec.Slice, spec.Map, spec.Struct:
 				in = "body"
-			case gotype.Interface:
+			case spec.Interface:
 				in = "middleware"
 			default:
-				if path == "" || strings.Index(path, "{"+name+"}") == -1 {
-					in = "query"
-				} else {
+				if path != "" && strings.Index(path, "{"+name+"}") != -1 {
 					in = "path"
+				} else {
+					in = "query"
 				}
 			}
 		}
@@ -476,11 +486,6 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	content := tag.Get("content")
 	if content == "" && in == "body" {
 		content = "json"
-	}
-
-	sch, err := g.AddType(t)
-	if err != nil {
-		return nil, err
 	}
 
 	key := name + "." + utils.Hash(in, sch.Name, sch.Ref, doc)
@@ -624,14 +629,20 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		return nil, fmt.Errorf("Gen.AddType: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
 
+	sch.Kind = kindMapping[kind]
+
 	if text, ok := g.importChild("encoding", "TextUnmarshaler"); ok && gotype.Implements(t, text) {
 		sch.IsTextUnmarshaler = true
 	}
 	if text, ok := g.importChild("encoding", "TextMarshaler"); ok && gotype.Implements(t, text) {
 		sch.IsTextMarshaler = true
 	}
-
-	sch.Kind = kindMapping[kind]
+	if text, ok := g.importChild("encoding/json", "Unmarshaler"); ok && gotype.Implements(t, text) {
+		sch.IsJSONUnmarshaler = true
+	}
+	if text, ok := g.importChild("encoding/json", "Marshaler"); ok && gotype.Implements(t, text) {
+		sch.IsJSONMarshaler = true
+	}
 
 	if name != "" && name != strings.ToLower(kind.String()) {
 		g.api.Types[key] = sch

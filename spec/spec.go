@@ -90,6 +90,8 @@ type Type struct {
 	Enum        []*Enum
 	Description string
 
+	IsJSONUnmarshaler bool
+	IsJSONMarshaler   bool
 	IsTextUnmarshaler bool
 	IsTextMarshaler   bool
 }
