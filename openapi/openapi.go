@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/wzshiming/gen/spec"
@@ -411,25 +412,25 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	case spec.Bool:
 		sch = oaspec.BooleanProperty()
 	case spec.Float32:
-		sch = oaspec.Float32Property() //.WithMinimum(math.SmallestNonzeroFloat32, false).WithMaximum(math.MaxFloat32, false)
+		sch = oaspec.Float32Property() // .WithMinimum(-math.MaxFloat32, false).WithMaximum(math.MaxFloat32, false)
 	case spec.Float64:
-		sch = oaspec.Float64Property() //.WithMinimum(math.SmallestNonzeroFloat64, false).WithMaximum(math.MaxFloat64, false)
+		sch = oaspec.Float64Property() // .WithMinimum(-math.MaxFloat64, false).WithMaximum(math.MaxFloat64, false)
 	case spec.Int8:
-		sch = oaspec.Int8Property() //.WithMinimum(math.MinInt8, false).WithMaximum(math.MaxInt8, false)
+		sch = oaspec.Int8Property().WithMinimum(math.MinInt8, false).WithMaximum(math.MaxInt8, false)
 	case spec.Int16:
-		sch = oaspec.Int16Property() //.WithMinimum(math.MinInt16, false).WithMaximum(math.MaxInt16, false)
+		sch = oaspec.Int16Property().WithMinimum(math.MinInt16, false).WithMaximum(math.MaxInt16, false)
 	case spec.Int32:
-		sch = oaspec.Int32Property() //.WithMinimum(math.MinInt32, false).WithMaximum(math.MaxInt32, false)
+		sch = oaspec.Int32Property() // .WithMinimum(math.MinInt32, false).WithMaximum(math.MaxInt32, false)
 	case spec.Int64, spec.Int:
-		sch = oaspec.Int64Property() //.WithMinimum(math.MinInt64, false).WithMaximum(math.MaxInt64, false)
+		sch = oaspec.Int64Property() // .WithMinimum(math.MinInt64, false).WithMaximum(math.MaxInt64, false)
 	case spec.Uint8:
-		sch = oaspec.IntFmtProperty("uin8") //.WithMinimum(0, false).WithMaximum(math.MaxUint8, false)
+		sch = oaspec.IntFmtProperty("uin8").WithMinimum(0, false).WithMaximum(math.MaxUint8, false)
 	case spec.Uint16:
-		sch = oaspec.IntFmtProperty("uin16") //.WithMinimum(0, false).WithMaximum(math.MaxUint16, false)
+		sch = oaspec.IntFmtProperty("uin16").WithMinimum(0, false).WithMaximum(math.MaxUint16, false)
 	case spec.Uint32:
-		sch = oaspec.IntFmtProperty("uin32") //.WithMinimum(0, false).WithMaximum(math.MaxUint32, false)
+		sch = oaspec.IntFmtProperty("uin32") // .WithMinimum(0, false).WithMaximum(math.MaxUint32, false)
 	case spec.Uint64, spec.Uint:
-		sch = oaspec.IntFmtProperty("uin64") //.WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
+		sch = oaspec.IntFmtProperty("uin64") // .WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
 	case spec.Map:
 		sch, err = g.Schemas(typ.Elem)
 		if err != nil {
