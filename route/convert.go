@@ -82,7 +82,13 @@ func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
 
 	if typ.IsTextUnmarshaler {
 		g.buf.AddImport("", "unsafe")
-		g.buf.WriteFormat(`err = %s.UnmarshalText(*(*[]byte)(unsafe.Pointer(&%s)))`, out, in)
+		g.buf.AddImport("", "net/http")
+		g.buf.WriteFormat(`
+	err = %s.UnmarshalText(*(*[]byte)(unsafe.Pointer(&%s)))
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+	}
+`, out, in)
 		return nil
 	}
 
