@@ -475,6 +475,8 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 				if v.Description != "" {
 					val.Description += "\n" + v.Description
 				}
+				val.Description = strings.TrimSpace(val.Description)
+
 				if v.Anonymous {
 					sch.AllOf = append(sch.AllOf, val)
 					continue
