@@ -29,9 +29,10 @@ func (g *GenCrud) Generate(tplname, pkgname, typname string) ([]byte, error) {
 	}
 	buf := bytes.NewBuffer(nil)
 	err = temp.Execute(buf, map[string]string{
-		"Package":   pkgname,
-		"CrudUpper": typname,
-		"CrudLower": namecase.ToLowerSnake(typname),
+		"Package":    pkgname,
+		"UpperHump":  namecase.ToUpperHump(typname),
+		"LowerHump":  namecase.ToLowerHump(typname),
+		"LowerSnake": namecase.ToLowerSnake(typname),
 	})
 	if err != nil {
 		return nil, err
