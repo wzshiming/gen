@@ -74,8 +74,5 @@ func Join(p1, p2 string) string {
 		return p1
 	}
 	p := path.Join(p1, p2)
-	if p2[len(p2)-1] == '/' {
-		p += "/"
-	}
 	return p
 }
