@@ -9,11 +9,11 @@ import (
 
 // < .UpperHump >WithID is < .UpperHump > with ID
 type < .UpperHump >WithID struct {
-	ID bson.ObjectId `bson:"_id,omitempty" json:"< .CrudLower >_id"`
-	< .UpperHump > `bson:",inline"`
+	ID bson.ObjectId `bson:"_id,omitempty" json:"< .LowerSnake >_id"`
+	< .Original > `bson:",inline"`
 }
 
-// < .UpperHump >Service #path:"/< .CrudLower >/"#
+// < .UpperHump >Service #path:"/< .LowerSnake >/"#
 type < .UpperHump >Service struct {
 	db *mgo.Collection
 }
@@ -24,36 +24,36 @@ func New< .UpperHump >Service(db *mgo.Collection) (*< .UpperHump >Service, error
 }
 
 // Create a < .UpperHump > #route:"POST /"#
-func (b *< .UpperHump >Service) Create(< .CrudLower > *< .UpperHump >) (err error) {
-	return b.db.Insert(< .CrudLower >)
+func (s *< .UpperHump >Service) Create(< .LowerHump > *< .Original >) (err error) {
+	return  s.db.Insert(< .LowerHump >)
 }
 
-// Update the < .UpperHump > #route:"PUT /{< .CrudLower >_id}"#
-func (s *< .UpperHump >Service) Update(< .CrudLower >_id bson.ObjectId, < .CrudLower > *< .UpperHump >) (err error) {
-	return s.db.UpdateId(< .CrudLower >_id, < .CrudLower >)
+// Update the < .UpperHump > #route:"PUT /{< .LowerSnake >_id}"#
+func (s *< .UpperHump >Service) Update(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, < .LowerHump > *< .Original >) (err error) {
+	return s.db.UpdateId(< .LowerHump >ID, < .LowerHump >)
 }
 
-// Delete the < .UpperHump > #route:"DELETE /{< .CrudLower >_id}"#
-func (s *< .UpperHump >Service) Delete(< .CrudLower >_id bson.ObjectId) (err error) {
-	return s.db.RemoveId(< .CrudLower >_id)
+// Delete the < .UpperHump > #route:"DELETE /{< .LowerSnake >_id}"#
+func (s *< .UpperHump >Service) Delete(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */) (err error) {
+	return s.db.RemoveId(< .LowerHump >ID)
 }
 
-// Get the < .UpperHump > #route:"GET /{< .CrudLower >_id}"#
-func (s *< .UpperHump >Service) Get(< .CrudLower >_id bson.ObjectId) (< .CrudLower > *< .UpperHump >, err error) {
-	q := s.db.FindId(< .CrudLower >_id)
-	err = q.One(&< .CrudLower >)
+// Get the < .UpperHump > #route:"GET /{< .LowerSnake >_id}"#
+func (s *< .UpperHump >Service) Get(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */) (< .LowerHump > *< .UpperHump >WithID, err error) {
+	q := s.db.FindId(< .LowerHump >ID)
+	err = q.One(&< .LowerHump >)
 	if err != nil {
 		return nil, err
 	}
-	return < .CrudLower >, nil
+	return < .LowerHump >, nil
 }
 
 // List of the < .UpperHump > #route:"GET /"#
-func (s *< .UpperHump >Service) List(offset, limit int) (< .CrudLower >s []*< .UpperHump >WithID, err error) {
+func (s *< .UpperHump >Service) List(offset, limit int) (< .LowerHump >s []*< .UpperHump >WithID, err error) {
 	q := s.db.Find(nil).Skip(offset).Limit(limit)
-	err = q.All(&< .CrudLower >s)
+	err = q.All(&< .LowerHump >s)
 	if err != nil {
 		return nil, err
 	}
-	return < .CrudLower >s, nil
+	return < .LowerHump >s, nil
 }
