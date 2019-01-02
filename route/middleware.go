@@ -37,7 +37,16 @@ func (g *GenRoute) GenerateMiddlewareCall(midd *spec.Middleware) error {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		g.buf.WriteString("_" + req.Name)
+		if req.In == "none" {
+			switch req.Name {
+			case "*net/http.Request":
+				g.buf.WriteString("r")
+			case "net/http.ResponseWriter":
+				g.buf.WriteString("w")
+			}
+		} else {
+			g.buf.WriteString("_" + req.Name)
+		}
 	}
 	g.buf.WriteString(`)
 `)
