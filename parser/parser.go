@@ -453,9 +453,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 			typ = g.api.Types[typ.Ref]
 		}
 
-		if typ.IsJSONUnmarshaler {
-			in = "body"
-		} else if typ.IsTextUnmarshaler {
+		if typ.IsTextUnmarshaler {
 			if path != "" && strings.Index(path, "{"+name+"}") != -1 {
 				in = "path"
 			} else {
