@@ -62,6 +62,12 @@ func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
 }
 
 func (g *GenModel) PkgPath(path string) bool {
+	const (
+		vendor = "/vendor/"
+	)
+	if i := strings.LastIndex(path, vendor); i != -1 {
+		path = path[i+len(vendor):]
+	}
 	if g.pkgpath == "" || path == g.pkgpath {
 		return false
 	}
