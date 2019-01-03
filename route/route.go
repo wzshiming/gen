@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/wzshiming/gen/model"
+	"github.com/wzshiming/gen/named"
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/srcgen"
 )
@@ -14,15 +15,17 @@ type GenRoute struct {
 	api *spec.API
 	buf *srcgen.File
 	model.GenModel
-	only map[string]bool
+	only  map[string]bool
+	named *named.Named
 }
 
 func NewGenRoute(api *spec.API) *GenRoute {
 	buf := &srcgen.File{}
 	return &GenRoute{
-		api:  api,
-		buf:  buf,
-		only: map[string]bool{},
+		api:   api,
+		buf:   buf,
+		only:  map[string]bool{},
+		named: named.NewNamed(),
 	}
 }
 
