@@ -367,6 +367,20 @@ func (g *GenOpenAPI) Parameters(req *spec.Request) (par *oaspec.Parameter, err e
 		return nil, fmt.Errorf("Parameters undefined in:%s", req.In)
 	}
 	par.Description = req.Description
+
+	typ := req.Type
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+
+	for _, v := range typ.Enum {
+		sch.Enum = append(sch.Enum, oaspec.Any(v.Value))
+		if v.Description != "" {
+			par.Description += "\n" + v.Value + ":" + v.Description
+		}
+	}
+	par.Description = strings.TrimSpace(par.Description)
+
 	return
 }
 
