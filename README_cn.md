@@ -1,4 +1,4 @@
-# Gen - 为微服务生成源码的工具
+# Gen - 为RESTful风格的微服务生成源码的工具
 
 只需要写普通的函数,Gen会为其生成高效的路由源代码和文档  
 因为生成的是源码，所以这些都不会影响运行时性能  
@@ -14,17 +14,15 @@
 
 ## 支持的功能
 
-- [X] 生成路由
-- [X] 生成客户端
-  - [X] Golang
-  - [ ] JavaScript
 - [X] 生成文档
-  - [ ] Swagger 2
   - [X] [OpenAPI 3](https://github.com/OAI/OpenAPI-Style-Guide)
   - [X] [SwaggerUI](https://github.com/swagger-api/swagger-ui)
-- [X] 协议
-  - [X] HTTP
-  - [ ] Protobuf
+- [X] RESTful
+  - [X] 生成Go路由
+  - [X] 生成Go客户端
+  - [Javascript 客户端](https://github.com/swagger-api/swagger-js)
+  - [其他语言客户端](https://github.com/swagger-api/swagger-codegen)
+- [ ] gRPC & Proto3
 
 ## 示例
 

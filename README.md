@@ -1,4 +1,4 @@
-# Gen - Generated source code tool for micro services
+# Gen - RESTful style of micro services to generate source code tools
 
 Just write normal functions, and Gen generates efficient routing source code and documentation for it
 Because the source code is generated, none of this affects runtime performance  
@@ -14,17 +14,15 @@ generating clients is also supported
 
 ## Supported
 
-- [X] Generate router
-- [X] Generate client
-  - [X] Golang
-  - [ ] JavaScript
 - [X] Generate documentation
-  - [ ] Swagger 2
   - [X] [OpenAPI 3](https://github.com/OAI/OpenAPI-Style-Guide)
   - [X] [SwaggerUI](https://github.com/swagger-api/swagger-ui)
-- [X] Protocol
-  - [X] HTTP
-  - [ ] Protobuf
+- [X] RESTful
+  - [X] Generate Go router
+  - [X] Generate Go client
+  - [Javascript client](https://github.com/swagger-api/swagger-js)
+  - [Other language client](https://github.com/swagger-api/swagger-codegen)
+- [ ] gRPC & Proto3
 
 ## Examples
 
