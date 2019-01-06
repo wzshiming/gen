@@ -20,7 +20,7 @@ var (
 
 func init() {
 	flag := Cmd.Flags()
-	flag.StringVarP(&tplname, "tpl", "t", "mgo", "tpl name")
+	flag.StringVarP(&tplname, "tpl", "t", "mock", "tpl name (mock, mgo)")
 	flag.StringVarP(&name, "name", "n", "", "type name")
 	flag.StringVarP(&pkgname, "package", "p", "", "package name")
 	flag.StringVarP(&out, "out", "o", "", "out file name")
