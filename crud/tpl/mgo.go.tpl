@@ -1,4 +1,4 @@
-// Code generated; DO NOT EDIT.
+// Code generated; Do not regenerate the overwrite after editing.
 
 package < .Package >
 
