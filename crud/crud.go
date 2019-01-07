@@ -2,6 +2,7 @@ package crud
 
 import (
 	"bytes"
+	"strings"
 	"text/template"
 	"unsafe"
 
@@ -16,8 +17,21 @@ func NewGenCrud() *GenCrud {
 	return &GenCrud{}
 }
 
+const suf = ".go.tpl"
+
+func TplNames() []string {
+	an := tpl.AssetNames()
+	names := make([]string, 0, len(an))
+	for _, name := range an {
+		if strings.HasSuffix(name, suf) {
+			names = append(names, name[:len(name)-len(suf)])
+		}
+	}
+	return names
+}
+
 func (g *GenCrud) Generate(tplname, pkgname, typname string) ([]byte, error) {
-	file, err := tpl.Asset(tplname + ".go.tpl")
+	file, err := tpl.Asset(tplname + suf)
 	if err != nil {
 		return nil, err
 	}

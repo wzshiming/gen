@@ -2,9 +2,11 @@ package crud
 
 import (
 	"errors"
+	"fmt"
 	"go/build"
 	"go/format"
 	"io/ioutil"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/crud"
@@ -20,7 +22,7 @@ var (
 
 func init() {
 	flag := Cmd.Flags()
-	flag.StringVarP(&tplname, "tpl", "t", "mock", "tpl name (mock, mgo)")
+	flag.StringVarP(&tplname, "tpl", "t", "mock", fmt.Sprintf("tpl name (%s)", strings.Join(crud.TplNames(), ", ")))
 	flag.StringVarP(&name, "name", "n", "", "type name")
 	flag.StringVarP(&pkgname, "package", "p", "", "package name")
 	flag.StringVarP(&out, "out", "o", "", "out file name")
