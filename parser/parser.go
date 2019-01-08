@@ -486,7 +486,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		content = "json"
 	}
 
-	key := name + "." + utils.Hash(in, sch.Name, sch.Ref, doc)
+	key := name + "." + utils.Hash(in, path, sch.Name, doc)
 
 	if g.api.Requests[key] != nil {
 		return &spec.Request{
