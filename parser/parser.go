@@ -7,7 +7,6 @@ import (
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/utils"
 	"github.com/wzshiming/gotype"
-	"github.com/wzshiming/namecase"
 )
 
 // Parser is the parse type generating definitions
@@ -301,17 +300,25 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 		return nil
 	}
 
-	oper := &spec.Operation{}
 	if basePath != "" {
-		oper.Tags = append(oper.Tags, namecase.ToCamel(basePath))
 		pat = Join(basePath, pat)
 	}
+
+	oper := &spec.Operation{}
 	oper.PkgPath = pkgpath
 	oper.Method = method
 	oper.Path = pat
 	oper.Description = doc
 	oper.Type = sch
 	oper.Name = name
+
+	if sch != nil {
+		sch := sch
+		if sch.Ref != "" {
+			sch = g.api.Types[sch.Ref]
+		}
+		oper.Tags = append(oper.Tags, sch.Name)
+	}
 
 	reqs, err := g.AddRequests(pat, t)
 	oper.Requests = reqs
