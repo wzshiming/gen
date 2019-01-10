@@ -112,7 +112,7 @@ func RouteOpenAPI(router *mux.Router) *mux.Router {
 		}
 		return nil, os.ErrNotExist
 	})))
-	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/swagger", swaggerui.HandleWith(func(path string) ([]byte, error) {
+	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/redoc", redoc.HandleWith(func(path string) ([]byte, error) {
 		if path == "openapi.json" {
 			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
 		}
