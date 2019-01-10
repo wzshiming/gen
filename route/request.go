@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/wzshiming/gen/spec"
-	ffmt "gopkg.in/ffmt.v1"
 )
 
 func (g *GenRoute) GenerateRequest(req *spec.Request) error {
@@ -144,7 +143,6 @@ func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
 	name := g.GetRequestFunctionName(req)
 
 	if g.only[name] {
-		ffmt.P(req)
 		return nil
 	}
 	g.only[name] = true
