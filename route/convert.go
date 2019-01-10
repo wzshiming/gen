@@ -12,10 +12,10 @@ func (g *GenRoute) convertString(in, out string, typ *spec.Type) error {
 }
 
 func (g *GenRoute) convertPrtString(in, out string, typ *spec.Type) error {
-	g.buf.WriteFormat(`_%s := `, out)
+	g.buf.WriteFormat(`__%s := `, out)
 	g.Types(typ)
 	g.buf.WriteFormat(`(%s)
-	%s = &_%s
+	%s = &__%s
 `, in, out, out)
 	return nil
 }
