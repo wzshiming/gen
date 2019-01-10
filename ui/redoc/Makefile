@@ -1,0 +1,15 @@
+
+redoc.go: redoc go-bindata
+	cd redoc && go-bindata --nomemcopy --pkg redoc -o ../redoc.go ./
+
+redoc:
+	docker run -v $(PWD)/redoc/:/redoc/ redocly/redoc cp -r /usr/share/nginx/html/. /redoc
+	rm -f ./redoc/*.map
+	sed -i '' -e 's|%PAGE_TITLE%|ReDoc|g' ./redoc/index.html
+	sed -i '' -e 's|%PAGE_FAVICON%|favicon.png|g' ./redoc/index.html
+	sed -i '' -e 's|%SPEC_URL%|./openapi.json|g' ./redoc/index.html
+	sed -i '' -e 's|%REDOC_OPTIONS%||g' ./redoc/index.html
+	sed -i '' -e 's|/redoc.standalone.js|./redoc.standalone.js|g' ./redoc/index.html
+
+go-bindata:
+	go get github.com/wzshiming/go-bindata/cmd/go-bindata
