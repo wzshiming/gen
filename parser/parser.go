@@ -431,16 +431,16 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 	case gotype.Ptr:
 		if req, ok := g.importChild("net/http", "Request"); ok && gotype.Equal(t.Elem(), req) {
 			return &spec.Request{
-				In:   "none",
-				Name: "*net/http.Request",
+				In:    "none",
+				Ident: "*net/http.Request",
 			}, nil
 		}
 
 	case gotype.Interface:
 		if resp, ok := g.importChild("net/http", "ResponseWriter"); ok && gotype.Implements(resp, t) {
 			return &spec.Request{
-				In:   "none",
-				Name: "net/http.ResponseWriter",
+				In:    "none",
+				Ident: "net/http.ResponseWriter",
 			}, nil
 		}
 	}

@@ -53,7 +53,7 @@ func (g *GenRoute) GenerateCall(name, pkgpath string, typ *spec.Type, requests [
 			g.buf.WriteByte(',')
 		}
 		if req.In == "none" {
-			switch req.Name {
+			switch req.Ident {
 			case "*net/http.Request":
 				g.buf.WriteString("r")
 			case "net/http.ResponseWriter":
