@@ -174,11 +174,11 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 		g.buf.AddImport("", "io/ioutil")
 		g.buf.AddImport("", "encoding/json")
 		g.buf.WriteFormat(`
-	var _body []byte
-	_body, err = ioutil.ReadAll(r.Body)
+	var body []byte
+	body, err = ioutil.ReadAll(r.Body)
 	if err == nil {
 		r.Body.Close()
-		err = json.Unmarshal(_body, &%s)
+		err = json.Unmarshal(body, &%s)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), 400)
@@ -189,10 +189,10 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 	case "cookie":
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
-	var _cookie *http.Cookie
-	_cookie, err = r.Cookie("%s")
+	var cookie *http.Cookie
+	cookie, err = r.Cookie("%s")
 	if err == nil {`, req.Name)
-		g.Convert(`_cookie.Value`, name, req.Type)
+		g.Convert(`cookie.Value`, name, req.Type)
 		g.buf.WriteFormat(`
 	}
 	if err != nil {

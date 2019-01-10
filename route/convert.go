@@ -12,58 +12,61 @@ func (g *GenRoute) convertString(in, out string, typ *spec.Type) error {
 }
 
 func (g *GenRoute) convertPrtString(in, out string, typ *spec.Type) error {
-	g.buf.WriteFormat(`_i := `)
+	g.buf.WriteFormat(`_%s := `, out)
 	g.Types(typ)
 	g.buf.WriteFormat(`(%s)
-	%s = &_i
-`, in, out)
+	%s = &_%s
+`, in, out, out)
 	return nil
 }
 
 func (g *GenRoute) convertInt64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
-	if i, err := strconv.ParseInt(%s,0,0); err == nil {
-		%s = `, in, out)
+	if _%s, err := strconv.ParseInt(%s, 0, 0); err == nil {
+		%s = `, out, in, out)
 	g.Types(typ)
-	g.buf.WriteString(`(i)
-}
-`)
+	g.buf.WriteFormat(`(_%s)
+	}
+`, out)
 	return nil
 }
 
 func (g *GenRoute) convertPrtInt64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
-	g.buf.WriteFormat(`if i, err := strconv.ParseInt(%s,0,0); err == nil {
-	_i := `, in)
+	g.buf.WriteFormat(`
+	if _%s, err := strconv.ParseInt(%s, 0, 0); err == nil {
+		__%s := `, out, in, out)
 	g.Types(typ)
-	g.buf.WriteFormat(`(i)
-	%s = &_i
-}
-`, out)
+	g.buf.WriteFormat(`(%s)
+		%s = &__%s
+	}
+`, out, out, out)
 	return nil
 }
 
 func (g *GenRoute) convertUint64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
-	g.buf.WriteFormat(`if i, err := strconv.ParseUint(%s,0,0); err == nil {
-	%s = `, in, out)
+	g.buf.WriteFormat(`
+	if _%s, err := strconv.ParseUint(%s, 0, 0); err == nil {
+		%s = `, out, in, out)
 	g.Types(typ)
-	g.buf.WriteString(`(i)
-}
-`)
+	g.buf.WriteFormat(`(_%s)
+	}
+`, out)
 	return nil
 }
 
 func (g *GenRoute) convertPrtUint64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
-	g.buf.WriteFormat(`if i, err := strconv.ParseUint(%s,0,0); err == nil {
-	_i := `, in)
+	g.buf.WriteFormat(`
+	if _%s, err := strconv.ParseUint(%s, 0, 0); err == nil {
+		__%s := `, out, in, out)
 	g.Types(typ)
-	g.buf.WriteFormat(`(i)
-	%s = &_i
-}
-`, out)
+	g.buf.WriteFormat(`(_%s)
+		%s = &__%s
+	}
+`, out, out, out)
 	return nil
 }
 
