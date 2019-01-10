@@ -61,6 +61,7 @@ type Operation struct {
 
 type Request struct {
 	Ref         string
+	Ident       string
 	Name        string
 	In          string
 	Content     string
@@ -70,6 +71,7 @@ type Request struct {
 
 type Response struct {
 	Ref         string
+	Ident       string
 	Name        string
 	In          string
 	Code        string
@@ -80,6 +82,7 @@ type Response struct {
 
 type Type struct {
 	Ref         string
+	Ident       string
 	PkgPath     string
 	Name        string
 	Kind        Kind

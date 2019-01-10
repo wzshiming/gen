@@ -190,21 +190,19 @@ func (g *Parser) AddPaths(t gotype.Type) (err error) {
 }
 
 func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
-	name := t.Name()
+	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
 	if doc == "" {
 		return nil
 	}
-	if t.Kind() == gotype.Declaration {
-		t = t.Declaration()
-	}
+	t = t.Declaration()
 	if t.Kind() != gotype.Func {
 		return nil
 	}
 
 	tag := GetTag(doc)
-	name = GetName(name, tag)
+	name := GetName(oname, tag)
 	middleware := tag.Get("middleware")
 	if middleware == "" {
 		return nil
@@ -216,12 +214,15 @@ func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 		_, path, _ = GetRoute(route)
 	}
 
+	hash := utils.Hash(oname, pkgpath, middleware, doc)
+	key := name + "." + hash
+
 	midd := &spec.Middleware{}
+	midd.Name = name
 	midd.PkgPath = pkgpath
 	midd.Schema = middleware
-	midd.Type = sch
 	midd.Description = doc
-	midd.Name = name
+	midd.Type = sch
 
 	reqs, err := g.AddRequests(path, t)
 	midd.Requests = reqs
@@ -229,39 +230,38 @@ func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	resps, err := g.AddResponses(t)
 	midd.Responses = resps
 
-	key := name + "." + utils.Hash(name, middleware, doc)
-
 	g.api.Middlewares[key] = midd
 	return nil
 }
 
 func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
-	name := t.Name()
+	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
 	if doc == "" {
 		return nil
 	}
-	if t.Kind() == gotype.Declaration {
-		t = t.Declaration()
-	}
+	t = t.Declaration()
 	if t.Kind() != gotype.Func {
 		return nil
 	}
 
 	tag := GetTag(doc)
-	name = GetName(name, tag)
+	name := GetName(oname, tag)
 	security := tag.Get("security")
 	if security == "" {
 		return nil
 	}
 
+	hash := utils.Hash(oname, pkgpath, security, doc)
+	key := name + "." + hash
+
 	secu := &spec.Security{}
+	secu.Name = name
 	secu.PkgPath = pkgpath
 	secu.Schema = security
-	secu.Type = sch
 	secu.Description = doc
-	secu.Name = name
+	secu.Type = sch
 
 	reqs, err := g.AddRequests("", t)
 	secu.Requests = reqs
@@ -269,28 +269,24 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	resps, err := g.AddResponses(t)
 	secu.Responses = resps
 
-	key := name + "." + utils.Hash(name, security, doc)
-
 	g.api.Securitys[key] = secu
 	return nil
 }
 
 func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
-	name := t.Name()
+	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
 
 	if doc == "" {
 		return nil
 	}
-	if t.Kind() == gotype.Declaration {
-		t = t.Declaration()
-	}
+	t = t.Declaration()
 	if t.Kind() != gotype.Func {
 		return nil
 	}
 	tag := GetTag(doc)
-	name = GetName(name, tag)
+	name := GetName(oname, tag)
 	route := tag.Get("route")
 	if route == "" {
 		return nil
@@ -345,13 +341,10 @@ func (g *Parser) AddResponses(t gotype.Type) (resps []*spec.Response, err error)
 
 func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 
-	if t.Kind() != gotype.Declaration {
-		return nil, fmt.Errorf("Gen.AddResponse: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
-	}
-	name := t.Name()
+	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
 	tag := GetTag(doc)
-	name = GetName(name, tag)
+	name := GetName(oname, tag)
 	code := tag.Get("code")
 	in := tag.Get("in")
 	content := tag.Get("content")
@@ -385,7 +378,12 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 		return nil, err
 	}
 
-	key := name + "." + utils.Hash(in, sch.Name, sch.Ref, doc)
+	si := sch.Ref
+	if si == "" {
+		si = sch.Ident
+	}
+	hash := utils.Hash(oname, in, code, content, doc, si)
+	key := name + "." + hash
 
 	if g.api.Responses[key] != nil {
 		return &spec.Response{
@@ -394,12 +392,13 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 	}
 
 	resp = &spec.Response{}
-	resp.Name = name
+	resp.Ident = key
 	resp.In = in
+	resp.Name = name
 	resp.Code = code
 	resp.Content = content
-	resp.Type = sch
 	resp.Description = doc
+	resp.Type = sch
 
 	g.api.Responses[key] = resp
 	return &spec.Response{
@@ -422,13 +421,10 @@ func (g *Parser) AddRequests(path string, t gotype.Type) (reqs []*spec.Request, 
 
 func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err error) {
 
-	if t.Kind() != gotype.Declaration {
-		return nil, fmt.Errorf("Gen.AddRequest: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
-	}
-	name := t.Name()
+	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
 	tag := GetTag(doc)
-	name = GetName(name, tag)
+	name := GetName(oname, tag)
 	in := tag.Get("in")
 	t = t.Declaration()
 	switch t.Kind() {
@@ -493,14 +489,21 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		content = "json"
 	}
 
-	key := name + "." + utils.Hash(in, path, sch.Name, doc)
+	si := sch.Ref
+	if si == "" {
+		si = sch.Ident
+	}
+	hash := utils.Hash(oname, in, content, doc, si)
+	key := name + "." + hash
 
 	if g.api.Requests[key] != nil {
 		return &spec.Request{
 			Ref: key,
 		}, nil
 	}
+
 	par = &spec.Request{}
+	par.Ident = key
 	par.In = in
 	par.Name = name
 	par.Content = content
@@ -514,14 +517,16 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 }
 
 func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
-	name := t.Name()
+	oname := t.Name()
 	pkgpath := t.PkgPath()
 	doc := strings.TrimSpace(t.Doc().Text())
 	tag := GetTag(doc)
-	name = GetName(name, tag)
+	name := GetName(oname, tag)
 	kind := t.Kind()
 
-	key := name + "." + utils.Hash(name, pkgpath, t.String(), doc)
+	hash := utils.Hash(t.String(), oname, pkgpath, doc)
+	key := name + "." + hash
+
 	if g.api.Types[key] != nil {
 		return &spec.Type{
 			Ref: key,
@@ -529,8 +534,9 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	}
 
 	sch = &spec.Type{}
-	sch.PkgPath = pkgpath
+	sch.Ident = key
 	sch.Name = name
+	sch.PkgPath = pkgpath
 	sch.Description = doc
 
 	if time, ok := g.importChild("time", "Time"); ok && gotype.Equal(time, t) {
