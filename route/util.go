@@ -13,7 +13,7 @@ func (g *GenRoute) GetVarName(name string) string {
 		return name
 
 	}
-	return "_" + namecase.ToCamel(fmt.Sprintf("var_%s", name))
+	return "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("var_%s", name))
 }
 
 func (g *GenRoute) GetRouteName(typ *spec.Type) string {
