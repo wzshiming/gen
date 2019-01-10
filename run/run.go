@@ -57,7 +57,8 @@ func file(pkgs []string, port string, way string) ([]byte, error) {
 	}
 	router.AddImport("", "net/http")
 	router.AddImport("", "fmt")
-	router.AddImport("", "github.com/urfave/negroni")
+	router.AddImport("", "os")
+	router.AddImport("", "github.com/gorilla/handlers")
 	router.AddImport("", "github.com/wzshiming/gen/ui/swaggerui")
 	router.AddImport("", "github.com/wzshiming/gen/ui/redoc")
 
@@ -109,9 +110,9 @@ func main() {
 	mux.Handle("/redoc/", http.StripPrefix("/redoc", redoc.HandleWithFile("openapi.json", openapi)))
 	fmt.Printf("Open {{ .Server }}/swagger/# or {{ .Server }}/redoc/# with your browser.\n")
 
-	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
-	n.UseHandler(mux)
-	err := http.ListenAndServe("{{ .Port }}", n)
+	mux0 := handlers.RecoveryHandler()(mux)
+	mux0 = handlers.CombinedLoggingHandler(os.Stdout, mux0)
+	err := http.ListenAndServe("{{ .Port }}", mux0)
 	if err != nil {
 		fmt.Println(err)
 	}

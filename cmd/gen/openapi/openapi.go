@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
+	"github.com/gorilla/handlers"
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
@@ -112,7 +114,10 @@ var Cmd = &cobra.Command{
 			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.json", dj)))
 			mux.Handle("/redoc/", http.StripPrefix("/redoc", redoc.HandleWithFile("openapi.json", dj)))
 			fmt.Printf("Open http://127.0.0.1:%d/swagger/# or http://127.0.0.1:%d/redoc/# with your browser.\n", port, port)
-			return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
+
+			mux0 := handlers.RecoveryHandler()(mux)
+			mux0 = handlers.CombinedLoggingHandler(os.Stdout, mux0)
+			return http.ListenAndServe(fmt.Sprintf(":%d", port), mux0)
 		}
 		return nil
 
