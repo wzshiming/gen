@@ -8,10 +8,12 @@ import (
 	"github.com/wzshiming/namecase"
 )
 
-func (g *GenRoute) GetVarName(typ *spec.Type) string {
-	name := "_" + namecase.ToCamel(fmt.Sprintf("var_%s", typ.Name))
-	addr := unsafe.Pointer(typ)
-	return g.named.GetName(name, addr)
+func (g *GenRoute) GetVarName(name string) string {
+	if name == "err" {
+		return name
+
+	}
+	return "_" + namecase.ToCamel(fmt.Sprintf("var_%s", name))
 }
 
 func (g *GenRoute) GetRouteName(typ *spec.Type) string {

@@ -22,8 +22,9 @@ func (g *GenRoute) convertPrtString(in, out string, typ *spec.Type) error {
 
 func (g *GenRoute) convertInt64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
-	g.buf.WriteFormat(`if i, err := strconv.ParseInt(%s,0,0); err == nil {
-	%s = `, in, out)
+	g.buf.WriteFormat(`
+	if i, err := strconv.ParseInt(%s,0,0); err == nil {
+		%s = `, in, out)
 	g.Types(typ)
 	g.buf.WriteString(`(i)
 }

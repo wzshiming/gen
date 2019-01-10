@@ -23,8 +23,8 @@ func (g *GenRoute) GenerateResponse(resp *spec.Response) error {
 func (g *GenRoute) GenerateResponseHeader(resp *spec.Response) error {
 	g.buf.AddImport("", "fmt")
 	g.buf.WriteFormat(`
-w.Header().Set("%s",fmt.Sprint(_%s))
-`, resp.Name, resp.Name)
+	w.Header().Set("%s",fmt.Sprint(%s))
+`, resp.Name, g.GetVarName(resp.Name))
 	return nil
 }
 
@@ -35,12 +35,11 @@ func (g *GenRoute) GenerateResponseBody(resp *spec.Response) error {
 	}
 	g.buf.WriteFormat(`
 	// Response code %s %s for %s.
-	if _%s != `, resp.Code, text, resp.Name, resp.Name)
+	if %s != `, resp.Code, text, resp.Name, g.GetVarName(resp.Name))
 	g.TypesZero(resp.Type)
 	g.buf.WriteString(`{`)
 	g.GenerateResponseBodyItem(resp)
-	g.buf.WriteString(`
-	return
+	g.buf.WriteString(`return
 }
 `)
 	return nil
@@ -60,42 +59,47 @@ func (g *GenRoute) GenerateResponseError() error {
 
 func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
 	contentType := ""
-
+	name := g.GetVarName(resp.Name)
 	switch resp.Content {
 	case "json":
 		g.buf.AddImport("", "encoding/json")
 		contentType = "application/json; charset=utf-8"
 		g.buf.WriteFormat(`
-	data, err := json.Marshal(_%s)`, resp.Name)
+	var _%s []byte
+	_%s, err = json.Marshal(%s)`, name, name, name)
 		g.GenerateResponseError()
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
 		contentType = "application/xml; charset=utf-8"
 		g.buf.WriteFormat(`
-	data, err := xml.Marshal(_%s)`, resp.Name)
+	var _%s []byte
+	_%s, err = xml.Marshal(%s)`, name, name, name)
 		g.GenerateResponseError()
 	case "error":
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
-	http.Error(w, _%s.Error(), %s)
-`, resp.Name, resp.Code)
+	http.Error(w, %s.Error(), %s)
+`, name, resp.Code)
 		return nil
 	default:
 		typ := resp.Type
 		if typ.IsTextMarshaler {
 			g.buf.WriteFormat(`
-	data, err := _%s.MarshalText()
-`, resp.Name)
+	var _%s []byte
+	_%s, err = %s.MarshalText()
+`, name, name, name)
 		} else if typ.Kind == spec.Slice && typ.Elem.Kind == spec.Byte {
 			g.buf.WriteFormat(`
-	data := _%s
-`, resp.Name)
+	var _%s []byte
+	_%s = %s
+`, name, name, name)
 		} else {
 			g.buf.AddImport("", "unsafe")
 			g.buf.WriteFormat(`
-	str := fmt.Sprint(_%s)
-	data := *(*[]byte)(unsafe.Pointer(&str))
-`, resp.Name)
+	var _%s []byte
+	__%s = fmt.Sprint(_%s)
+	%s = *(*[]byte)(unsafe.Pointer(&__%s))
+`, name, name, name, name, name)
 		}
 
 		contentType = resp.Content
@@ -107,7 +111,7 @@ func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
 	g.buf.WriteFormat(`
 	w.Header().Set("Content-Type","%s")
 	w.WriteHeader(%s)
-	w.Write(data)
-`, contentType, resp.Code)
+	w.Write(_%s)
+`, contentType, resp.Code, name)
 	return nil
 }

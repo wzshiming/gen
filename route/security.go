@@ -4,66 +4,6 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateSecurityCall(secu *spec.Security) error {
-	g.buf.WriteFormat(`
-		// Call %s.
-`, secu.Name)
-	errFlag := false
-	for i, resp := range secu.Responses {
-		if i != 0 {
-			g.buf.WriteByte(',')
-		}
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		if !errFlag && resp.Name == "err" {
-			errFlag = true
-		}
-		g.buf.WriteFormat("%s ", resp.Name)
-	}
-	if len(secu.Responses) != 0 {
-		g.buf.WriteString(` = `)
-	}
-	if secu.Type == nil {
-		g.PkgPath(secu.PkgPath)
-	} else {
-		g.buf.WriteString(`s.`)
-	}
-	g.buf.WriteFormat("%s(", secu.Name)
-	for i, req := range secu.Requests {
-		if req.Ref != "" {
-			req = g.api.Requests[req.Ref]
-		}
-		if i != 0 {
-			g.buf.WriteByte(',')
-		}
-		if req.In == "none" {
-			switch req.Name {
-			case "*net/http.Request":
-				g.buf.WriteString("r")
-			case "net/http.ResponseWriter":
-				g.buf.WriteString("w")
-			}
-		} else {
-			g.buf.WriteString("_" + req.Name)
-		}
-	}
-	g.buf.WriteString(`)
-`)
-	if errFlag {
-		g.buf.WriteString(`
-	if err != nil {
-		http.Error(w, err.Error(), 403)
-		return
-	}
-`)
-	}
-	g.buf.WriteString(`
-		return
-`)
-	return nil
-}
-
 func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
 	name := g.GetSecurityFunctionName(secu)
 
@@ -90,23 +30,30 @@ func %s(`, name, secu.Name, name)
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
 		}
-		g.buf.WriteFormat("%s ", resp.Name)
+		g.buf.WriteFormat("%s ", g.GetVarName(resp.Name))
 		g.Types(resp.Type)
 	}
 	g.buf.WriteString(`){
 `)
+
 	for _, req := range secu.Requests {
-		err = g.GenerateOperationRequest(req)
-		if err != nil {
-			return err
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
 		}
+		if req.Type == nil {
+			continue
+		}
+		g.buf.WriteFormat("var %s ", g.GetVarName(req.Name))
+		g.Types(req.Type)
+		g.buf.WriteString("\n")
 	}
-	err = g.GenerateSecurityCall(secu)
+
+	err = g.GenerateCall(secu.Name, secu.PkgPath, secu.Type, secu.Requests, secu.Responses, true)
 	if err != nil {
 		return err
 	}
-
 	g.buf.WriteString(`
+	return
 }
 `)
 
