@@ -3,7 +3,6 @@ package run
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -16,11 +15,10 @@ import (
 	"github.com/wzshiming/gen/route"
 	"github.com/wzshiming/gotype"
 	oaspec "github.com/wzshiming/openapi/spec"
-	"github.com/wzshiming/openapi/util"
 )
 
-func Run(pkgs []string, port string, format string, way string) error {
-	f, err := file(pkgs, port, format, way)
+func Run(pkgs []string, port string, way string) error {
+	f, err := file(pkgs, port, way)
 	if err != nil {
 		return err
 	}
@@ -40,7 +38,7 @@ func Run(pkgs []string, port string, format string, way string) error {
 	return nil
 }
 
-func file(pkgs []string, port string, format string, way string) ([]byte, error) {
+func file(pkgs []string, port string, way string) ([]byte, error) {
 	imp := gotype.NewImporter(gotype.WithCommentLocator())
 	def := parser.NewParser(imp)
 
@@ -61,6 +59,7 @@ func file(pkgs []string, port string, format string, way string) ([]byte, error)
 	router.AddImport("", "fmt")
 	router.AddImport("", "github.com/urfave/negroni")
 	router.AddImport("", "github.com/wzshiming/gen/ui/swaggerui")
+	router.AddImport("", "github.com/wzshiming/gen/ui/redoc")
 
 	api, err := openapi.NewGenOpenAPI(def.API()).SetInfo(&oaspec.Info{
 		Title:       "OpenAPI Demo",
@@ -79,21 +78,10 @@ func file(pkgs []string, port string, format string, way string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	switch format {
-	case "json":
-	case "yaml":
-		d, err = util.JSON2YAML(d)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("undefined format %s", format)
-	}
 
 	buf := bytes.NewBuffer(nil)
 	err = tpl.Execute(buf, map[string]interface{}{
 		"Openapi": "`" + string(d) + "`",
-		"Format":  format,
 		"Server":  server,
 		"Port":    port,
 		"Router":  router,
@@ -116,8 +104,11 @@ var openapi = []byte({{ .Openapi }})
 func main() {
 	mux := &http.ServeMux{}
 	mux.Handle("/", Router())
-	mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.{{ .Format }}", openapi)))
-	fmt.Printf("Open {{ .Server }}/swagger/?url=openapi.{{ .Format }}# with your browser.\n")
+
+	mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.json", openapi)))
+	mux.Handle("/redoc/", http.StripPrefix("/redoc", redoc.HandleWithFile("openapi.json", openapi)))
+	fmt.Printf("Open {{ .Server }}/swagger/# or {{ .Server }}/redoc/# with your browser.\n")
+
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger())
 	n.UseHandler(mux)
 	err := http.ListenAndServe("{{ .Port }}", n)

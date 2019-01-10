@@ -3,7 +3,6 @@ package route
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -23,7 +22,6 @@ var (
 	name     string
 	pack     string
 	servers  []string
-	format   string
 	info     string
 	openapiF bool
 	way      string
@@ -36,7 +34,6 @@ func init() {
 	flag.StringVarP(&pack, "package", "p", "", "package name")
 	flag.BoolVarP(&openapiF, "openapi", "", false, "with openapi")
 	flag.StringSliceVarP(&servers, "servers", "s", nil, "")
-	flag.StringVarP(&format, "format", "f", "json", "json or yaml")
 	flag.StringVarP(&info, "info", "i", "", "Info")
 	flag.StringVarP(&way, "way", "w", "", "way to export")
 }
@@ -96,38 +93,34 @@ var Cmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			switch format {
-			case "json":
-				doc := "// " + strings.Join(strings.Split(string(dc), "\n"), "\n// ")
-				dd, _ := json.Marshal(api)
-				d.WriteFormat("%s\nvar OpenAPI=`%s`\n", doc, string(dd))
-			case "yaml":
-				dc, err = util.JSON2YAML(dc)
-				if err != nil {
-					return err
-				}
-				d.WriteFormat("var OpenAPI=`\n%s\n`\n", string(dc))
-			default:
-				return fmt.Errorf("undefined format %s", format)
-			}
+			doc := "// " + strings.Join(strings.Split(string(dc), "\n"), "\n// ")
+			dd, _ := json.Marshal(api)
+			d.WriteFormat("%s\nvar OpenAPI=`%s`\n", doc, string(dd))
 
 			d.AddImport("", "github.com/wzshiming/gen/ui/swaggerui")
+			d.AddImport("", "github.com/wzshiming/gen/ui/redoc")
 			d.AddImport("", "github.com/gorilla/mux")
 			d.AddImport("", "os")
 			d.AddImport("", "unsafe")
 
-			d.WriteFormat(`
+			d.WriteString(`
 // RouteOpenAPI
 func RouteOpenAPI(router *mux.Router) *mux.Router {
 	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", swaggerui.HandleWith(func(path string) ([]byte, error) {
-		if path == "openapi.%s" {
+		if path == "openapi.json" {
+			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
+		}
+		return nil, os.ErrNotExist
+	})))
+	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/swagger", swaggerui.HandleWith(func(path string) ([]byte, error) {
+		if path == "openapi.json" {
 			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
 		}
 		return nil, os.ErrNotExist
 	})))
 	return router
 }
-`, format)
+`)
 
 		}
 

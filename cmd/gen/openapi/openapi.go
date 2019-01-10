@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
+	"github.com/wzshiming/gen/ui/redoc"
 	"github.com/wzshiming/gen/ui/swaggerui"
 	"github.com/wzshiming/gotype"
 	oaspec "github.com/wzshiming/openapi/spec"
@@ -83,6 +84,7 @@ var Cmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		dj := d
 		switch format {
 		case "json":
 
@@ -107,8 +109,9 @@ var Cmd = &cobra.Command{
 
 			mux := &http.ServeMux{}
 
-			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi."+format, d)))
-			fmt.Printf("Open http://127.0.0.1:%d/swagger/?url=./openapi.%s# with your browser.\n", port, format)
+			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.json", dj)))
+			mux.Handle("/redoc/", http.StripPrefix("/redoc", redoc.HandleWithFile("openapi.json", dj)))
+			fmt.Printf("Open http://127.0.0.1:%d/swagger/# or http://127.0.0.1:%d/redoc/# with your browser.\n", port, port)
 			return http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 		}
 		return nil
