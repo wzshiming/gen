@@ -176,7 +176,7 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 			g.buf.AddImport("", "encoding/json")
 			g.buf.WriteFormat(`
 	var _%s []byte
-	body, err = ioutil.ReadAll(r.Body)
+	_%s, err = ioutil.ReadAll(r.Body)
 	if err == nil {
 		r.Body.Close()
 		err = json.Unmarshal(_%s, &%s)
@@ -185,13 +185,13 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-`, name, name, name)
+`, name, name, name, name)
 		case "xml":
 			g.buf.AddImport("", "io/ioutil")
 			g.buf.AddImport("", "encoding/xml")
 			g.buf.WriteFormat(`
 	var _%s []byte
-	body, err = ioutil.ReadAll(r.Body)
+	_%s, err = ioutil.ReadAll(r.Body)
 	if err == nil {
 		r.Body.Close()
 		err = xml.Unmarshal(_%s, &%s)
@@ -200,7 +200,7 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-`, name, name, name)
+`, name, name, name, name)
 		case "formdata":
 			g.buf.WriteFormat(`
 	if _%s := r.MultipartForm.File["%s"]; len(_%s) != 0 {
