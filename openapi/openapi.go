@@ -400,14 +400,16 @@ func (g *GenOpenAPI) RequestBody(req *spec.Request) (body *oaspec.RequestBody, e
 		body = oaspec.XMLRequestBody(sch)
 	case "textplain":
 		body = oaspec.TextPlainRequestBody(sch)
-	case "octetstream":
+	case "octetstream", "file":
 		body = oaspec.OctetStreamRequestBody(sch)
 	case "urlencoded":
 		body = oaspec.URLEncodedRequestBody(sch)
 	case "formdata":
 		body = oaspec.FormDataRequestBody(sch)
+	case "image":
+		body = oaspec.NewRequestBody("image/*", sch)
 	default:
-		return nil, fmt.Errorf("RequestBody undefined content:%s", req.Content)
+		body = oaspec.NewRequestBody(req.Content, sch)
 	}
 	body.Description = req.Description
 	return
@@ -417,8 +419,11 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	if typ.Ref != "" {
 		return oaspec.RefSchemas(typ.Ref), nil
 	}
-
-	if typ.IsTextMarshaler {
+	if typ.IsReader || typ.IsImage {
+		sch = &oaspec.Schema{}
+		sch.Type = "string"
+		sch.Format = "binary"
+	} else if typ.IsTextMarshaler {
 		sch = oaspec.StrFmtProperty(typ.Name)
 	} else {
 		switch typ.Kind {

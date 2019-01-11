@@ -58,7 +58,7 @@ func (g *GenClient) GenerateSecurity(oper *spec.Security) (err error) {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		err = g.GenerateParameterRequests(req)
+		err = g.GenerateParameterRequests(req, "")
 		if err != nil {
 			return err
 		}

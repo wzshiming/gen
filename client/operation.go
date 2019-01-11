@@ -83,10 +83,17 @@ func (g *GenClient) GenerateOperations(oper *spec.Operation) (err error) {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		err = g.GenerateParameterRequests(req)
+		typ := ""
+		switch req.Content {
+		case "file", "image":
+			g.buf.AddImport("", "io")
+			typ = "io.Reader"
+		}
+		err = g.GenerateParameterRequests(req, typ)
 		if err != nil {
 			return err
 		}
+
 	}
 	g.buf.WriteString(")(")
 

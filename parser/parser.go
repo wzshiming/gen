@@ -408,6 +408,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 
 func (g *Parser) AddRequests(path string, t gotype.Type) (reqs []*spec.Request, err error) {
 	numin := t.NumIn()
+
 	for i := 0; i != numin; i++ {
 		v := t.In(i)
 		req, err := g.AddRequest(path, v)
@@ -450,13 +451,25 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		return nil, err
 	}
 
+	content := tag.Get("content")
+
 	if in == "" {
 		typ := sch
 		if typ.Ref != "" {
 			typ = g.api.Types[typ.Ref]
 		}
 
-		if typ.IsTextUnmarshaler {
+		if typ.IsImage {
+			in = "body"
+			if content == "" {
+				content = "image"
+			}
+		} else if typ.IsReader {
+			in = "body"
+			if content == "" {
+				content = "file"
+			}
+		} else if typ.IsTextUnmarshaler {
 			if path != "" && strings.Index(path, "{"+name+"}") != -1 {
 				in = "path"
 			} else {
@@ -484,7 +497,6 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		}
 	}
 
-	content := tag.Get("content")
 	if content == "" && in == "body" {
 		content = "json"
 	}
@@ -523,7 +535,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	tag := GetTag(doc)
 	name := GetName(oname, tag)
 	kind := t.Kind()
-
+	isRoot := t.IsGoroot()
 	hash := utils.Hash(t.String(), oname, pkgpath, doc)
 	key := name + "." + hash
 
@@ -534,6 +546,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	}
 
 	sch = &spec.Type{}
+	sch.IsRoot = isRoot
 	sch.Ident = key
 	sch.Name = name
 	sch.PkgPath = pkgpath
@@ -636,6 +649,8 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 			return nil, err
 		}
 		sch.Elem = schv
+	case gotype.Interface:
+		// No action
 	default:
 		return nil, fmt.Errorf("Gen.AddType: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
 	}
@@ -653,6 +668,14 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	}
 	if text, ok := g.importChild("encoding/json", "Marshaler"); ok && gotype.Implements(t, text) {
 		sch.IsJSONMarshaler = true
+	}
+
+	if read, ok := g.importChild("io", "Reader"); ok && gotype.Implements(t, read) {
+		sch.IsReader = true
+	}
+
+	if read, ok := g.importChild("image", "Image"); ok && gotype.Implements(t, read) {
+		sch.IsImage = true
 	}
 
 	if name != "" && name != strings.ToLower(kind.String()) {

@@ -7,6 +7,25 @@ import (
 func (g *GenRoute) GenerateCall(name, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response, onErr bool) (err error) {
 
 	for _, req := range requests {
+		req := req
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
+		}
+		if req.Content == "formdata" {
+			g.buf.WriteFormat(`
+	if r.MultipartForm == nil {
+		err := r.ParseMultipartForm(10 << 20)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+	}
+`)
+			break
+		}
+	}
+
+	for _, req := range requests {
 		err = g.GenerateRequest(req)
 		if err != nil {
 			return err
@@ -58,6 +77,8 @@ func (g *GenRoute) GenerateCall(name, pkgpath string, typ *spec.Type, requests [
 				g.buf.WriteString("r")
 			case "net/http.ResponseWriter":
 				g.buf.WriteString("w")
+			case "net/http.File":
+				g.buf.WriteString(g.GetVarName(req.Name))
 			}
 		} else {
 			g.buf.WriteString(g.GetVarName(req.Name))

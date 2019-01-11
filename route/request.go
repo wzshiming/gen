@@ -169,21 +169,83 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 	name := g.GetVarName(req.Name)
 	switch req.In {
 	case "body":
-		g.buf.AddImport("", "io/ioutil")
-		g.buf.AddImport("", "encoding/json")
-		g.buf.WriteFormat(`
-	var body []byte
+
+		switch req.Content {
+		case "json":
+			g.buf.AddImport("", "io/ioutil")
+			g.buf.AddImport("", "encoding/json")
+			g.buf.WriteFormat(`
+	var _%s []byte
 	body, err = ioutil.ReadAll(r.Body)
 	if err == nil {
 		r.Body.Close()
-		err = json.Unmarshal(body, &%s)
+		err = json.Unmarshal(_%s, &%s)
 	}
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+`, name, name, name)
+		case "xml":
+			g.buf.AddImport("", "io/ioutil")
+			g.buf.AddImport("", "encoding/xml")
+			g.buf.WriteFormat(`
+	var _%s []byte
+	body, err = ioutil.ReadAll(r.Body)
+	if err == nil {
+		r.Body.Close()
+		err = xml.Unmarshal(_%s, &%s)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+`, name, name, name)
+		case "formdata":
+			g.buf.WriteFormat(`
+	if _%s := r.MultipartForm.File["%s"]; len(_%s) != 0 {
+		%s, err = _%s[0].Open()
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+	}
+`, name, name, name, name, name)
+		case "file":
+			g.buf.AddImport("", "io")
+			g.buf.AddImport("", "bytes")
+			g.buf.WriteFormat(`
+	_%s := bytes.NewBuffer(nil)
+	_, err = io.Copy(_%s, r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	err = r.Body.Close()
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	%s = _%s
+`, name, name, name, name)
+		case "image":
+			g.buf.AddImport("", "image")
+			g.buf.AddImport("_", "image/jpeg")
+			g.buf.AddImport("_", "image/png")
+			g.buf.WriteFormat(`
+	%s, _, err = image.Decode(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	err = r.Body.Close()
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
 	}
 `, name)
 
+		}
 	case "cookie":
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`

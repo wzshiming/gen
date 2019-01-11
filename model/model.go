@@ -1,6 +1,7 @@
 package model
 
 import (
+	"path"
 	"strconv"
 	"strings"
 
@@ -91,6 +92,14 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		g.buf.WriteString(utils.GetName(typ.Ref))
 		return nil
 	}
+
+	if typ.IsRoot {
+		g.buf.AddImport("", typ.PkgPath)
+		_, pkgname := path.Split(typ.PkgPath)
+		g.buf.WriteFormat("%s.%s", pkgname, typ.Name)
+		return nil
+	}
+
 	switch typ.Kind {
 	case spec.Ptr:
 		g.buf.WriteByte('*')
@@ -148,6 +157,8 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 			g.buf.WriteByte('\n')
 		}
 		g.buf.WriteByte('}')
+	case spec.Interface:
+		g.buf.WriteString("interface{}")
 	default:
 		g.buf.WriteString(strings.ToLower(typ.Kind.String()))
 	}

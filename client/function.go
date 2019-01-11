@@ -52,6 +52,9 @@ SetJSON(_%s)`, req.Name)
 			case "xml":
 				g.buf.WriteFormat(`.
 SetXML(_%s)`, req.Name)
+			case "file", "image":
+				g.buf.WriteFormat(`.
+SetBody(_%s)`, req.Name)
 			}
 		}
 	}

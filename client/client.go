@@ -51,6 +51,9 @@ func (g *GenClient) GenerateSchemas() (err error) {
 	sort.Strings(schKey)
 	for _, k := range schKey {
 		v := schemas[k]
+		if v.IsRoot {
+			continue
+		}
 		g.buf.WriteString(utils.CommentLine(v.Description))
 		g.buf.WriteString("type ")
 		g.buf.WriteString(utils.GetName(k))
@@ -64,12 +67,16 @@ func (g *GenClient) GenerateSchemas() (err error) {
 	return
 }
 
-func (g *GenClient) GenerateParameterRequests(req *spec.Request) (err error) {
+func (g *GenClient) GenerateParameterRequests(req *spec.Request, typ string) (err error) {
 	if req.Ref != "" {
 		req = g.api.Requests[req.Ref]
 	}
 	g.buf.WriteFormat("_%s ", req.Name)
-	err = g.Types(req.Type)
+	if typ != "" {
+		g.buf.WriteString(typ)
+	} else {
+		err = g.Types(req.Type)
+	}
 	if err != nil {
 		return err
 	}

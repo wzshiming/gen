@@ -93,10 +93,13 @@ type Type struct {
 	Enum        []*Enum
 	Description string
 
+	IsRoot            bool
 	IsJSONUnmarshaler bool
 	IsJSONMarshaler   bool
 	IsTextUnmarshaler bool
 	IsTextMarshaler   bool
+	IsReader          bool
+	IsImage           bool
 }
 
 type Field struct {
