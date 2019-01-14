@@ -1,4 +1,4 @@
-# Gen - RESTful style of micro services to generate source code tools
+# Gen - Tools for generating source code for microservices
 
 Just write normal functions, and Gen generates efficient routing source code and documentation for it
 Because the source code is generated, none of this affects runtime performance  
