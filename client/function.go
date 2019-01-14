@@ -34,27 +34,27 @@ func (g *GenClient) GenerateRequests(oper *spec.Operation) (err error) {
 		case "header":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetHead("%s", fmt.Sprint(_%s))`, req.Name, req.Name)
+SetHead("%s", fmt.Sprint(%s))`, req.Name, g.GetVarName(req.Name))
 		case "cookie":
 			// TODO
 		case "path":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetPath("%s", fmt.Sprint(_%s))`, req.Name, req.Name)
+SetPath("%s", fmt.Sprint(%s))`, req.Name, g.GetVarName(req.Name))
 		case "query":
 			g.buf.WriteFormat(`.
-SetQuery("%s", fmt.Sprint(_%s))`, req.Name, req.Name)
+SetQuery("%s", fmt.Sprint(%s))`, req.Name, g.GetVarName(req.Name))
 		case "body":
 			switch req.Content {
 			case "json":
 				g.buf.WriteFormat(`.
-SetJSON(_%s)`, req.Name)
+SetJSON(%s)`, g.GetVarName(req.Name))
 			case "xml":
 				g.buf.WriteFormat(`.
-SetXML(_%s)`, req.Name)
+SetXML(%s)`, g.GetVarName(req.Name))
 			case "file", "image":
 				g.buf.WriteFormat(`.
-SetBody(_%s)`, req.Name)
+SetBody(%s)`, g.GetVarName(req.Name))
 			}
 		}
 	}
@@ -83,18 +83,18 @@ func (g *GenClient) GenerateResponses(oper *spec.Operation) (err error) {
 		case "json":
 			g.buf.AddImport("", "encoding/json")
 			g.buf.WriteFormat(`
-	err = json.Unmarshal(resp.Body(),&_%s)
-`, resp.Name)
+	err = json.Unmarshal(resp.Body(),&%s)
+`, g.GetVarName(resp.Name))
 		case "xml":
 			g.buf.AddImport("", "encoding/xml")
 			g.buf.WriteFormat(`
-	err = xml.Unmarshal(resp.Body(),&_%s)
-`, resp.Name)
+	err = xml.Unmarshal(resp.Body(),&%s)
+`, g.GetVarName(resp.Name))
 		case "error":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`
-	_%s = fmt.Errorf(string(resp.Body()))
-`, resp.Name)
+	%s = fmt.Errorf(string(resp.Body()))
+`, g.GetVarName(resp.Name))
 		}
 		// TODO
 	}

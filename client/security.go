@@ -83,19 +83,19 @@ Client = Client`)
 		case "header":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetHeader("%s", fmt.Sprint(_%s))
-`, req.Name, req.Name)
+SetHeader("%s", fmt.Sprint(%s))
+`, req.Name, g.GetVarName(req.Name))
 		case "cookie":
 			// TODO
 		case "path":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetPath("%s", fmt.Sprint(_%s))
-`, req.Name, req.Name)
+SetPath("%s", fmt.Sprint(%s))
+`, req.Name, g.GetVarName(req.Name))
 		case "query":
 			g.buf.WriteFormat(`.
-SetQuery("%s", fmt.Sprint(_%s))
-`, req.Name, req.Name)
+SetQuery("%s", fmt.Sprint(%s))
+`, req.Name, g.GetVarName(req.Name))
 		case "body":
 			// No action
 		}

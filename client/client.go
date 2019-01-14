@@ -71,7 +71,7 @@ func (g *GenClient) GenerateParameterRequests(req *spec.Request, typ string) (er
 	if req.Ref != "" {
 		req = g.api.Requests[req.Ref]
 	}
-	g.buf.WriteFormat("_%s ", req.Name)
+	g.buf.WriteFormat("%s ", g.GetVarName(req.Name))
 	if typ != "" {
 		g.buf.WriteString(typ)
 	} else {
@@ -90,7 +90,7 @@ func (g *GenClient) GenerateParameterResponses(resp *spec.Response) (err error) 
 	if resp.Ref != "" {
 		resp = g.api.Responses[resp.Ref]
 	}
-	g.buf.WriteFormat("_%s ", resp.Name)
+	g.buf.WriteFormat("%s ", g.GetVarName(resp.Name))
 	err = g.Types(resp.Type)
 	if err != nil {
 		return err
