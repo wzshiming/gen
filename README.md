@@ -17,6 +17,7 @@ generating clients is also supported
 - [X] Generate documentation
   - [X] [OpenAPI 3](https://github.com/OAI/OpenAPI-Style-Guide)
   - [X] [SwaggerUI](https://github.com/swagger-api/swagger-ui)
+  - [X] [ReDoc](https://github.com/Rebilly/ReDoc)
 - [X] RESTful
   - [X] Generate Go router
   - [X] Generate Go client
