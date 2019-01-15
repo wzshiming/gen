@@ -342,6 +342,9 @@ func (g *GenOpenAPI) ResponsesBody(res *spec.Response) (code string, resp *oaspe
 		resp = oaspec.NewResponse(res.Content, nil)
 	}
 	resp.Description = res.Description
+	if resp.Description == "" {
+		resp.Description = "Response code is " + res.Code
+	}
 	code = res.Code
 	return
 }

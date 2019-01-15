@@ -536,8 +536,12 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	name := GetName(oname, tag)
 	kind := t.Kind()
 	isRoot := t.IsGoroot()
-	hash := utils.Hash(t.String(), oname, pkgpath, doc)
-	key := name + "." + hash
+	isBuiltin := name == strings.ToLower(kind.String())
+	hash := ""
+	if !isBuiltin {
+		hash = "." + utils.Hash(t.String(), oname, pkgpath, doc)
+	}
+	key := name + hash
 
 	if g.api.Types[key] != nil {
 		return &spec.Type{
@@ -678,7 +682,7 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 		sch.IsImage = true
 	}
 
-	if name != "" && name != strings.ToLower(kind.String()) {
+	if name != "" && !isBuiltin {
 		g.api.Types[key] = sch
 		return &spec.Type{
 			Ref: key,
