@@ -215,8 +215,25 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 			g.buf.AddImport("", "io")
 			g.buf.AddImport("", "bytes")
 			g.buf.WriteFormat(`
+	body := r.Body
+	if r.Header.Get("Content-Type") == "multipart/form-data" {
+		if r.MultipartForm == nil {
+			_, err = r.MultipartReader()
+			if err != nil {
+				return
+			}
+		}
+		file := r.MultipartForm.File["%s"]
+		if len(file) != 0 {
+			body, err = file[0].Open()
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	_%s := bytes.NewBuffer(nil)
-	_, err = io.Copy(_%s, r.Body)
+	_, err = io.Copy(_%s, body)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
@@ -227,13 +244,30 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 		return
 	}
 	%s = _%s
-`, name, name, name, name)
+`, req.Name, name, name, name, name)
 		case "image":
 			g.buf.AddImport("", "image")
 			g.buf.AddImport("_", "image/jpeg")
 			g.buf.AddImport("_", "image/png")
 			g.buf.WriteFormat(`
-	%s, _, err = image.Decode(r.Body)
+	body := r.Body
+	if r.Header.Get("Content-Type") == "multipart/form-data" {
+		if r.MultipartForm == nil {
+			_, err = r.MultipartReader()
+			if err != nil {
+				return
+			}
+		}
+		file := r.MultipartForm.File["%s"]
+		if len(file) != 0 {
+			body, err = file[0].Open()
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	%s, _, err = image.Decode(body)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
@@ -243,7 +277,7 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-`, name)
+`, req.Name, name)
 
 		}
 	case "cookie":
