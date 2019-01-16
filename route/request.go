@@ -263,21 +263,21 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 
 	case "query":
 		g.buf.WriteFormat(`
-	var _%s = r.URL.Query().Get("%s")
+	var _raw%s = r.URL.Query().Get("%s")
 `, name, req.Name)
-		g.Convert("_"+name, name, req.Type)
+		g.Convert("_raw"+name, name, req.Type)
 
 	case "header":
 		g.buf.WriteFormat(`
-	var _%s = r.Header.Get("%s")
+	var _raw%s = r.Header.Get("%s")
 `, name, req.Name)
-		g.Convert("_"+name, name, req.Type)
+		g.Convert("_raw"+name, name, req.Type)
 
 	case "path":
 		g.buf.WriteFormat(`
-	var _%s = mux.Vars(r)["%s"]
+	var _raw%s = mux.Vars(r)["%s"]
 `, name, req.Name)
-		g.Convert("_"+name, name, req.Type)
+		g.Convert("_raw"+name, name, req.Type)
 
 	default:
 		return fmt.Errorf("undefine in %s", req.In)

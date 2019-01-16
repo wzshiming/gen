@@ -79,11 +79,10 @@ func (g *GenModel) PkgPath(path string) bool {
 }
 
 func (g *GenModel) Paths(typ *spec.Type) bool {
-	reftyp, ok := g.api.Types[typ.Ref]
-	if !ok {
-		return false
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
 	}
-	return g.PkgPath(reftyp.PkgPath)
+	return g.PkgPath(typ.PkgPath)
 }
 
 func (g *GenModel) Types(typ *spec.Type) (err error) {
@@ -97,6 +96,12 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		g.buf.AddImport("", typ.PkgPath)
 		_, pkgname := path.Split(typ.PkgPath)
 		g.buf.WriteFormat("%s.%s", pkgname, typ.Name)
+		return nil
+	}
+
+	if typ.Name != "" && strings.ToLower(typ.Kind.String()) != typ.Name {
+		g.Paths(typ)
+		g.buf.WriteString(typ.Name)
 		return nil
 	}
 
