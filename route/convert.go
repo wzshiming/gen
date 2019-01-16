@@ -84,7 +84,7 @@ func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
 		typ = g.api.Types[typ.Ref]
 	}
 
-	if typ.IsTextUnmarshaler {
+	if typ.IsTextUnmarshaler || typ.Kind == spec.Time {
 		g.buf.AddImport("", "unsafe")
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
@@ -131,8 +131,6 @@ func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat("// Conversion of string to ")
 	g.Types(typ)
 	g.buf.WriteString(" is not supported.")
-	g.buf.WriteFormat("\nvar %s ", out)
-	g.Types(typ)
 
 	return nil
 }
