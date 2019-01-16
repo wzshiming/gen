@@ -97,9 +97,10 @@ func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
 			g.buf.AddImport("", "unsafe")
 			g.buf.WriteFormat(`
 	var _%s []byte
-	__%s = fmt.Sprint(_%s)
-	%s = *(*[]byte)(unsafe.Pointer(&__%s))
-`, name, name, name, name, name)
+	var __%s string
+	__%s = fmt.Sprint(%s)
+	_%s = *(*[]byte)(unsafe.Pointer(&__%s))
+`, name, name, name, name, name, name)
 		}
 
 		contentType = resp.Content
