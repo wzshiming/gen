@@ -56,10 +56,10 @@ func (s *< .UpperHump >Service) Update(< .LowerHump >ID bson.ObjectId /* #name:"
 		return err
 	}
 
-	return s.db.UpdateId(< .LowerHump >ID, &< .UpperHump >WithID{
+	return s.db.UpdateId(< .LowerHump >ID, bson.D{{"$set", &< .UpperHump >WithID{
 		< .UpperHump >:   *< .LowerHump >,
 		Update: bson.Now(),
-	})
+	}}})
 }
 
 // Delete the < .UpperHump > #route:"DELETE /{< .LowerSnake >_id}"#

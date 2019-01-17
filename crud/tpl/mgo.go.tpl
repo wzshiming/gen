@@ -30,7 +30,7 @@ func (s *< .UpperHump >Service) Create(< .LowerHump > *< .Original >) (err error
 
 // Update the < .UpperHump > #route:"PUT /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Update(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, < .LowerHump > *< .Original >) (err error) {
-	return s.db.UpdateId(< .LowerHump >ID, < .LowerHump >)
+	return s.db.UpdateId(< .LowerHump >ID, bson.D{{"$set", < .LowerHump >}})
 }
 
 // Delete the < .UpperHump > #route:"DELETE /{< .LowerSnake >_id}"#
