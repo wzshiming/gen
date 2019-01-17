@@ -403,14 +403,39 @@ func (g *GenOpenAPI) RequestBody(req *spec.Request) (body *oaspec.RequestBody, e
 		body = oaspec.XMLRequestBody(sch)
 	case "textplain":
 		body = oaspec.TextPlainRequestBody(sch)
-	case "octetstream", "file":
-		body = oaspec.OctetStreamRequestBody(sch)
 	case "urlencoded":
 		body = oaspec.URLEncodedRequestBody(sch)
 	case "formdata":
 		body = oaspec.FormDataRequestBody(sch)
+	case "octetstream", "file":
+		body = oaspec.OctetStreamRequestBody(sch)
+
+		prop := &oaspec.Schema{}
+		prop.Type = "object"
+		prop.Properties = map[string]*oaspec.Schema{
+			req.Name: sch,
+		}
+		body.Content[oaspec.MimeFormData] = &oaspec.MediaType{
+			Schema: prop,
+		}
+
 	case "image":
-		body = oaspec.NewRequestBody("image/*", sch)
+		body = &oaspec.RequestBody{}
+		body.Content = map[string]*oaspec.MediaType{
+			"image/*": &oaspec.MediaType{
+				Schema: sch,
+			},
+		}
+
+		prop := &oaspec.Schema{}
+		prop.Type = "object"
+		prop.Properties = map[string]*oaspec.Schema{
+			req.Name: sch,
+		}
+		body.Content[oaspec.MimeFormData] = &oaspec.MediaType{
+			Schema: prop,
+		}
+
 	default:
 		body = oaspec.NewRequestBody(req.Content, sch)
 	}

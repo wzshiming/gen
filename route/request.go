@@ -212,13 +212,16 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 	}
 `, name, name, name, name, name)
 		case "file":
+
 			g.buf.AddImport("", "io")
 			g.buf.AddImport("", "bytes")
+			g.buf.AddImport("", "strings")
 			g.buf.WriteFormat(`
 	body := r.Body
-	if r.Header.Get("Content-Type") == "multipart/form-data" {
+	contentType := r.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
 		if r.MultipartForm == nil {
-			_, err = r.MultipartReader()
+			err = r.ParseMultipartForm(10<<20)
 			if err != nil {
 				return
 			}
@@ -249,11 +252,13 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 			g.buf.AddImport("", "image")
 			g.buf.AddImport("_", "image/jpeg")
 			g.buf.AddImport("_", "image/png")
+			g.buf.AddImport("", "strings")
 			g.buf.WriteFormat(`
 	body := r.Body
-	if r.Header.Get("Content-Type") == "multipart/form-data" {
+	contentType := r.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
 		if r.MultipartForm == nil {
-			_, err = r.MultipartReader()
+			err = r.ParseMultipartForm(10<<20)
 			if err != nil {
 				return
 			}
