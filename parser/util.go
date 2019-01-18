@@ -2,7 +2,6 @@ package parser
 
 import (
 	"go/ast"
-	"path"
 	"reflect"
 	"strings"
 
@@ -67,12 +66,4 @@ func GetRoute(route string) (method, path string, ok bool) {
 		return "", "", false
 	}
 	return method, path, true
-}
-
-func Join(p1, p2 string) string {
-	if p2 == "" {
-		return p1
-	}
-	p := path.Join(p1, p2)
-	return p
 }

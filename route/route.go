@@ -73,41 +73,62 @@ func %s() http.Handler {
 }
 `)
 
-	var t *spec.Type
+	opers := map[string][]*spec.Operation{}
 	for _, v := range g.api.Operations {
-		typ := v.Type
-		if typ == nil {
+		if v.Type == nil {
 			continue
 		}
-		if typ.Ref != "" {
-			typ = g.api.Types[typ.Ref]
-		}
+		opers[v.BasePath] = append(opers[v.BasePath], v)
+	}
 
-		if typ != t {
-			if t != nil {
-				g.buf.WriteString(`
-	return router
-}
-`)
+	basepaths := []string{}
+	for k, _ := range opers {
+		basepaths = append(basepaths, k)
+	}
+	sort.Strings(basepaths)
+
+	for _, p := range basepaths {
+		op := opers[p]
+
+		sort.Slice(op, func(i, j int) bool {
+			io := op[i].Path
+			jo := op[j].Path
+			ip := strings.Count(io, "{")
+			jp := strings.Count(jo, "{")
+			if ip == jp {
+				return io > jo
 			}
-			t = typ
-			name := g.GetRouteName(t)
-			g.buf.WriteFormat(`
+			return ip < jp
+		})
+
+		for i, v := range op {
+			typ := v.Type
+			if typ.Ref != "" {
+				typ = g.api.Types[typ.Ref]
+			}
+
+			if i == 0 {
+				name := g.GetRouteName(typ)
+				g.buf.WriteFormat(`
 // %s is routing for %s
-func %s(router *mux.Router, %s *`, name, t.Name, name, g.GetVarName(t.Name))
-			g.Types(v.Type)
-			g.buf.WriteFormat(`, fs ...func(http.Handler) http.Handler) *mux.Router {
+func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
+				g.Types(v.Type)
+				g.buf.WriteFormat(`, fs ...mux.MiddlewareFunc) *mux.Router {
 	if router == nil {
 		router = mux.NewRouter()
 	}
-`)
-		}
-		err = g.GenerateRoute(v)
-		if err != nil {
-			return err
-		}
+	subrouter := router.PathPrefix("%s").Subrouter()
+	if len(fs) != 0 {
+		subrouter.Use(fs...)
 	}
-	if t != nil {
+`, v.BasePath)
+			}
+
+			err = g.GenerateRoute(v)
+			if err != nil {
+				return err
+			}
+		}
 		g.buf.WriteString(`
 	return router
 }
@@ -204,9 +225,10 @@ func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 
 	methods := strings.Split(oper.Method, ",")
 	for i := range methods {
-		methods[i] = `"` + strings.ToUpper(methods[i]) + `"`
+		methods[i] = strings.ToUpper(methods[i])
 	}
 
+	path := oper.Path[len(oper.BasePath):]
 	g.buf.WriteFormat(`
 	// Registered routing %s %s`, strings.ToUpper(oper.Method), oper.Path)
 	if oper.Type != nil {
@@ -225,10 +247,7 @@ func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 	_%s := http.HandlerFunc(%s)`, name, name)
 	}
 	g.buf.WriteFormat(`
-	for _, f := range fs {
-		_%s = f(_%s)
-	}
-	router.Methods(%s).Path("%s").Handler(_%s)
-`, name, name, strings.Join(methods, ", "), oper.Path, name)
+	subrouter.Methods("%s").Path("%s").Handler(_%s)
+`, strings.Join(methods, `", "`), path, name)
 	return
 }

@@ -49,6 +49,7 @@ type Security struct {
 type Operation struct {
 	PkgPath     string
 	Method      string
+	BasePath    string
 	Path        string
 	Tags        []string
 	Name        string
