@@ -7,6 +7,6 @@ swaggerui.go: swaggerui
 
 swaggerui:
 	docker pull ${IMAGE}
-	docker run -v ${PWD}/swaggerui/:/swaggerui/ ${IMAGE} cp -r /usr/share/nginx/html/. /swaggerui
+	docker run --rm -v ${PWD}/swaggerui/:/swaggerui/ ${IMAGE} cp -r /usr/share/nginx/html/. /swaggerui
 	sed -i '' -e 's#https://petstore.swagger.io/v2/swagger.json#openapi.json#' ./swaggerui/index.html
 

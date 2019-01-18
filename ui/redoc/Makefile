@@ -7,7 +7,7 @@ redoc.go: redoc
 
 redoc:
 	docker pull ${IMAGE}
-	docker run -v ${PWD}/redoc/:/redoc/ ${IMAGE} cp -r /usr/share/nginx/html/. /redoc
+	docker run --rm -v ${PWD}/redoc/:/redoc/ ${IMAGE} cp -r /usr/share/nginx/html/. /redoc
 	sed -i '' -e 's|%PAGE_TITLE%|ReDoc|g' ./redoc/index.html
 	sed -i '' -e 's|%PAGE_FAVICON%|favicon.png|g' ./redoc/index.html
 	sed -i '' -e 's|%SPEC_URL%|./openapi.json|g' ./redoc/index.html
