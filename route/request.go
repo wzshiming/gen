@@ -30,20 +30,25 @@ func (g *GenRoute) GenerateRequest(req *spec.Request) error {
 			if resp.Name != req.Name {
 				continue
 			}
+
+			if resp.Type.Ref != req.Type.Ref {
+				continue
+			}
+
 			midds = append(midds, midd)
 		}
 		switch len(midds) {
-		case 0:
+		default:
 			g.buf.WriteFormat(`
 // Permission middleware undefined %s.
 `, req.Name)
 		case 1:
-			secu := midds[0]
-			name := g.GetMiddlewareFunctionName(secu)
+			midd := midds[0]
+			name := g.GetMiddlewareFunctionName(midd)
 			g.buf.WriteFormat(`
 // Permission middlewares call %s.
-%s, err = %s(`, secu.Name, vname, name)
-			if secu.Type != nil {
+%s, err = %s(`, midd.Name, vname, name)
+			if midd.Type != nil {
 				g.buf.WriteString(`s, `)
 			}
 			g.buf.WriteString(`w, r)
