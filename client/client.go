@@ -58,7 +58,7 @@ func (g *GenClient) GenerateSchemas() (err error) {
 		g.buf.WriteString("type ")
 		g.buf.WriteString(utils.GetName(k))
 		g.buf.WriteByte(' ')
-		err = g.Types(v)
+		err = g.TypesDefine(v)
 		if err != nil {
 			return err
 		}

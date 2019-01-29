@@ -92,16 +92,24 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 		return nil
 	}
 
+	if typ.Name != "" && strings.ToLower(typ.Kind.String()) != typ.Name {
+		g.Paths(typ)
+		g.buf.WriteString(typ.Name)
+		return nil
+	}
+
+	return g.TypesDefine(typ)
+}
+
+func (g *GenModel) TypesDefine(typ *spec.Type) (err error) {
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+
 	if typ.IsRoot {
 		g.buf.AddImport("", typ.PkgPath)
 		_, pkgname := path.Split(typ.PkgPath)
 		g.buf.WriteFormat("%s.%s", pkgname, typ.Name)
-		return nil
-	}
-
-	if typ.Name != "" && strings.ToLower(typ.Kind.String()) != typ.Name {
-		g.Paths(typ)
-		g.buf.WriteString(typ.Name)
 		return nil
 	}
 
