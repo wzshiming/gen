@@ -4,8 +4,6 @@ test:
 
 generate: go-bindata
 	make -C crud/tpl
-	make -C ui/swaggerui
-	make -C ui/redoc
 	make -C examples
 
 go-bindata:
