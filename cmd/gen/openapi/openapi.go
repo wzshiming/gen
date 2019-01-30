@@ -12,10 +12,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
-	"github.com/wzshiming/gen/ui/redoc"
-	"github.com/wzshiming/gen/ui/swaggerui"
 	"github.com/wzshiming/gotype"
 	oaspec "github.com/wzshiming/openapi/spec"
+	oaui "github.com/wzshiming/openapi/ui"
+	"github.com/wzshiming/openapi/ui/redoc"
+	"github.com/wzshiming/openapi/ui/swaggerui"
 	"github.com/wzshiming/openapi/util"
 )
 
@@ -111,8 +112,8 @@ var Cmd = &cobra.Command{
 
 			mux := &http.ServeMux{}
 
-			mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.json", dj)))
-			mux.Handle("/redoc/", http.StripPrefix("/redoc", redoc.HandleWithFile("openapi.json", dj)))
+			mux.Handle("/swagger/", http.StripPrefix("/swagger", oaui.HandleWithFile("openapi.json", dj, swaggerui.Asset)))
+			mux.Handle("/redoc/", http.StripPrefix("/redoc", oaui.HandleWithFile("openapi.json", dj, redoc.Asset)))
 			fmt.Printf("Open http://127.0.0.1:%d/swagger/# or http://127.0.0.1:%d/redoc/# with your browser.\n", port, port)
 
 			mux0 := handlers.RecoveryHandler()(mux)

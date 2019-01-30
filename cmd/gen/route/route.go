@@ -97,8 +97,9 @@ var Cmd = &cobra.Command{
 			dd, _ := json.Marshal(api)
 			d.WriteFormat("%s\nvar OpenAPI=`%s`\n", doc, string(dd))
 
-			d.AddImport("", "github.com/wzshiming/gen/ui/swaggerui")
-			d.AddImport("", "github.com/wzshiming/gen/ui/redoc")
+			d.AddImport("", "github.com/wzshiming/openapi/ui")
+			d.AddImport("", "github.com/wzshiming/openapi/ui/swaggerui")
+			d.AddImport("", "github.com/wzshiming/openapi/ui/redoc")
 			d.AddImport("", "github.com/gorilla/mux")
 			d.AddImport("", "os")
 			d.AddImport("", "unsafe")
@@ -106,18 +107,18 @@ var Cmd = &cobra.Command{
 			d.WriteString(`
 // RouteOpenAPI
 func RouteOpenAPI(router *mux.Router) *mux.Router {
-	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", swaggerui.HandleWith(func(path string) ([]byte, error) {
+	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", ui.HandleWith(func(path string) ([]byte, error) {
 		if path == "openapi.json" {
 			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
 		}
 		return nil, os.ErrNotExist
-	})))
-	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/redoc", redoc.HandleWith(func(path string) ([]byte, error) {
+	}, swaggerui.Asset)))
+	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/redoc", ui.HandleWith(func(path string) ([]byte, error) {
 		if path == "openapi.json" {
 			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
 		}
 		return nil, os.ErrNotExist
-	})))
+	}, redoc.Asset)))
 	return router
 }
 `)

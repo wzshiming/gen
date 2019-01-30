@@ -59,8 +59,9 @@ func file(pkgs []string, port string, way string) ([]byte, error) {
 	router.AddImport("", "fmt")
 	router.AddImport("", "os")
 	router.AddImport("", "github.com/gorilla/handlers")
-	router.AddImport("", "github.com/wzshiming/gen/ui/swaggerui")
-	router.AddImport("", "github.com/wzshiming/gen/ui/redoc")
+	router.AddImport("", "github.com/wzshiming/openapi/ui/swaggerui")
+	router.AddImport("", "github.com/wzshiming/openapi/ui/redoc")
+	router.AddImport("", "github.com/wzshiming/openapi/ui")
 
 	api, err := openapi.NewGenOpenAPI(def.API()).SetInfo(&oaspec.Info{
 		Title:       "OpenAPI Demo",
@@ -106,8 +107,8 @@ func main() {
 	mux := &http.ServeMux{}
 	mux.Handle("/", Router())
 
-	mux.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.HandleWithFile("openapi.json", openapi)))
-	mux.Handle("/redoc/", http.StripPrefix("/redoc", redoc.HandleWithFile("openapi.json", openapi)))
+	mux.Handle("/swagger/", http.StripPrefix("/swagger", ui.HandleWithFile("openapi.json", openapi, swaggerui.Asset)))
+	mux.Handle("/redoc/", http.StripPrefix("/redoc", ui.HandleWithFile("openapi.json", openapi, redoc.Asset)))
 	fmt.Printf("Open {{ .Server }}/swagger/# or {{ .Server }}/redoc/# with your browser.\n")
 
 	mux0 := handlers.RecoveryHandler()(mux)
