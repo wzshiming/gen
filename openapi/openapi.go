@@ -270,7 +270,8 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 	}
 
 	oper.Description = ope.Description
-	oper.Summary = strings.SplitN(oper.Description, "\n", 2)[0]
+	oper.Summary = ope.Summary
+	oper.Deprecated = ope.Deprecated
 
 	if g.openapi.Paths[ope.Path] == nil {
 		g.openapi.Paths[ope.Path] = &oaspec.PathItem{}

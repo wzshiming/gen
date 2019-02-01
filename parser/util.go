@@ -51,19 +51,30 @@ func GetTypeHash(typ gotype.Type) string {
 	return strings.Repeat("_", tp) + name + "." + utils.Hash(name, pkgpath)
 }
 
-// GetRoute
-func GetRoute(route string) (method, path string, ok bool) {
-	rs := strings.SplitN(strings.TrimSpace(route), " ", 2)
+// GetRoute "!GET /path"
+func GetRoute(route string) (deprecated bool, method, path string, ok bool) {
+
+	route = strings.TrimSpace(route)
+	if route == "" {
+		return false, "", "", false
+	}
+	if route[0] == '!' {
+		deprecated = true
+		route = route[1:]
+	}
+
+	route = strings.TrimSpace(route)
+	rs := strings.SplitN(route, " ", 2)
 	if len(rs) != 2 {
-		return "", "", false
+		return false, "", "", false
 	}
 	path = strings.TrimSpace(rs[1])
 	if path == "" {
-		return "", "", false
+		return false, "", "", false
 	}
 	method = strings.TrimSpace(strings.ToUpper(rs[0]))
 	if method == "" {
-		return "", "", false
+		return false, "", "", false
 	}
-	return method, path, true
+	return deprecated, method, path, true
 }

@@ -47,16 +47,19 @@ type Security struct {
 }
 
 type Operation struct {
-	PkgPath     string
-	Method      string
-	BasePath    string
-	Path        string
-	Tags        []string
-	Name        string
-	Type        *Type
-	Requests    []*Request
-	Responses   []*Response
-	Securitys   []*Security
+	PkgPath   string
+	Method    string
+	BasePath  string
+	Path      string
+	Tags      []string
+	Name      string
+	Type      *Type
+	Requests  []*Request
+	Responses []*Response
+	Securitys []*Security
+
+	Deprecated  bool
+	Summary     string
 	Description string
 }
 

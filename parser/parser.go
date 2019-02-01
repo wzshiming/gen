@@ -212,7 +212,7 @@ func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	path := ""
 	route := tag.Get("route")
 	if route != "" {
-		_, path, _ = GetRoute(route)
+		_, _, path, _ = GetRoute(route)
 	}
 
 	hash := utils.Hash(oname, pkgpath, middleware, doc)
@@ -292,7 +292,7 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 	if route == "" {
 		return nil
 	}
-	method, pat, ok := GetRoute(route)
+	deprecated, method, pat, ok := GetRoute(route)
 	if !ok {
 		return nil
 	}
@@ -308,6 +308,8 @@ func (g *Parser) AddOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 	oper.BasePath = basePath
 	oper.Path = pat
 	oper.Description = doc
+	oper.Summary = strings.SplitN(oper.Description, "\n", 2)[0]
+	oper.Deprecated = deprecated
 	oper.Type = sch
 	oper.Name = name
 
