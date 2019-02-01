@@ -94,13 +94,7 @@ type Type struct {
 	Enum        []*Enum
 	Description string
 
-	IsRoot            bool
-	IsJSONUnmarshaler bool
-	IsJSONMarshaler   bool
-	IsTextUnmarshaler bool
-	IsTextMarshaler   bool
-	IsReader          bool
-	IsImage           bool
+	Attr Attr
 }
 
 type Field struct {
@@ -114,4 +108,28 @@ type Field struct {
 type Enum struct {
 	Value       string
 	Description string
+}
+
+type Attr uint64
+
+const (
+	AttrRoot Attr = 1 << (63 - iota)
+	AttrJSONUnmarshaler
+	AttrJSONMarshaler
+	AttrTextUnmarshaler
+	AttrTextMarshaler
+	AttrReader
+	AttrImage
+)
+
+func (a Attr) HasOne(b Attr) bool {
+	return a&b != 0
+}
+
+func (a Attr) Has(b Attr) bool {
+	return a&b == b
+}
+
+func (a *Attr) Add(b Attr) {
+	*a |= b
 }

@@ -447,11 +447,11 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	if typ.Ref != "" {
 		return oaspec.RefSchemas(typ.Ref), nil
 	}
-	if typ.IsReader || typ.IsImage {
+	if typ.Attr.HasOne(spec.AttrReader | spec.AttrImage) {
 		sch = &oaspec.Schema{}
 		sch.Type = "string"
 		sch.Format = "binary"
-	} else if typ.IsTextMarshaler {
+	} else if typ.Attr.Has(spec.AttrTextMarshaler) {
 		sch = oaspec.StrFmtProperty(typ.Name)
 	} else {
 		switch typ.Kind {

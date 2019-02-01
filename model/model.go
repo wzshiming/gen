@@ -106,7 +106,7 @@ func (g *GenModel) TypesDefine(typ *spec.Type) (err error) {
 		typ = g.api.Types[typ.Ref]
 	}
 
-	if typ.IsRoot {
+	if typ.Attr.Has(spec.AttrRoot) {
 		g.buf.AddImport("", typ.PkgPath)
 		_, pkgname := path.Split(typ.PkgPath)
 		g.buf.WriteFormat("%s.%s", pkgname, typ.Name)

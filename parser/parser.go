@@ -462,17 +462,17 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 			typ = g.api.Types[typ.Ref]
 		}
 
-		if typ.IsImage {
+		if typ.Attr.Has(spec.AttrImage) {
 			in = "body"
 			if content == "" {
 				content = "image"
 			}
-		} else if typ.IsReader {
+		} else if typ.Attr.Has(spec.AttrReader) {
 			in = "body"
 			if content == "" {
 				content = "file"
 			}
-		} else if typ.IsTextUnmarshaler {
+		} else if typ.Attr.Has(spec.AttrTextUnmarshaler) {
 			if path != "" && strings.Index(path, "{"+name+"}") != -1 {
 				in = "path"
 			} else {
@@ -553,7 +553,9 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	}
 
 	sch = &spec.Type{}
-	sch.IsRoot = isRoot
+	if isRoot {
+		sch.Attr.Add(spec.AttrRoot)
+	}
 	sch.Ident = key
 	sch.Name = name
 	sch.PkgPath = pkgpath
@@ -665,24 +667,24 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	sch.Kind = kindMapping[kind]
 
 	if text, ok := g.importChild("encoding", "TextUnmarshaler"); ok && gotype.Implements(t, text) {
-		sch.IsTextUnmarshaler = true
+		sch.Attr.Add(spec.AttrTextUnmarshaler)
 	}
 	if text, ok := g.importChild("encoding", "TextMarshaler"); ok && gotype.Implements(t, text) {
-		sch.IsTextMarshaler = true
+		sch.Attr.Add(spec.AttrTextMarshaler)
 	}
 	if text, ok := g.importChild("encoding/json", "Unmarshaler"); ok && gotype.Implements(t, text) {
-		sch.IsJSONUnmarshaler = true
+		sch.Attr.Add(spec.AttrJSONUnmarshaler)
 	}
 	if text, ok := g.importChild("encoding/json", "Marshaler"); ok && gotype.Implements(t, text) {
-		sch.IsJSONMarshaler = true
+		sch.Attr.Add(spec.AttrJSONMarshaler)
 	}
 
 	if read, ok := g.importChild("io", "Reader"); ok && gotype.Implements(t, read) {
-		sch.IsReader = true
+		sch.Attr.Add(spec.AttrReader)
 	}
 
 	if read, ok := g.importChild("image", "Image"); ok && gotype.Implements(t, read) {
-		sch.IsImage = true
+		sch.Attr.Add(spec.AttrImage)
 	}
 
 	if name != "" && !isBuiltin {

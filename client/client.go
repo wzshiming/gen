@@ -51,7 +51,7 @@ func (g *GenClient) GenerateSchemas() (err error) {
 	sort.Strings(schKey)
 	for _, k := range schKey {
 		v := schemas[k]
-		if v.IsRoot {
+		if v.Attr.Has(spec.AttrRoot) {
 			continue
 		}
 		g.buf.WriteString(utils.CommentLine(v.Description))

@@ -48,7 +48,7 @@ func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
 		typ = g.api.Types[typ.Ref]
 	}
 
-	if typ.IsTextUnmarshaler || typ.Kind == spec.Time {
+	if typ.Attr.Has(spec.AttrTextUnmarshaler) || typ.Kind == spec.Time {
 		g.buf.AddImport("", "unsafe")
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`

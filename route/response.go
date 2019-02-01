@@ -83,7 +83,7 @@ func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
 		return nil
 	default:
 		typ := resp.Type
-		if typ.IsTextMarshaler {
+		if typ.Attr.Has(spec.AttrTextMarshaler) {
 			g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = %s.MarshalText()
