@@ -4,7 +4,9 @@ import (
 	"go/build"
 	"go/format"
 	"io/ioutil"
+	"path"
 	"path/filepath"
+	"strings"
 	"unsafe"
 )
 
@@ -51,11 +53,21 @@ func (f *File) WithFilename(filename string) *File {
 	return f
 }
 
-func (f *File) AddImport(aliase, path string) *File {
+func (f *File) AddImport(aliase, importpath string) *File {
 	if f.imports == nil {
 		f.imports = map[string]string{}
 	}
-	f.imports[path] = aliase
+	if aliase == "" {
+		_, aliase = path.Split(importpath)
+		aliase = strings.SplitN(aliase, ".", 2)[0]
+	}
+	if aliase == "_" {
+		_, ok := f.imports[importpath]
+		if ok {
+			return f
+		}
+	}
+	f.imports[importpath] = aliase
 	return f
 }
 
