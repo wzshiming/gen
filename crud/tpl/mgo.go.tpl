@@ -45,16 +45,18 @@ func New< .UpperHump >Service(db *mgo.Collection) (*< .UpperHump >Service, error
 
 // Create a < .UpperHump > #route:"POST /"#
 func (s *< .UpperHump >Service) Create(< .LowerHump > *< .UpperHump >) (< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, err error) {
-    < .LowerHump >ID = bson.NewObjectId()
-    err = s.db.Insert(&< .UpperHump >WithID {
-        ID: < .LowerHump >ID,
-        < .Original >: *< .LowerHump >,
-		UpdateTime: bson.Now(),
-    })
-    if err != nil {
-        return "", err
-    }
-    return < .LowerHump >ID, nil
+	< .LowerHump >ID = bson.NewObjectId()
+	now := bson.Now()
+	err = s.db.Insert(&< .UpperHump >WithID {
+		ID: < .LowerHump >ID,
+		< .Original >: *< .LowerHump >,
+		CreateTime: now,
+		UpdateTime: now,
+	})
+	if err != nil {
+		return "", err
+	}
+	return < .LowerHump >ID, nil
 }
 
 // Update the < .UpperHump > #route:"PUT /{< .LowerSnake >_id}"#
@@ -90,7 +92,7 @@ func (s *< .UpperHump >Service) Get(< .LowerHump >ID bson.ObjectId /* #name:"< .
 
 // List of the < .UpperHump > #route:"GET /"#
 func (s *< .UpperHump >Service) List(startTime /* #name:"start_time"# */, endTime time.Time /* #name:"end_time"# */, offset, limit int) (< .LowerHump >s []*< .UpperHump >WithID, err error) {
-    m := bson.D{}
+	m := bson.D{}
 	if !startTime.IsZero() || !endTime.IsZero() {
 		m0 := bson.D{}
 		if !startTime.IsZero() {
