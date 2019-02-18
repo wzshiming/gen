@@ -2,23 +2,22 @@ package named
 
 import (
 	"fmt"
-	"unsafe"
 )
 
 type Named struct {
-	set map[string]map[unsafe.Pointer]string
+	set map[string]map[string]string
 }
 
 func NewNamed() *Named {
 	return &Named{
-		set: map[string]map[unsafe.Pointer]string{},
+		set: map[string]map[string]string{},
 	}
 }
 
-func (n *Named) GetName(name string, addr unsafe.Pointer) string {
+func (n *Named) GetName(name string, addr string) string {
 	d, ok := n.set[name]
 	if !ok {
-		n.set[name] = map[unsafe.Pointer]string{
+		n.set[name] = map[string]string{
 			addr: name,
 		}
 		return name

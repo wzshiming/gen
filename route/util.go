@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"strconv"
 	"unsafe"
 
 	"github.com/wzshiming/gen/spec"
@@ -17,30 +18,30 @@ func (g *GenRoute) GetVarName(name string) string {
 
 func (g *GenRoute) GetRouteName(typ *spec.Type) string {
 	name := namecase.ToUpperHumpInitialisms(fmt.Sprintf("route_%s", typ.Name))
-	addr := unsafe.Pointer(typ)
+	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(typ))), 16)
 	return g.named.GetName(name, addr)
 }
 
 func (g *GenRoute) GetOperationFunctionName(oper *spec.Operation) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("operation_%s_%s", oper.Method, oper.Path))
-	addr := unsafe.Pointer(oper)
+	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(oper))), 16)
 	return g.named.GetName(name, addr)
 }
 
 func (g *GenRoute) GetRequestFunctionName(req *spec.Request) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("request_%s_%s", req.In, req.Name))
-	addr := unsafe.Pointer(req)
+	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(req))), 16)
 	return g.named.GetName(name, addr)
 }
 
 func (g *GenRoute) GetSecurityFunctionName(secu *spec.Security) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("security_%s_%s", secu.Schema, secu.Name))
-	addr := unsafe.Pointer(secu)
+	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(secu))), 16)
 	return g.named.GetName(name, addr)
 }
 
 func (g *GenRoute) GetMiddlewareFunctionName(midd *spec.Middleware) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("middleware_%s_%s", midd.Schema, midd.Name))
-	addr := unsafe.Pointer(midd)
+	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(midd))), 16)
 	return g.named.GetName(name, addr)
 }
