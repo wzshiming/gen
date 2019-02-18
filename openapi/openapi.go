@@ -218,7 +218,7 @@ func (g *GenOpenAPI) Requests(oper *oaspec.Operation, reqs []*spec.Request) (err
 
 func (g *GenOpenAPI) Responses(oper *oaspec.Operation, resps []*spec.Response) (err error) {
 	oper.Responses = map[string]*oaspec.Response{}
-	headers := []*oaspec.Header{}
+	headers := map[string]*oaspec.Header{}
 	for _, resp := range resps {
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
@@ -227,11 +227,11 @@ func (g *GenOpenAPI) Responses(oper *oaspec.Operation, resps []*spec.Response) (
 		case "cookie":
 			// TODO: Process the returned cookie
 		case "header":
-			head, err := g.ResponsesHeader(resp)
+			name, head, err := g.ResponsesHeader(resp)
 			if err != nil {
 				return err
 			}
-			headers = append(headers, head)
+			headers[name] = head
 		case "body":
 			code, resp, err := g.ResponsesBody(resp)
 			if err != nil {
@@ -239,12 +239,7 @@ func (g *GenOpenAPI) Responses(oper *oaspec.Operation, resps []*spec.Response) (
 			}
 
 			if len(headers) != 0 {
-				if resp.Headers == nil {
-					resp.Headers = map[string]*oaspec.Header{}
-				}
-				for _, head := range headers {
-					resp.Headers[head.Name] = head
-				}
+				resp.Headers = headers
 			}
 
 			oper.Responses[code] = resp
@@ -306,16 +301,14 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 	return nil
 }
 
-func (g *GenOpenAPI) ResponsesHeader(res *spec.Response) (head *oaspec.Header, err error) {
+func (g *GenOpenAPI) ResponsesHeader(res *spec.Response) (name string, head *oaspec.Header, err error) {
 	sch, err := g.Schemas(res.Type)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	head = &oaspec.Header{}
-	head.In = "header"
-	head.Name = res.Name
 	head.Schema = sch
-	return head, nil
+	return res.Name, head, nil
 }
 
 func (g *GenOpenAPI) ResponsesBody(res *spec.Response) (code string, resp *oaspec.Response, err error) {
