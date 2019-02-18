@@ -19,8 +19,8 @@ github.com/wzshiming/gotype v0.4.2 h1:C/+jcML5ZRyIjLPSkZ42K1zKf9buKcAlwUQyrh4WN7
 github.com/wzshiming/gotype v0.4.2/go.mod h1:P0t9DFmwzTST7oUbGw7IaW8DAQxgkCfi7WnGY/+COs4=
 github.com/wzshiming/namecase v3.0.4+incompatible h1:6MPkBmlrCwvqU4WefTHb1rz9PXOdzdm5CxbuOCwEO/o=
 github.com/wzshiming/namecase v3.0.4+incompatible/go.mod h1:q3P1U6voOD8f/qupop2s7rFCYotZHayowv3UqVj1hBQ=
-github.com/wzshiming/openapi v0.0.0-20190130083847-fbdfe4df7b15 h1:CRUk1vxYRPMzfSHaPToeAmAaZHwe6PzlGO51uCZsyfI=
-github.com/wzshiming/openapi v0.0.0-20190130083847-fbdfe4df7b15/go.mod h1:bGcw/6WQPCRn7A4S77rCct+0xY31fUn9A+89KWVmNNA=
+github.com/wzshiming/openapi v0.0.0-20190218023048-2996085a0132 h1:dkSvqRxjw7YpSsI3TmDcKS7VMOZY0yGuZbeKWEDJOps=
+github.com/wzshiming/openapi v0.0.0-20190218023048-2996085a0132/go.mod h1:bGcw/6WQPCRn7A4S77rCct+0xY31fUn9A+89KWVmNNA=
 github.com/wzshiming/requests v1.1.0 h1:wP1mpwPwR5wLbsZdzSZy/ORe2kmiSJdZZMwQGS4siys=
 github.com/wzshiming/requests v1.1.0/go.mod h1:bWykudsOJpRdoG9HSTm9p0P9BUmnELaxL2Sb3lDACUM=
 golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3 h1:czFLhve3vsQetD6JOJ8NZZvGQIXlnN3/yXxbT6/awxI=
