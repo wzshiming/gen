@@ -5,6 +5,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/wzshiming/gen/named"
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/utils"
 	"github.com/wzshiming/gotype"
@@ -16,14 +17,25 @@ type Parser struct {
 	api    *spec.API
 	ways   map[string]bool
 	consts map[string]gotype.Type
+
+	namedReq  *named.Named
+	namedResp *named.Named
+	namedMidd *named.Named
+	namedSecu *named.Named
+	namedTyp  *named.Named
 }
 
 func NewParser(imp *gotype.Importer) *Parser {
 	return &Parser{
-		imp:    imp,
-		api:    spec.NewAPI(),
-		ways:   map[string]bool{},
-		consts: map[string]gotype.Type{},
+		imp:       imp,
+		api:       spec.NewAPI(),
+		ways:      map[string]bool{},
+		consts:    map[string]gotype.Type{},
+		namedReq:  named.NewNamed("."),
+		namedResp: named.NewNamed("."),
+		namedMidd: named.NewNamed("."),
+		namedSecu: named.NewNamed("."),
+		namedTyp:  named.NewNamed("."),
 	}
 }
 
@@ -216,7 +228,7 @@ func (g *Parser) AddMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	}
 
 	hash := utils.Hash(oname, pkgpath, middleware, doc)
-	key := name + "." + hash
+	key := g.namedMidd.GetName(name, hash)
 
 	midd := &spec.Middleware{}
 	midd.Name = name
@@ -255,7 +267,7 @@ func (g *Parser) AddSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	}
 
 	hash := utils.Hash(oname, pkgpath, security, doc)
-	key := name + "." + hash
+	key := g.namedSecu.GetName(name, hash)
 
 	secu := &spec.Security{}
 	secu.Name = name
@@ -388,7 +400,7 @@ func (g *Parser) AddResponse(t gotype.Type) (resp *spec.Response, err error) {
 		si = sch.Ident
 	}
 	hash := utils.Hash(oname, in, code, content, doc, si)
-	key := name + "." + hash
+	key := g.namedResp.GetName(name, hash)
 
 	if g.api.Responses[key] != nil {
 		return &spec.Response{
@@ -511,7 +523,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 		si = sch.Ident
 	}
 	hash := utils.Hash(oname, in, content, doc, si)
-	key := name + "." + hash
+	key := g.namedReq.GetName(name, hash)
 
 	if g.api.Requests[key] != nil {
 		return &spec.Request{
@@ -544,9 +556,9 @@ func (g *Parser) AddType(t gotype.Type) (sch *spec.Type, err error) {
 	isBuiltin := name == strings.ToLower(kind.String())
 	hash := ""
 	if !isBuiltin {
-		hash = "." + utils.Hash(t.String(), oname, pkgpath, doc)
+		hash = utils.Hash(t.String(), oname, pkgpath, doc)
 	}
-	key := name + hash
+	key := g.namedTyp.GetName(name, hash)
 
 	if g.api.Types[key] != nil {
 		return &spec.Type{

@@ -6,11 +6,13 @@ import (
 
 type Named struct {
 	set map[string]map[string]string
+	seg string
 }
 
-func NewNamed() *Named {
+func NewNamed(seg string) *Named {
 	return &Named{
 		set: map[string]map[string]string{},
+		seg: seg,
 	}
 }
 
@@ -27,7 +29,7 @@ func (n *Named) GetName(name string, addr string) string {
 		return name
 	}
 
-	name = fmt.Sprintf("%s_%d", name, len(d))
+	name = fmt.Sprintf("%s%s%d", name, n.seg, len(d))
 	d[addr] = name
 	return name
 }

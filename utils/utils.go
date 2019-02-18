@@ -81,5 +81,5 @@ func Hash(s ...string) string {
 	for _, v := range s {
 		h.Write([]byte(v))
 	}
-	return hex.EncodeToString(h.Sum(nil)[:2])
+	return hex.EncodeToString(h.Sum(nil)[:])
 }

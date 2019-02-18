@@ -25,7 +25,7 @@ func NewGenRoute(api *spec.API) *GenRoute {
 		api:   api,
 		buf:   buf,
 		only:  map[string]bool{},
-		named: named.NewNamed(),
+		named: named.NewNamed("_"),
 	}
 }
 
