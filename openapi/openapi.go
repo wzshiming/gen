@@ -63,14 +63,6 @@ func (g *GenOpenAPI) Generate() (*oaspec.OpenAPI, error) {
 }
 
 func (g *GenOpenAPI) Components() (err error) {
-	for k, v := range g.api.Types {
-		sch, err := g.Schemas(v)
-		if err != nil {
-			return err
-		}
-		g.openapi.Components.Schemas[k] = sch
-
-	}
 
 	for _, v := range g.api.Securitys {
 		err := g.SecurityScheme(v)
@@ -136,16 +128,16 @@ func (g *GenOpenAPI) Components() (err error) {
 }
 
 func (g *GenOpenAPI) Tags(ope *spec.Operation) (err error) {
-	sch, err := g.Schemas(ope.Type)
+	typ := ope.Type
+	typ = g.api.Types[typ.Ref]
+	sch, err := g.Schemas(typ)
 	if err != nil {
 		return err
 	}
-	description := ""
 	if sch.Ref != "" {
-		description = g.openapi.Components.Schemas[sch.Ref].Description
-	} else {
-		description = sch.Description
+		sch = g.openapi.Components.Schemas[sch.Ref]
 	}
+	description := sch.Description
 	for _, v := range ope.Tags {
 		g.openapi.Tags = append(g.openapi.Tags, &oaspec.Tag{
 			Name:        v,
@@ -440,8 +432,16 @@ func (g *GenOpenAPI) RequestBody(req *spec.Request) (body *oaspec.RequestBody, e
 
 func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	if typ.Ref != "" {
+		if g.openapi.Components.Schemas[typ.Ref] == nil {
+			typ0, err := g.Schemas(g.api.Types[typ.Ref])
+			if err != nil {
+				return nil, err
+			}
+			g.openapi.Components.Schemas[typ.Ref] = typ0
+		}
 		return oaspec.RefSchemas(typ.Ref), nil
 	}
+
 	if typ.Attr.HasOne(spec.AttrReader | spec.AttrImage) {
 		sch = &oaspec.Schema{}
 		sch.Type = "string"
