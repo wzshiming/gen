@@ -5,7 +5,7 @@ import (
 	"github.com/wzshiming/gen/utils"
 )
 
-func (g *GenClient) GenerateClient() (err error) {
+func (g *GenClient) generateClient() (err error) {
 	g.buf.AddImport("", "github.com/wzshiming/requests")
 	g.buf.WriteFormat(`
 	var Client = requests.NewClient().NewRequest()
@@ -13,11 +13,11 @@ func (g *GenClient) GenerateClient() (err error) {
 
 	operations := g.api.Operations
 	for _, v := range operations {
-		err = g.GenerateOperations(v)
+		err = g.generateOperations(v)
 		if err != nil {
 			return err
 		}
-		err = g.GenerateFuncBody(v)
+		err = g.generateFuncBody(v)
 		if err != nil {
 			return err
 		}
@@ -26,7 +26,7 @@ func (g *GenClient) GenerateClient() (err error) {
 	return
 }
 
-func (g *GenClient) MergeMiddlewareRequests(sreq []*spec.Request) (reqs []*spec.Request, err error) {
+func (g *GenClient) mergeMiddlewareRequests(sreq []*spec.Request) (reqs []*spec.Request, err error) {
 	for _, req := range sreq {
 		if req.Ref != "" {
 			req = g.api.Requests[req.Ref]
@@ -45,7 +45,7 @@ func (g *GenClient) MergeMiddlewareRequests(sreq []*spec.Request) (reqs []*spec.
 				}
 
 				if req.Name == resp.Name {
-					r, err := g.MergeMiddlewareRequests(v.Requests)
+					r, err := g.mergeMiddlewareRequests(v.Requests)
 					if err != nil {
 						return nil, err
 					}
@@ -60,7 +60,7 @@ func (g *GenClient) MergeMiddlewareRequests(sreq []*spec.Request) (reqs []*spec.
 	return reqs, nil
 }
 
-func (g *GenClient) GenerateOperations(oper *spec.Operation) (err error) {
+func (g *GenClient) generateOperations(oper *spec.Operation) (err error) {
 
 	g.buf.WriteString(utils.CommentLine(oper.Description))
 	g.buf.WriteString("func ")
@@ -75,7 +75,7 @@ func (g *GenClient) GenerateOperations(oper *spec.Operation) (err error) {
 	}
 	g.buf.WriteString(utils.GetName(oper.Name))
 	g.buf.WriteByte('(')
-	reqs, err := g.MergeMiddlewareRequests(oper.Requests)
+	reqs, err := g.mergeMiddlewareRequests(oper.Requests)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (g *GenClient) GenerateOperations(oper *spec.Operation) (err error) {
 			g.buf.AddImport("", "io")
 			typ = "io.Reader"
 		}
-		err = g.GenerateParameterRequests(req, typ)
+		err = g.generateParameterRequests(req, typ)
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ func (g *GenClient) GenerateOperations(oper *spec.Operation) (err error) {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		err = g.GenerateParameterResponses(v)
+		err = g.generateParameterResponses(v)
 		if err != nil {
 			return err
 		}

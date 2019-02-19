@@ -7,19 +7,19 @@ import (
 	"github.com/wzshiming/namecase"
 )
 
-func (g *GenClient) GenerateFuncBody(oper *spec.Operation) (err error) {
+func (g *GenClient) generateFuncBody(oper *spec.Operation) (err error) {
 
 	g.buf.WriteString("{\n")
 	defer g.buf.WriteString(`
 	return
 }
 `)
-	g.GenerateRequests(oper)
-	g.GenerateResponses(oper)
+	g.generateRequests(oper)
+	g.generateResponses(oper)
 	return nil
 }
 
-func (g *GenClient) GenerateRequests(oper *spec.Operation) (err error) {
+func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 
 	g.buf.WriteString(`resp, err := Client.Clone()`)
 	for _, v := range oper.Requests {
@@ -34,38 +34,38 @@ func (g *GenClient) GenerateRequests(oper *spec.Operation) (err error) {
 		case "header":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetHead("%s", fmt.Sprint(%s))`, req.Name, g.GetVarName(req.Name))
+SetHead("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name))
 		case "cookie":
 			// TODO
 		case "path":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetPath("%s", fmt.Sprint(%s))`, req.Name, g.GetVarName(req.Name))
+SetPath("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name))
 		case "query":
 			g.buf.WriteFormat(`.
-SetQuery("%s", fmt.Sprint(%s))`, req.Name, g.GetVarName(req.Name))
+SetQuery("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name))
 		case "body":
 			switch req.Content {
 			case "json":
 				g.buf.WriteFormat(`.
-SetJSON(%s)`, g.GetVarName(req.Name))
+SetJSON(%s)`, g.getVarName(req.Name))
 			case "xml":
 				g.buf.WriteFormat(`.
-SetXML(%s)`, g.GetVarName(req.Name))
+SetXML(%s)`, g.getVarName(req.Name))
 			case "file", "image":
 				g.buf.WriteFormat(`.
-SetBody(%s)`, g.GetVarName(req.Name))
+SetBody(%s)`, g.getVarName(req.Name))
 			}
 		}
 	}
 	g.buf.WriteFormat(`.
 %s("%s")`, namecase.ToUpperHump(strings.SplitN(oper.Method, ",", 2)[0]), oper.Path)
 
-	g.GenerateErrror(oper.Responses)
+	g.generateErrror(oper.Responses)
 	return nil
 }
 
-func (g *GenClient) GenerateResponses(oper *spec.Operation) (err error) {
+func (g *GenClient) generateResponses(oper *spec.Operation) (err error) {
 
 	g.buf.WriteString(`
 	switch code := resp.StatusCode(); code {
@@ -84,17 +84,17 @@ func (g *GenClient) GenerateResponses(oper *spec.Operation) (err error) {
 			g.buf.AddImport("", "encoding/json")
 			g.buf.WriteFormat(`
 	err = json.Unmarshal(resp.Body(),&%s)
-`, g.GetVarName(resp.Name))
+`, g.getVarName(resp.Name))
 		case "xml":
 			g.buf.AddImport("", "encoding/xml")
 			g.buf.WriteFormat(`
 	err = xml.Unmarshal(resp.Body(),&%s)
-`, g.GetVarName(resp.Name))
+`, g.getVarName(resp.Name))
 		case "error":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`
 	%s = fmt.Errorf(string(resp.Body()))
-`, g.GetVarName(resp.Name))
+`, g.getVarName(resp.Name))
 		}
 		// TODO
 	}
@@ -104,11 +104,11 @@ func (g *GenClient) GenerateResponses(oper *spec.Operation) (err error) {
 	}
 `)
 
-	g.GenerateErrror(oper.Responses)
+	g.generateErrror(oper.Responses)
 	return nil
 }
 
-func (g *GenClient) GenerateErrror(resps []*spec.Response) (err error) {
+func (g *GenClient) generateErrror(resps []*spec.Response) (err error) {
 	g.buf.WriteString(`
 if err != nil {
 	return `)

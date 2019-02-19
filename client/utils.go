@@ -6,6 +6,6 @@ import (
 	"github.com/wzshiming/namecase"
 )
 
-func (g *GenClient) GetVarName(name string) string {
+func (g *GenClient) getVarName(name string) string {
 	return "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("var_%s", name))
 }

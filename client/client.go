@@ -27,22 +27,22 @@ func NewGenClient(api *spec.API) *GenClient {
 
 func (g *GenClient) Generate() (*srcgen.File, error) {
 
-	err := g.GenerateSchemas()
+	err := g.generateSchemas()
 	if err != nil {
 		return nil, err
 	}
-	err = g.GenerateSecuritys()
+	err = g.generateSecuritys()
 	if err != nil {
 		return nil, err
 	}
-	err = g.GenerateClient()
+	err = g.generateClient()
 	if err != nil {
 		return nil, err
 	}
 	return g.buf, nil
 }
 
-func (g *GenClient) GenerateSchemas() (err error) {
+func (g *GenClient) generateSchemas() (err error) {
 	schemas := g.api.Types
 	schKey := make([]string, 0, len(schemas))
 	for k := range schemas {
@@ -67,11 +67,11 @@ func (g *GenClient) GenerateSchemas() (err error) {
 	return
 }
 
-func (g *GenClient) GenerateParameterRequests(req *spec.Request, typ string) (err error) {
+func (g *GenClient) generateParameterRequests(req *spec.Request, typ string) (err error) {
 	if req.Ref != "" {
 		req = g.api.Requests[req.Ref]
 	}
-	g.buf.WriteFormat("%s ", g.GetVarName(req.Name))
+	g.buf.WriteFormat("%s ", g.getVarName(req.Name))
 	if typ != "" {
 		g.buf.WriteString(typ)
 	} else {
@@ -86,11 +86,11 @@ func (g *GenClient) GenerateParameterRequests(req *spec.Request, typ string) (er
 	return nil
 }
 
-func (g *GenClient) GenerateParameterResponses(resp *spec.Response) (err error) {
+func (g *GenClient) generateParameterResponses(resp *spec.Response) (err error) {
 	if resp.Ref != "" {
 		resp = g.api.Responses[resp.Ref]
 	}
-	g.buf.WriteFormat("%s ", g.GetVarName(resp.Name))
+	g.buf.WriteFormat("%s ", g.getVarName(resp.Name))
 	err = g.Types(resp.Type)
 	if err != nil {
 		return err

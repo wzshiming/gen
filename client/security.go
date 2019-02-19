@@ -7,7 +7,7 @@ import (
 	"github.com/wzshiming/gen/utils"
 )
 
-func (g *GenClient) GenerateSecuritys() (err error) {
+func (g *GenClient) generateSecuritys() (err error) {
 	secuKey := make([]string, 0, len(g.api.Securitys))
 	for k := range g.api.Securitys {
 		secuKey = append(secuKey, k)
@@ -15,11 +15,11 @@ func (g *GenClient) GenerateSecuritys() (err error) {
 	sort.Strings(secuKey)
 	for _, k := range secuKey {
 		secu := g.api.Securitys[k]
-		err = g.GenerateSecurity(secu)
+		err = g.generateSecurity(secu)
 		if err != nil {
 			return err
 		}
-		err = g.GenerateSecurityBody(secu)
+		err = g.generateSecurityBody(secu)
 		if err != nil {
 			return err
 		}
@@ -28,7 +28,7 @@ func (g *GenClient) GenerateSecuritys() (err error) {
 	return nil
 }
 
-func (g *GenClient) GenerateSecurity(oper *spec.Security) (err error) {
+func (g *GenClient) generateSecurity(oper *spec.Security) (err error) {
 	g.buf.WriteString(utils.CommentLine(oper.Description))
 	g.buf.WriteString("func ")
 
@@ -58,7 +58,7 @@ func (g *GenClient) GenerateSecurity(oper *spec.Security) (err error) {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		err = g.GenerateParameterRequests(req, "")
+		err = g.generateParameterRequests(req, "")
 		if err != nil {
 			return err
 		}
@@ -67,7 +67,7 @@ func (g *GenClient) GenerateSecurity(oper *spec.Security) (err error) {
 	return
 }
 
-func (g *GenClient) GenerateSecurityBody(oper *spec.Security) (err error) {
+func (g *GenClient) generateSecurityBody(oper *spec.Security) (err error) {
 	g.buf.WriteString(`{
 Client = Client`)
 	defer g.buf.WriteString(`
@@ -84,18 +84,18 @@ Client = Client`)
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
 SetHeader("%s", fmt.Sprint(%s))
-`, req.Name, g.GetVarName(req.Name))
+`, req.Name, g.getVarName(req.Name))
 		case "cookie":
 			// TODO
 		case "path":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
 SetPath("%s", fmt.Sprint(%s))
-`, req.Name, g.GetVarName(req.Name))
+`, req.Name, g.getVarName(req.Name))
 		case "query":
 			g.buf.WriteFormat(`.
 SetQuery("%s", fmt.Sprint(%s))
-`, req.Name, g.GetVarName(req.Name))
+`, req.Name, g.getVarName(req.Name))
 		case "body":
 			// No action
 		}
