@@ -37,7 +37,7 @@ func (g *GenOpenAPI) WithServices(servers ...string) *GenOpenAPI {
 }
 
 func (g *GenOpenAPI) Generate() (*oaspec.OpenAPI, error) {
-	err := g.Components()
+	err := g.generateComponents()
 	if err != nil {
 		return nil, err
 	}
@@ -62,10 +62,10 @@ func (g *GenOpenAPI) Generate() (*oaspec.OpenAPI, error) {
 	return g.openapi, nil
 }
 
-func (g *GenOpenAPI) Components() (err error) {
+func (g *GenOpenAPI) generateComponents() (err error) {
 
 	for _, v := range g.api.Securitys {
-		err := g.SecurityScheme(v)
+		err := g.generateSecurityScheme(v)
 		if err != nil {
 			return err
 		}
@@ -76,13 +76,13 @@ func (g *GenOpenAPI) Components() (err error) {
 		case "security":
 			// No action
 		case "body":
-			body, err := g.RequestBody(v)
+			body, err := g.generateRequestBody(v)
 			if err != nil {
 				return err
 			}
 			g.openapi.Components.RequestBodies[k] = body
 		case "header", "cookie", "path", "query":
-			par, err := g.Parameters(v)
+			par, err := g.generateParameters(v)
 			if err != nil {
 				return err
 			}
@@ -99,7 +99,7 @@ func (g *GenOpenAPI) Components() (err error) {
 		case "header":
 			// No action
 		case "body":
-			_, resp, err := g.ResponsesBody(v)
+			_, resp, err := g.generateResponsesBody(v)
 			if err != nil {
 				return err
 			}
@@ -111,12 +111,12 @@ func (g *GenOpenAPI) Components() (err error) {
 
 	tmpTags := map[*spec.Type]bool{}
 	for _, v := range g.api.Operations {
-		err := g.Operations(v)
+		err := g.generateOperations(v)
 		if err != nil {
 			return err
 		}
 		if v.Type != nil && !tmpTags[v.Type] {
-			err := g.Tags(v)
+			err := g.generateTags(v)
 			if err != nil {
 				return err
 			}
@@ -127,10 +127,10 @@ func (g *GenOpenAPI) Components() (err error) {
 	return nil
 }
 
-func (g *GenOpenAPI) Tags(ope *spec.Operation) (err error) {
+func (g *GenOpenAPI) generateTags(ope *spec.Operation) (err error) {
 	typ := ope.Type
 	typ = g.api.Types[typ.Ref]
-	sch, err := g.Schemas(typ)
+	sch, err := g.generateSchemas(typ)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (g *GenOpenAPI) Tags(ope *spec.Operation) (err error) {
 	return nil
 }
 
-func (g *GenOpenAPI) Requests(oper *oaspec.Operation, reqs []*spec.Request) (err error) {
+func (g *GenOpenAPI) generateRequests(oper *oaspec.Operation, reqs []*spec.Request) (err error) {
 
 	for _, v := range reqs {
 		req := v
@@ -166,7 +166,7 @@ func (g *GenOpenAPI) Requests(oper *oaspec.Operation, reqs []*spec.Request) (err
 				}
 
 				if req.Name == resp.Name {
-					err := g.Requests(oper, v.Requests)
+					err := g.generateRequests(oper, v.Requests)
 					if err != nil {
 						return err
 					}
@@ -189,13 +189,13 @@ func (g *GenOpenAPI) Requests(oper *oaspec.Operation, reqs []*spec.Request) (err
 				}
 			}
 		case "body":
-			body, err := g.RequestBody(v)
+			body, err := g.generateRequestBody(v)
 			if err != nil {
 				return err
 			}
 			oper.RequestBody = body
 		case "header", "cookie", "path", "query":
-			par, err := g.Parameters(v)
+			par, err := g.generateParameters(v)
 			if err != nil {
 				return err
 			}
@@ -208,7 +208,7 @@ func (g *GenOpenAPI) Requests(oper *oaspec.Operation, reqs []*spec.Request) (err
 	return nil
 }
 
-func (g *GenOpenAPI) Responses(oper *oaspec.Operation, resps []*spec.Response) (err error) {
+func (g *GenOpenAPI) generateResponses(oper *oaspec.Operation, resps []*spec.Response) (err error) {
 	oper.Responses = map[string]*oaspec.Response{}
 	headers := map[string]*oaspec.Header{}
 	for _, resp := range resps {
@@ -219,13 +219,13 @@ func (g *GenOpenAPI) Responses(oper *oaspec.Operation, resps []*spec.Response) (
 		case "cookie":
 			// TODO: Process the returned cookie
 		case "header":
-			name, head, err := g.ResponsesHeader(resp)
+			name, head, err := g.generateResponsesHeader(resp)
 			if err != nil {
 				return err
 			}
 			headers[name] = head
 		case "body":
-			code, resp, err := g.ResponsesBody(resp)
+			code, resp, err := g.generateResponsesBody(resp)
 			if err != nil {
 				return err
 			}
@@ -243,15 +243,15 @@ func (g *GenOpenAPI) Responses(oper *oaspec.Operation, resps []*spec.Response) (
 	return nil
 }
 
-func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
+func (g *GenOpenAPI) generateOperations(ope *spec.Operation) (err error) {
 	oper := &oaspec.Operation{}
 
-	err = g.Requests(oper, ope.Requests)
+	err = g.generateRequests(oper, ope.Requests)
 	if err != nil {
 		return err
 	}
 
-	err = g.Responses(oper, ope.Responses)
+	err = g.generateResponses(oper, ope.Responses)
 	if err != nil {
 		return err
 	}
@@ -293,8 +293,8 @@ func (g *GenOpenAPI) Operations(ope *spec.Operation) (err error) {
 	return nil
 }
 
-func (g *GenOpenAPI) ResponsesHeader(res *spec.Response) (name string, head *oaspec.Header, err error) {
-	sch, err := g.Schemas(res.Type)
+func (g *GenOpenAPI) generateResponsesHeader(res *spec.Response) (name string, head *oaspec.Header, err error) {
+	sch, err := g.generateSchemas(res.Type)
 	if err != nil {
 		return "", nil, err
 	}
@@ -303,11 +303,11 @@ func (g *GenOpenAPI) ResponsesHeader(res *spec.Response) (name string, head *oas
 	return res.Name, head, nil
 }
 
-func (g *GenOpenAPI) ResponsesBody(res *spec.Response) (code string, resp *oaspec.Response, err error) {
+func (g *GenOpenAPI) generateResponsesBody(res *spec.Response) (code string, resp *oaspec.Response, err error) {
 	if res.Ref != "" {
 		return g.api.Responses[res.Ref].Code, oaspec.RefResponse(res.Ref), nil
 	}
-	sch, err := g.Schemas(res.Type)
+	sch, err := g.generateSchemas(res.Type)
 	if err != nil {
 		return "", nil, err
 	}
@@ -336,11 +336,11 @@ func (g *GenOpenAPI) ResponsesBody(res *spec.Response) (code string, resp *oaspe
 	return
 }
 
-func (g *GenOpenAPI) Parameters(req *spec.Request) (par *oaspec.Parameter, err error) {
+func (g *GenOpenAPI) generateParameters(req *spec.Request) (par *oaspec.Parameter, err error) {
 	if req.Ref != "" {
 		return oaspec.RefParameter(req.Ref), nil
 	}
-	sch, err := g.Schemas(req.Type)
+	sch, err := g.generateSchemas(req.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -374,11 +374,11 @@ func (g *GenOpenAPI) Parameters(req *spec.Request) (par *oaspec.Parameter, err e
 	return
 }
 
-func (g *GenOpenAPI) RequestBody(req *spec.Request) (body *oaspec.RequestBody, err error) {
+func (g *GenOpenAPI) generateRequestBody(req *spec.Request) (body *oaspec.RequestBody, err error) {
 	if req.Ref != "" {
 		return oaspec.RefRequestBody(req.Ref), nil
 	}
-	sch, err := g.Schemas(req.Type)
+	sch, err := g.generateSchemas(req.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -430,10 +430,10 @@ func (g *GenOpenAPI) RequestBody(req *spec.Request) (body *oaspec.RequestBody, e
 	return
 }
 
-func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
+func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	if typ.Ref != "" {
 		if g.openapi.Components.Schemas[typ.Ref] == nil {
-			typ0, err := g.Schemas(g.api.Types[typ.Ref])
+			typ0, err := g.generateSchemas(g.api.Types[typ.Ref])
 			if err != nil {
 				return nil, err
 			}
@@ -479,25 +479,25 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 		case spec.Uint64, spec.Uint:
 			sch = oaspec.IntFmtProperty("uin64") // .WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
 		case spec.Map:
-			sch, err = g.Schemas(typ.Elem)
+			sch, err = g.generateSchemas(typ.Elem)
 			if err != nil {
 				return nil, err
 			}
 			sch = oaspec.MapProperty(sch)
 		case spec.Slice:
-			sch, err = g.Schemas(typ.Elem)
+			sch, err = g.generateSchemas(typ.Elem)
 			if err != nil {
 				return nil, err
 			}
 			sch = oaspec.ArrayProperty(sch)
 		case spec.Array:
-			sch, err = g.Schemas(typ.Elem)
+			sch, err = g.generateSchemas(typ.Elem)
 			if err != nil {
 				return nil, err
 			}
 			sch = oaspec.ArrayProperty(sch).WithMaxItems(int64(typ.Len))
 		case spec.Ptr:
-			sch, err = g.Schemas(typ.Elem)
+			sch, err = g.generateSchemas(typ.Elem)
 			if err != nil {
 				return nil, err
 			}
@@ -510,7 +510,7 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 				name := v.Name
 				tag := v.Tag
 
-				val, err := g.Schemas(v.Type)
+				val, err := g.generateSchemas(v.Type)
 				if err != nil {
 					return nil, err
 				}
@@ -555,7 +555,7 @@ func (g *GenOpenAPI) Schemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
 	return sch, nil
 }
 
-func (g *GenOpenAPI) SecurityScheme(sec *spec.Security) (err error) {
+func (g *GenOpenAPI) generateSecurityScheme(sec *spec.Security) (err error) {
 	secu := &oaspec.SecurityScheme{}
 	secu.Type = sec.Schema
 	if len(sec.Requests) == 0 {
