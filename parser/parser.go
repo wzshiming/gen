@@ -451,6 +451,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 			return &spec.Request{
 				In:    "none",
 				Ident: "*net/http.Request",
+				Name:  "r",
 			}, nil
 		}
 
@@ -459,6 +460,7 @@ func (g *Parser) AddRequest(path string, t gotype.Type) (par *spec.Request, err 
 			return &spec.Request{
 				In:    "none",
 				Ident: "net/http.ResponseWriter",
+				Name:  "w",
 			}, nil
 		}
 	}

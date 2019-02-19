@@ -4,8 +4,8 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateMiddlewareFunction(midd *spec.Middleware) (err error) {
-	name := g.GetMiddlewareFunctionName(midd)
+func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error) {
+	name := g.getMiddlewareFunctionName(midd)
 
 	if g.only[name] {
 		return nil
@@ -30,7 +30,7 @@ func %s(`, name, midd.Name, name)
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
 		}
-		g.buf.WriteFormat("%s ", g.GetVarName(resp.Name))
+		g.buf.WriteFormat("%s ", g.getVarName(resp.Name))
 		g.Types(resp.Type)
 	}
 	g.buf.WriteString(`){
@@ -43,12 +43,12 @@ func %s(`, name, midd.Name, name)
 		if req.Type == nil {
 			continue
 		}
-		g.buf.WriteFormat("var %s ", g.GetVarName(req.Name))
+		g.buf.WriteFormat("var %s ", g.getVarName(req.Name))
 		g.Types(req.Type)
 		g.buf.WriteString("\n")
 	}
 
-	err = g.GenerateCall(midd.Name, midd.PkgPath, midd.Type, midd.Requests, midd.Responses, true)
+	err = g.generateCallExec(midd.Name, midd.PkgPath, midd.Type, midd.Requests, midd.Responses, true)
 	if err != nil {
 		return err
 	}

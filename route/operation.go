@@ -4,8 +4,8 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateOperationFunction(oper *spec.Operation) (err error) {
-	name := g.GetOperationFunctionName(oper)
+func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
+	name := g.getOperationFunctionName(oper)
 
 	if g.only[name] {
 		return nil
@@ -31,7 +31,7 @@ func %s(`, name, oper.Name, name)
 		if req.Type == nil {
 			continue
 		}
-		g.buf.WriteFormat("var %s ", g.GetVarName(req.Name))
+		g.buf.WriteFormat("var %s ", g.getVarName(req.Name))
 		g.Types(req.Type)
 		g.buf.WriteString("\n")
 	}
@@ -40,12 +40,12 @@ func %s(`, name, oper.Name, name)
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
 		}
-		g.buf.WriteFormat("var %s ", g.GetVarName(resp.Name))
+		g.buf.WriteFormat("var %s ", g.getVarName(resp.Name))
 		g.Types(resp.Type)
 		g.buf.WriteString("\n")
 	}
 
-	err = g.GenerateCall(oper.Name, oper.PkgPath, oper.Type, oper.Requests, oper.Responses, false)
+	err = g.generateCallExec(oper.Name, oper.PkgPath, oper.Type, oper.Requests, oper.Responses, false)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func %s(`, name, oper.Name, name)
 				resp = g.api.Responses[resp.Ref]
 			}
 			if resp.In == "body" && resp.Content != "error" {
-				g.GenerateResponseBodyItem(resp)
+				g.generateResponseBodyItem(resp)
 				noCtx = false
 				break
 			}

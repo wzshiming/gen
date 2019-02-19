@@ -4,8 +4,8 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateSecurityFunction(secu *spec.Security) (err error) {
-	name := g.GetSecurityFunctionName(secu)
+func (g *GenRoute) generateSecurityFunction(secu *spec.Security) (err error) {
+	name := g.getSecurityFunctionName(secu)
 
 	if g.only[name] {
 		return nil
@@ -30,7 +30,7 @@ func %s(`, name, secu.Name, name)
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
 		}
-		g.buf.WriteFormat("%s ", g.GetVarName(resp.Name))
+		g.buf.WriteFormat("%s ", g.getVarName(resp.Name))
 		g.Types(resp.Type)
 	}
 	g.buf.WriteString(`){
@@ -43,12 +43,12 @@ func %s(`, name, secu.Name, name)
 		if req.Type == nil {
 			continue
 		}
-		g.buf.WriteFormat("var %s ", g.GetVarName(req.Name))
+		g.buf.WriteFormat("var %s ", g.getVarName(req.Name))
 		g.Types(req.Type)
 		g.buf.WriteString("\n")
 	}
 
-	err = g.GenerateCall(secu.Name, secu.PkgPath, secu.Type, secu.Requests, secu.Responses, true)
+	err = g.generateCallExec(secu.Name, secu.PkgPath, secu.Type, secu.Requests, secu.Responses, true)
 	if err != nil {
 		return err
 	}

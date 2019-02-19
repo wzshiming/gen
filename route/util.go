@@ -9,38 +9,38 @@ import (
 	"github.com/wzshiming/namecase"
 )
 
-func (g *GenRoute) GetVarName(name string) string {
+func (g *GenRoute) getVarName(name string) string {
 	if name == "err" {
 		return name
 	}
 	return "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("var_%s", name))
 }
 
-func (g *GenRoute) GetRouteName(typ *spec.Type) string {
+func (g *GenRoute) getRouteName(typ *spec.Type) string {
 	name := namecase.ToUpperHumpInitialisms(fmt.Sprintf("route_%s", typ.Name))
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(typ))), 16)
 	return g.named.GetName(name, addr)
 }
 
-func (g *GenRoute) GetOperationFunctionName(oper *spec.Operation) string {
+func (g *GenRoute) getOperationFunctionName(oper *spec.Operation) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("operation_%s_%s", oper.Method, oper.Path))
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(oper))), 16)
 	return g.named.GetName(name, addr)
 }
 
-func (g *GenRoute) GetRequestFunctionName(req *spec.Request) string {
+func (g *GenRoute) getRequestFunctionName(req *spec.Request) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("request_%s_%s", req.In, req.Name))
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(req))), 16)
 	return g.named.GetName(name, addr)
 }
 
-func (g *GenRoute) GetSecurityFunctionName(secu *spec.Security) string {
+func (g *GenRoute) getSecurityFunctionName(secu *spec.Security) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("security_%s_%s", secu.Schema, secu.Name))
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(secu))), 16)
 	return g.named.GetName(name, addr)
 }
 
-func (g *GenRoute) GetMiddlewareFunctionName(midd *spec.Middleware) string {
+func (g *GenRoute) getMiddlewareFunctionName(midd *spec.Middleware) string {
 	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("middleware_%s_%s", midd.Schema, midd.Name))
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(midd))), 16)
 	return g.named.GetName(name, addr)

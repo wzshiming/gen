@@ -4,7 +4,7 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateCall(name, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response, onErr bool) (err error) {
+func (g *GenRoute) generateCallExec(name, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response, onErr bool) (err error) {
 
 	for _, req := range requests {
 		req := req
@@ -25,8 +25,33 @@ func (g *GenRoute) GenerateCall(name, pkgpath string, typ *spec.Type, requests [
 		}
 	}
 
+	err = g.generateCall(name, pkgpath, typ, requests, responses)
+	if err != nil {
+		return err
+	}
+
+	for _, resp := range responses {
+		if onErr {
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+			if resp.Name != "err" {
+				continue
+			}
+		}
+		err = g.generateResponse(resp)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (g *GenRoute) generateCall(name, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response) (err error) {
+
 	for _, req := range requests {
-		err = g.GenerateRequest(req)
+		err = g.generateRequest(req)
 		if err != nil {
 			return err
 		}
@@ -52,13 +77,13 @@ func (g *GenRoute) GenerateCall(name, pkgpath string, typ *spec.Type, requests [
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		g.buf.WriteString(g.GetVarName(resp.Name))
+		g.buf.WriteString(g.getVarName(resp.Name))
 	}
 	if len(responses) != 0 {
 		g.buf.WriteString(" = ")
 	}
 	if typ != nil {
-		g.buf.WriteString("s.")
+		g.buf.WriteString(" s.")
 	} else {
 		g.PkgPath(pkgpath)
 	}
@@ -71,35 +96,9 @@ func (g *GenRoute) GenerateCall(name, pkgpath string, typ *spec.Type, requests [
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		if req.In == "none" {
-			switch req.Ident {
-			case "*net/http.Request":
-				g.buf.WriteString("r")
-			case "net/http.ResponseWriter":
-				g.buf.WriteString("w")
-			case "net/http.File":
-				g.buf.WriteString(g.GetVarName(req.Name))
-			}
-		} else {
-			g.buf.WriteString(g.GetVarName(req.Name))
-		}
+		g.buf.WriteString(g.getVarName(req.Name))
 	}
 	g.buf.WriteString(")\n")
-
-	for _, resp := range responses {
-		if onErr {
-			if resp.Ref != "" {
-				resp = g.api.Responses[resp.Ref]
-			}
-			if resp.Name != "err" {
-				continue
-			}
-		}
-		err = g.GenerateResponse(resp)
-		if err != nil {
-			return err
-		}
-	}
 
 	return nil
 }

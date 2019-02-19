@@ -43,7 +43,7 @@ func (g *GenRoute) convertBytes(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenRoute) Convert(in, out string, typ *spec.Type) error {
+func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}

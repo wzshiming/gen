@@ -32,7 +32,7 @@ func NewGenRoute(api *spec.API) *GenRoute {
 func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) {
 	g.buf.WithPackname(pkg)
 	g.GenModel = *model.NewGenModel(g.api, g.buf, outpkg)
-	err := g.GenerateRoutes(funcName)
+	err := g.generateRoutes(funcName)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) 
 	return g.buf, nil
 }
 
-func (g *GenRoute) GenerateRoutes(funcName string) (err error) {
+func (g *GenRoute) generateRoutes(funcName string) (err error) {
 	g.buf.AddImport("", "github.com/gorilla/mux")
 	g.buf.AddImport("", "net/http")
 
@@ -53,7 +53,7 @@ func %s() http.Handler {
 `, funcName, funcName)
 
 	for _, v := range g.api.Operations {
-		err = g.GenerateRouteTypes(v, m)
+		err = g.generateRouteTypes(v, m)
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ func %s() http.Handler {
 		if v.Type != nil {
 			continue
 		}
-		err = g.GenerateRoute(v)
+		err = g.generateRoute(v)
 		if err != nil {
 			return err
 		}
@@ -108,10 +108,10 @@ func %s() http.Handler {
 			}
 
 			if i == 0 {
-				name := g.GetRouteName(typ)
+				name := g.getRouteName(typ)
 				g.buf.WriteFormat(`
 // %s is routing for %s
-func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
+func %s(router *mux.Router, %s *`, name, typ.Name, name, g.getVarName(typ.Name))
 				g.Types(v.Type)
 				g.buf.WriteFormat(`, fs ...mux.MiddlewareFunc) *mux.Router {
 	if router == nil {
@@ -124,7 +124,7 @@ func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
 `, v.BasePath)
 			}
 
-			err = g.GenerateRoute(v)
+			err = g.generateRoute(v)
 			if err != nil {
 				return err
 			}
@@ -147,7 +147,7 @@ func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
 		case "middleware":
 		case "none":
 		default:
-			err = g.GenerateRequestFunction(v)
+			err = g.generateRequestFunction(v)
 			if err != nil {
 				return err
 			}
@@ -163,7 +163,7 @@ func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
 
 		for _, k := range middKey {
 			v := g.api.Middlewares[k]
-			err = g.GenerateMiddlewareFunction(v)
+			err = g.generateMiddlewareFunction(v)
 			if err != nil {
 				return err
 			}
@@ -179,7 +179,7 @@ func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
 		sort.Strings(secuKey)
 		for _, k := range secuKey {
 			v := g.api.Securitys[k]
-			err = g.GenerateSecurityFunction(v)
+			err = g.generateSecurityFunction(v)
 			if err != nil {
 				return err
 			}
@@ -187,7 +187,7 @@ func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
 	}
 
 	for _, v := range g.api.Operations {
-		err = g.GenerateOperationFunction(v)
+		err = g.generateOperationFunction(v)
 		if err != nil {
 			return err
 		}
@@ -196,7 +196,7 @@ func %s(router *mux.Router, %s *`, name, typ.Name, name, g.GetVarName(typ.Name))
 	return
 }
 
-func (g *GenRoute) GenerateRouteTypes(oper *spec.Operation, m map[string]bool) (err error) {
+func (g *GenRoute) generateRouteTypes(oper *spec.Operation, m map[string]bool) (err error) {
 	if oper.Type == nil {
 		return
 	}
@@ -208,20 +208,20 @@ func (g *GenRoute) GenerateRouteTypes(oper *spec.Operation, m map[string]bool) (
 		return
 	}
 
-	name := g.GetVarName(typ.Name)
+	name := g.getVarName(typ.Name)
 	g.buf.WriteFormat(`
 // %s Define the method scope
 var %s `, typ.Name, name)
 	g.Types(oper.Type)
 	g.buf.WriteFormat(`
 %s(router, &%s)
-`, g.GetRouteName(typ), name)
+`, g.getRouteName(typ), name)
 	m[typ.Name] = true
 	return
 }
 
-func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
-	name := g.GetOperationFunctionName(oper)
+func (g *GenRoute) generateRoute(oper *spec.Operation) (err error) {
+	name := g.getOperationFunctionName(oper)
 
 	methods := strings.Split(oper.Method, ",")
 	for i := range methods {
@@ -236,7 +236,7 @@ func (g *GenRoute) GenerateRoute(oper *spec.Operation) (err error) {
 		if typ.Ref != "" {
 			typ = g.api.Types[oper.Type.Ref]
 		}
-		typname := g.GetVarName(typ.Name)
+		typname := g.getVarName(typ.Name)
 		g.buf.WriteFormat(`
 	var _%s http.Handler
 	_%s = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -6,12 +6,12 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateRequest(req *spec.Request) error {
+func (g *GenRoute) generateRequest(req *spec.Request) error {
 	if req.Ref != "" {
 		req = g.api.Requests[req.Ref]
 	}
 
-	vname := g.GetVarName(req.Name)
+	vname := g.getVarName(req.Name)
 	switch req.In {
 	case "none":
 		// No action
@@ -44,7 +44,7 @@ func (g *GenRoute) GenerateRequest(req *spec.Request) error {
 `, req.Name)
 		case 1:
 			midd := midds[0]
-			name := g.GetMiddlewareFunctionName(midd)
+			name := g.getMiddlewareFunctionName(midd)
 			g.buf.WriteFormat(`
 // Permission middlewares call %s.
 %s, err = %s(`, midd.Name, vname, name)
@@ -83,7 +83,7 @@ var %s `, vname)
 `)
 		case 1:
 			secu := secus[0]
-			name := g.GetSecurityFunctionName(secu)
+			name := g.getSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
 %s, err = %s(`, secu.Name, vname, name)
@@ -97,7 +97,7 @@ if err != nil {
 `)
 		default:
 			secu := secus[0]
-			name := g.GetSecurityFunctionName(secu)
+			name := g.getSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
 // Permission verification call %s.
 %s, err = %s(`, secu.Name, vname, name)
@@ -131,7 +131,7 @@ if err != nil {
 	default:
 		g.buf.WriteFormat(`
 // Parsing %s.
-%s, err = %s(w, r)`, req.Name, vname, g.GetRequestFunctionName(req))
+%s, err = %s(w, r)`, req.Name, vname, g.getRequestFunctionName(req))
 		g.buf.WriteString(`
 if err != nil {
 	return
@@ -142,10 +142,10 @@ if err != nil {
 	return nil
 }
 
-func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
+func (g *GenRoute) generateRequestFunction(req *spec.Request) error {
 	g.buf.AddImport("", "net/http")
 
-	name := g.GetRequestFunctionName(req)
+	name := g.getRequestFunctionName(req)
 
 	if g.only[name] {
 		return nil
@@ -154,11 +154,11 @@ func (g *GenRoute) GenerateRequestFunction(req *spec.Request) error {
 
 	g.buf.WriteFormat(`
 // %s Parsing the %s for of %s
-func %s(w http.ResponseWriter, r *http.Request) (%s `, name, req.In, req.Name, name, g.GetVarName(req.Name))
+func %s(w http.ResponseWriter, r *http.Request) (%s `, name, req.In, req.Name, name, g.getVarName(req.Name))
 	g.Types(req.Type)
 	g.buf.WriteString(`, err error) {
 `)
-	err := g.GenerateRequestVar(req)
+	err := g.generateRequestVar(req)
 	if err != nil {
 		return err
 	}
@@ -169,9 +169,9 @@ func %s(w http.ResponseWriter, r *http.Request) (%s `, name, req.In, req.Name, n
 	return nil
 }
 
-func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
+func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 
-	name := g.GetVarName(req.Name)
+	name := g.getVarName(req.Name)
 	switch req.In {
 	case "body":
 
@@ -296,7 +296,7 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 	var cookie *http.Cookie
 	cookie, err = r.Cookie("%s")
 	if err == nil {`, req.Name)
-		g.Convert(`cookie.Value`, name, req.Type)
+		g.convert(`cookie.Value`, name, req.Type)
 		g.buf.WriteFormat(`
 	}
 	if err != nil {
@@ -309,19 +309,19 @@ func (g *GenRoute) GenerateRequestVar(req *spec.Request) error {
 		g.buf.WriteFormat(`
 	var _raw%s = r.URL.Query().Get("%s")
 `, name, req.Name)
-		g.Convert("_raw"+name, name, req.Type)
+		g.convert("_raw"+name, name, req.Type)
 
 	case "header":
 		g.buf.WriteFormat(`
 	var _raw%s = r.Header.Get("%s")
 `, name, req.Name)
-		g.Convert("_raw"+name, name, req.Type)
+		g.convert("_raw"+name, name, req.Type)
 
 	case "path":
 		g.buf.WriteFormat(`
 	var _raw%s = mux.Vars(r)["%s"]
 `, name, req.Name)
-		g.Convert("_raw"+name, name, req.Type)
+		g.convert("_raw"+name, name, req.Type)
 
 	default:
 		return fmt.Errorf("undefine in %s", req.In)

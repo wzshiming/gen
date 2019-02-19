@@ -7,38 +7,38 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) GenerateResponse(resp *spec.Response) error {
+func (g *GenRoute) generateResponse(resp *spec.Response) error {
 	if resp.Ref != "" {
 		resp = g.api.Responses[resp.Ref]
 	}
 	switch resp.In {
 	case "header":
-		return g.GenerateResponseHeader(resp)
+		return g.generateResponseHeader(resp)
 	case "body":
-		return g.GenerateResponseBody(resp)
+		return g.generateResponseBody(resp)
 	}
 	return nil
 }
 
-func (g *GenRoute) GenerateResponseHeader(resp *spec.Response) error {
+func (g *GenRoute) generateResponseHeader(resp *spec.Response) error {
 	g.buf.AddImport("", "fmt")
 	g.buf.WriteFormat(`
 	w.Header().Set("%s",fmt.Sprint(%s))
-`, resp.Name, g.GetVarName(resp.Name))
+`, resp.Name, g.getVarName(resp.Name))
 	return nil
 }
 
-func (g *GenRoute) GenerateResponseBody(resp *spec.Response) error {
+func (g *GenRoute) generateResponseBody(resp *spec.Response) error {
 	text := ""
 	if i, err := strconv.Atoi(resp.Code); err == nil {
 		text = http.StatusText(i)
 	}
 	g.buf.WriteFormat(`
 	// Response code %s %s for %s.
-	if %s != `, resp.Code, text, resp.Name, g.GetVarName(resp.Name))
+	if %s != `, resp.Code, text, resp.Name, g.getVarName(resp.Name))
 	g.TypesZero(resp.Type)
 	g.buf.WriteString(`{`)
-	g.GenerateResponseBodyItem(resp)
+	g.generateResponseBodyItem(resp)
 	g.buf.WriteString(`return
 }
 `)
@@ -46,7 +46,7 @@ func (g *GenRoute) GenerateResponseBody(resp *spec.Response) error {
 
 }
 
-func (g *GenRoute) GenerateResponseError() error {
+func (g *GenRoute) generateResponseError() error {
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 	if err != nil {
@@ -57,9 +57,9 @@ func (g *GenRoute) GenerateResponseError() error {
 	return nil
 }
 
-func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
+func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 	contentType := ""
-	name := g.GetVarName(resp.Name)
+	name := g.getVarName(resp.Name)
 	switch resp.Content {
 	case "json":
 		g.buf.AddImport("", "encoding/json")
@@ -67,14 +67,14 @@ func (g *GenRoute) GenerateResponseBodyItem(resp *spec.Response) error {
 		g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = json.Marshal(%s)`, name, name, name)
-		g.GenerateResponseError()
+		g.generateResponseError()
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
 		contentType = "application/xml; charset=utf-8"
 		g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = xml.Marshal(%s)`, name, name, name)
-		g.GenerateResponseError()
+		g.generateResponseError()
 	case "error":
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
