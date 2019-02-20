@@ -4,6 +4,7 @@ import (
 	"go/build"
 	"go/format"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -39,6 +40,11 @@ func (f *File) Save() error {
 		} else {
 			f.packname = b.Name
 		}
+	}
+
+	err := os.MkdirAll(filepath.Dir(f.filename), 0755)
+	if err != nil {
+		return err
 	}
 	return ioutil.WriteFile(f.filename, f.Bytes(), 0666)
 }
