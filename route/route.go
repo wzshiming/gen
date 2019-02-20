@@ -111,8 +111,8 @@ func %s() http.Handler {
 				name := g.getRouteName(typ)
 				g.buf.WriteFormat(`
 // %s is routing for %s
-func %s(router *mux.Router, %s *`, name, typ.Name, name, g.getVarName("", typ))
-				g.Types(v.Type)
+func %s(router *mux.Router, %s `, name, typ.Name, name, g.getVarName("", typ))
+				g.PtrTypes(v.Type)
 				g.buf.WriteFormat(`, fs ...mux.MiddlewareFunc) *mux.Router {
 	if router == nil {
 		router = mux.NewRouter()
@@ -214,8 +214,12 @@ func (g *GenRoute) generateRouteTypes(oper *spec.Operation, m map[string]bool) (
 var %s `, typ.Name, name)
 	g.Types(oper.Type)
 	g.buf.WriteFormat(`
-%s(router, &%s)
-`, g.getRouteName(typ), name)
+%s(router, `, g.getRouteName(typ))
+	if g.Ptr(typ) {
+		g.buf.WriteString("&")
+	}
+	g.buf.WriteFormat(`%s)
+`, name)
 	m[typ.Name] = true
 	return
 }

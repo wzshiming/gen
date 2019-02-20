@@ -85,6 +85,35 @@ func (g *GenModel) Paths(typ *spec.Type) bool {
 	return g.PkgPath(typ.PkgPath)
 }
 
+func (g *GenModel) Ptr(typ *spec.Type) bool {
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+	return typ.Kind != spec.Interface
+}
+
+func (g *GenModel) PtrTypes(typ *spec.Type) (err error) {
+	if typ.Ref != "" {
+		if g.Ptr(typ) {
+			g.buf.WriteString("*")
+		}
+		g.Paths(typ)
+		g.buf.WriteString(utils.GetName(typ.Ref))
+		return nil
+	}
+
+	if typ.Name != "" && strings.ToLower(typ.Kind.String()) != typ.Name {
+		g.Paths(typ)
+		g.buf.WriteString(typ.Name)
+		return nil
+	}
+
+	if g.Ptr(typ) {
+		g.buf.WriteString("*")
+	}
+	return g.TypesDefine(typ)
+}
+
 func (g *GenModel) Types(typ *spec.Type) (err error) {
 	if typ.Ref != "" {
 		g.Paths(typ)

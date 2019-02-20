@@ -144,7 +144,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 			if err != nil {
 				return err
 			}
-		case gotype.Interface, gotype.Scope, gotype.Invalid:
+		case gotype.Scope, gotype.Invalid:
 			// No action
 		}
 	}

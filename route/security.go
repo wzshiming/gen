@@ -17,8 +17,8 @@ func (g *GenRoute) generateSecurityFunction(secu *spec.Security) (err error) {
 // %s Is the security of %s
 func %s(`, name, secu.Name, name)
 	if secu.Type != nil {
-		g.buf.WriteString("s *")
-		g.Types(secu.Type)
+		g.buf.WriteString("s ")
+		g.PtrTypes(secu.Type)
 		g.buf.WriteString(", ")
 	}
 	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) (`)

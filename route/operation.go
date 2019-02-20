@@ -17,8 +17,8 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 // %s Is the route of %s
 func %s(`, name, oper.Name, name)
 	if oper.Type != nil {
-		g.buf.WriteString("s *")
-		g.Types(oper.Type)
+		g.buf.WriteString("s ")
+		g.PtrTypes(oper.Type)
 		g.buf.WriteString(", ")
 	}
 	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) {

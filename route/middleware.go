@@ -17,8 +17,8 @@ func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error)
 // %s Is the middleware of %s
 func %s(`, name, midd.Name, name)
 	if midd.Type != nil {
-		g.buf.WriteString("s *")
-		g.Types(midd.Type)
+		g.buf.WriteString("s ")
+		g.PtrTypes(midd.Type)
 		g.buf.WriteString(", ")
 	}
 	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) (`)
