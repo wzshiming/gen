@@ -24,7 +24,7 @@ func (g *GenRoute) generateResponseHeader(resp *spec.Response) error {
 	g.buf.AddImport("", "fmt")
 	g.buf.WriteFormat(`
 	w.Header().Set("%s",fmt.Sprint(%s))
-`, resp.Name, g.getVarName(resp.Name))
+`, resp.Name, g.getVarName(resp.Name, resp.Type))
 	return nil
 }
 
@@ -35,7 +35,7 @@ func (g *GenRoute) generateResponseBody(resp *spec.Response) error {
 	}
 	g.buf.WriteFormat(`
 	// Response code %s %s for %s.
-	if %s != `, resp.Code, text, resp.Name, g.getVarName(resp.Name))
+	if %s != `, resp.Code, text, resp.Name, g.getVarName(resp.Name, resp.Type))
 	g.TypesZero(resp.Type)
 	g.buf.WriteString(`{`)
 	g.generateResponseBodyItem(resp)
@@ -59,7 +59,7 @@ func (g *GenRoute) generateResponseError() error {
 
 func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 	contentType := ""
-	name := g.getVarName(resp.Name)
+	name := g.getVarName(resp.Name, resp.Type)
 	switch resp.Content {
 	case "json":
 		g.buf.AddImport("", "encoding/json")

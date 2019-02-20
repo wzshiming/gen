@@ -31,7 +31,7 @@ func %s(`, name, oper.Name, name)
 		if req.Type == nil {
 			continue
 		}
-		g.buf.WriteFormat("var %s ", g.getVarName(req.Name))
+		g.buf.WriteFormat("var %s ", g.getVarName(req.Name, req.Type))
 		g.Types(req.Type)
 		g.buf.WriteString("\n")
 	}
@@ -40,7 +40,7 @@ func %s(`, name, oper.Name, name)
 		if resp.Ref != "" {
 			resp = g.api.Responses[resp.Ref]
 		}
-		g.buf.WriteFormat("var %s ", g.getVarName(resp.Name))
+		g.buf.WriteFormat("var %s ", g.getVarName(resp.Name, resp.Type))
 		g.Types(resp.Type)
 		g.buf.WriteString("\n")
 	}

@@ -11,7 +11,7 @@ func (g *GenRoute) generateRequest(req *spec.Request) error {
 		req = g.api.Requests[req.Ref]
 	}
 
-	vname := g.getVarName(req.Name)
+	vname := g.getVarName(req.Name, req.Type)
 	switch req.In {
 	case "none":
 		// No action
@@ -154,7 +154,7 @@ func (g *GenRoute) generateRequestFunction(req *spec.Request) error {
 
 	g.buf.WriteFormat(`
 // %s Parsing the %s for of %s
-func %s(w http.ResponseWriter, r *http.Request) (%s `, name, req.In, req.Name, name, g.getVarName(req.Name))
+func %s(w http.ResponseWriter, r *http.Request) (%s `, name, req.In, req.Name, name, g.getVarName(req.Name, req.Type))
 	g.Types(req.Type)
 	g.buf.WriteString(`, err error) {
 `)
@@ -171,7 +171,7 @@ func %s(w http.ResponseWriter, r *http.Request) (%s `, name, req.In, req.Name, n
 
 func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 
-	name := g.getVarName(req.Name)
+	name := g.getVarName(req.Name, req.Type)
 	switch req.In {
 	case "body":
 

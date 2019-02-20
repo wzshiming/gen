@@ -77,7 +77,7 @@ func (g *GenRoute) generateCall(name, pkgpath string, typ *spec.Type, requests [
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		g.buf.WriteString(g.getVarName(resp.Name))
+		g.buf.WriteString(g.getVarName(resp.Name, resp.Type))
 	}
 	if len(responses) != 0 {
 		g.buf.WriteString(" = ")
@@ -96,7 +96,7 @@ func (g *GenRoute) generateCall(name, pkgpath string, typ *spec.Type, requests [
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
-		g.buf.WriteString(g.getVarName(req.Name))
+		g.buf.WriteString(g.getVarName(req.Name, req.Type))
 	}
 	g.buf.WriteString(")\n")
 
