@@ -22,7 +22,7 @@ generating clients is also supported
   - [X] Generate Go router
   - [X] Generate Go client
   - [Javascript client](https://github.com/swagger-api/swagger-js)
-  - [Other language client](https://github.com/swagger-api/swagger-codegen)
+  - [Other language client](https://github.com/swagger-api/swagger-codegen/tree/3.0.0)
 - [ ] gRPC & Proto3
 
 ## Examples

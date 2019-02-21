@@ -22,7 +22,7 @@
   - [X] 生成Go路由
   - [X] 生成Go客户端
   - [Javascript 客户端](https://github.com/swagger-api/swagger-js)
-  - [其他语言客户端](https://github.com/swagger-api/swagger-codegen)
+  - [其他语言客户端](https://github.com/swagger-api/swagger-codegen/tree/3.0.0)
 - [ ] gRPC & Proto3
 
 ## 示例
