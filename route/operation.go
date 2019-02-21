@@ -80,12 +80,13 @@ func %s(`, name, oper.Name, name)
 	}
 	if noCtx {
 		g.buf.WriteString(`
-	w.WriteHeader(204)
-	w.Write(nil)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	w.Write([]byte("null"))
 `)
 	}
 	g.buf.WriteString(`
-		return
+	return
 }
 `)
 	return
