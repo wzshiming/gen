@@ -95,7 +95,9 @@ var Cmd = &cobra.Command{
 			}
 			doc := "// " + strings.Join(strings.Split(string(dc), "\n"), "\n// ")
 			dd, _ := json.Marshal(api)
-			d.WriteFormat("%s\nvar OpenAPI=`%s`\n", doc, string(dd))
+
+			oa := strings.Replace(string(dd), "`", "`+\"`\"+`", -1)
+			d.WriteFormat("%s\nvar OpenAPI=`%s`\n", doc, oa)
 
 			d.AddImport("", "github.com/wzshiming/openapi/ui")
 			d.AddImport("", "github.com/wzshiming/openapi/ui/swaggerui")

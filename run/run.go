@@ -80,10 +80,11 @@ func file(pkgs []string, port string, way string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	oa := strings.Replace(string(d), "`", "`+\"`\"+`", -1)
 
 	buf := bytes.NewBuffer(nil)
 	err = tpl.Execute(buf, map[string]interface{}{
-		"Openapi": "`" + string(d) + "`",
+		"Openapi": "`" + oa + "`",
 		"Server":  server,
 		"Port":    port,
 		"Router":  router,
