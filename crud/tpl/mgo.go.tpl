@@ -130,7 +130,8 @@ func (s *< .UpperHump >Service) Count(startTime /* #name:"start_time"# */, endTi
 
 // RecordList of the < .UpperHump > record list #route:"GET /record/{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) RecordList(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, offset, limit int) (< .LowerHump >Records []*< .UpperHump >Record, err error) {
-	q := s.dbRecord.Find(bson.D{{"< .LowerSnake >_id", < .LowerHump >ID}}).Skip(offset).Limit(limit)
+	m := bson.D{{"< .LowerSnake >_id", < .LowerHump >ID}}
+	q := s.dbRecord.Find(m).Skip(offset).Limit(limit)
 	err = q.All(&< .LowerHump >Records)
 	if err != nil {
 		return nil, err
@@ -138,22 +139,32 @@ func (s *< .UpperHump >Service) RecordList(< .LowerHump >ID bson.ObjectId /* #na
 	return < .LowerHump >Records, nil
 }
 
+// RecordCount of the < .UpperHump > record count #route:"GET /record/{< .LowerSnake >_id}/count"#
+func (s *< .UpperHump >Service) RecordCount(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */) (count int, err error) {
+	m := bson.D{{"< .LowerSnake >_id", < .LowerHump >ID}}
+	q := s.dbRecord.Find(m)
+	return q.Count()
+}
+
 func (s *< .UpperHump >Service) record(< .LowerHump >ID bson.ObjectId, current *< .UpperHump >) error {
 	v, err := s.Get(< .LowerHump >ID)
+	if err != nil && err != mgo.ErrNotFound{
+		return err
+	}
+	count, err := s.dbRecord.Find(bson.D{{"< .LowerSnake >_id", < .LowerHump >ID}}).Count()
 	if err != nil {
 		return err
 	}
-	count, err := s.dbRecord.Find(bson.D{{"< .LowerSnake >_id", v.ID}}).Count()
-	if err != nil {
-		return err
+	record := &< .UpperHump >Record{
+		< .UpperHump >ID: < .LowerHump >ID,
+		Current:          current,
+		CurrentTime:      bson.Now(),
+		Times:            count + 1,
 	}
-	return s.dbRecord.Insert(&< .UpperHump >Record{
-		< .UpperHump >ID:      v.ID,
-		Recent:      &v.< .UpperHump >,
-		Current:     current,
-		RecentTime:  v.UpdateTime,
-		CurrentTime: bson.Now(),
-		Times:       count + 1,
-	})
+	if v != nil {
+		record.Recent = &v.< .UpperHump >
+		record.RecentTime = v.UpdateTime
+	}
+	return s.dbRecord.Insert(record)
 }
 
