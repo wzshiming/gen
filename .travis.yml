@@ -1,6 +1,26 @@
+go_import_path: github.com/wzshiming/gen
+
 language: go
+
 go:
-  - "1.9"
-  - "1.10"
-  - "1.11"
-  - master
+  - 1.10.x
+  - 1.11.x
+  - tip
+
+os:
+  - linux
+  - osx
+  - windows
+
+matrix:
+  allow_failures:
+    - go: tip
+  fast_finish: true
+
+install:
+  - go get -v github.com/wzshiming/gen/cmd/gen
+
+script:
+  - go test -v github.com/wzshiming/gen/...
+
+sudo: false
