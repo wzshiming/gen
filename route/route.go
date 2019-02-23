@@ -1,6 +1,7 @@
 package route
 
 import (
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -8,12 +9,14 @@ import (
 	"github.com/wzshiming/gen/named"
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/srcgen"
+	"github.com/wzshiming/openapi/util"
 )
 
 // GenClient is the generating generating
 type GenRoute struct {
-	api *spec.API
-	buf *srcgen.File
+	api          *spec.API
+	apiInterface interface{}
+	buf          *srcgen.File
 	model.GenModel
 	only  map[string]bool
 	named *named.Named
@@ -36,8 +39,56 @@ func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) 
 	if err != nil {
 		return nil, err
 	}
-
+	if g.apiInterface != nil {
+		err := g.generateOpenAPI()
+		if err != nil {
+			return nil, err
+		}
+	}
 	return g.buf, nil
+}
+
+func (g *GenRoute) generateOpenAPI() (err error) {
+	dj, err := json.Marshal(g.apiInterface)
+	if err != nil {
+		return err
+	}
+	dy, err := util.JSON2YAML(dj)
+	if err != nil {
+		return err
+	}
+	oay := strings.Replace(string(dy), "`", "`+\"`\"+`", -1)
+	oaj := strings.Replace(string(dj), "`", "`+\"`\"+`", -1)
+	g.buf.WriteFormat("var OpenAPI4YAML=[]byte(`%s`)\n", oay)
+	g.buf.WriteFormat("var OpenAPI4JSON=[]byte(`%s`)\n", oaj)
+
+	g.buf.AddImport("", "github.com/wzshiming/openapi/ui")
+	g.buf.AddImport("", "github.com/wzshiming/openapi/ui/swaggerui")
+	g.buf.AddImport("", "github.com/wzshiming/openapi/ui/swaggereditor")
+	g.buf.AddImport("", "github.com/wzshiming/openapi/ui/redoc")
+	g.buf.AddImport("", "github.com/gorilla/mux")
+
+	g.buf.WriteString(`
+// RouteOpenAPI
+func RouteOpenAPI(router *mux.Router) *mux.Router {
+	openapi := map[string][]byte {
+		"openapi.json": OpenAPI4JSON,
+		"openapi.yml": OpenAPI4YAML,
+		"openapi.yaml": OpenAPI4YAML,
+	}
+	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", ui.HandleWithFiles(openapi, swaggerui.Asset)))
+	router.PathPrefix("/swaggerui/").Handler(http.StripPrefix("/swaggerui", ui.HandleWithFiles(openapi, swaggerui.Asset)))
+	router.PathPrefix("/swaggereditor/").Handler(http.StripPrefix("/swaggereditor", ui.HandleWithFiles(openapi, swaggereditor.Asset)))
+	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/redoc", ui.HandleWithFiles(openapi, redoc.Asset)))
+	return router
+}
+`)
+	return nil
+}
+
+func (g *GenRoute) WithOpenAPI(api interface{}) *GenRoute {
+	g.apiInterface = api
+	return g
 }
 
 func (g *GenRoute) generateRoutes(funcName string) (err error) {
@@ -67,6 +118,12 @@ func %s() http.Handler {
 		if err != nil {
 			return err
 		}
+	}
+
+	if g.apiInterface != nil {
+		g.buf.WriteString(`
+	router = RouteOpenAPI(router)
+		`)
 	}
 	g.buf.WriteString(`
 	return router

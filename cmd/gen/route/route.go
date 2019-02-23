@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/openapi"
@@ -59,11 +58,8 @@ var Cmd = &cobra.Command{
 				return err
 			}
 		}
-		d, err := route.NewGenRoute(def.API()).Generate(pack, impPath, name)
-		if err != nil {
-			return err
-		}
 
+		rg := route.NewGenRoute(def.API())
 		if openapiF {
 
 			var oainfo *oaspec.Info
@@ -88,43 +84,11 @@ var Cmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-
-			dc, err := json.MarshalIndent(api, "", " ")
-			if err != nil {
-				return err
-			}
-			doc := "// " + strings.Join(strings.Split(string(dc), "\n"), "\n// ")
-			dd, _ := json.Marshal(api)
-
-			oa := strings.Replace(string(dd), "`", "`+\"`\"+`", -1)
-			d.WriteFormat("%s\nvar OpenAPI=`%s`\n", doc, oa)
-
-			d.AddImport("", "github.com/wzshiming/openapi/ui")
-			d.AddImport("", "github.com/wzshiming/openapi/ui/swaggerui")
-			d.AddImport("", "github.com/wzshiming/openapi/ui/redoc")
-			d.AddImport("", "github.com/gorilla/mux")
-			d.AddImport("", "os")
-			d.AddImport("", "unsafe")
-
-			d.WriteString(`
-// RouteOpenAPI
-func RouteOpenAPI(router *mux.Router) *mux.Router {
-	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", ui.HandleWith(func(path string) ([]byte, error) {
-		if path == "openapi.json" {
-			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
+			rg = rg.WithOpenAPI(api)
 		}
-		return nil, os.ErrNotExist
-	}, swaggerui.Asset)))
-	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/redoc", ui.HandleWith(func(path string) ([]byte, error) {
-		if path == "openapi.json" {
-			return *(*[]byte)(unsafe.Pointer(&OpenAPI)), nil
-		}
-		return nil, os.ErrNotExist
-	}, redoc.Asset)))
-	return router
-}
-`)
-
+		d, err := rg.Generate(pack, impPath, name)
+		if err != nil {
+			return err
 		}
 
 		return d.WithFilename(out).Save()
