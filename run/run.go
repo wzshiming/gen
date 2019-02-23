@@ -17,24 +17,57 @@ import (
 )
 
 func Run(pkgs []string, port string, way string) error {
+	for _, pkg := range pkgs {
+		get(pkg)
+	}
+
 	f, err := file(pkgs, port, way)
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(os.TempDir(), "main.go")
-	err = ioutil.WriteFile(path, f, 0666)
+
+	dir := os.TempDir()
+
+	pathOrigin := filepath.Join(dir, "gen-path")
+
+	pwd, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		return err
 	}
 
-	cmd := exec.Command("go", "run", path)
+	path, err := filepath.Rel(pwd, pathOrigin)
+	if err != nil {
+		return err
+	}
+
+	pkg := filepath.Join(path, "src", "gen-run")
+
+	err = os.MkdirAll(pkg, 0755)
+	if err != nil {
+		return err
+	}
+
+	file := filepath.Join(pkg, "main.go")
+	err = ioutil.WriteFile(file, f, 0666)
+	if err != nil {
+		return err
+	}
+
+	get(pkg)
+
+	cmd := exec.Command("go", "run", pkg)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
 	err = cmd.Run()
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func get(pkg string) {
+	exec.Command("go", "get", pkg).Run()
 }
 
 func file(pkgs []string, port string, way string) ([]byte, error) {
@@ -88,8 +121,7 @@ func file(pkgs []string, port string, way string) ([]byte, error) {
 
 var tpl = template.Must(template.New("").Parse(temp))
 
-const temp = `//+build ignore
-
+const temp = `
 {{ .Router }}
 
 func main() {
