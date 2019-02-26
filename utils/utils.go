@@ -65,7 +65,11 @@ func MergeLine(t string) string {
 }
 
 func CommentLine(t string) string {
-	return "// " + strings.Join(strings.Split(strings.TrimSpace(t), "\n"), "\n// ") + "\n"
+	t = strings.TrimSpace(t)
+	if t == "" {
+		return "\n"
+	}
+	return "// " + strings.Join(strings.Split(t, "\n"), "\n// ") + "\n"
 }
 
 func Hash(s ...string) string {
