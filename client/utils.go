@@ -42,3 +42,7 @@ func (g *GenClient) getSecurityName(secu *spec.Security) string {
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(secu))), 16)
 	return g.named.GetName(name, addr)
 }
+
+func (g *GenClient) getEnumName(name, value string) string {
+	return g.named.GetName(name, value)
+}

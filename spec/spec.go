@@ -109,6 +109,7 @@ type Field struct {
 }
 
 type Enum struct {
+	Name        string
 	Value       string
 	Description string
 }

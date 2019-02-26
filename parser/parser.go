@@ -631,12 +631,14 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 				if v.Kind() != gotype.Declaration {
 					continue
 				}
+				vname := v.Name()
 				v = v.Declaration()
 				if typname := v.Name(); name == typname {
 					if value := v.Value(); value != "" {
 						desc := v.Doc().Text() + "\n" + v.Comment().Text()
 						desc = strings.TrimSpace(desc)
 						sch.Enum = append(sch.Enum, &spec.Enum{
+							Name:        vname,
 							Value:       value,
 							Description: desc,
 						})

@@ -59,11 +59,21 @@ func (g *GenClient) generateSchemas() (err error) {
 		}
 		g.buf.WriteString(utils.CommentLine(v.Description))
 		g.buf.WriteString("type ")
-		g.buf.WriteString(g.getTypeName(v))
+		name := g.getTypeName(v)
+		g.buf.WriteString(name)
 		g.buf.WriteByte(' ')
 		err = g.TypesDefine(v)
 		if err != nil {
 			return err
+		}
+		if len(v.Enum) != 0 {
+			g.buf.WriteString(`
+const (
+`)
+			for _, enum := range v.Enum {
+				g.buf.WriteFormat("%s %s = %s\n", g.getEnumName(enum.Name, enum.Value), name, enum.Value)
+			}
+			g.buf.WriteString(`)`)
 		}
 		g.buf.WriteString("\n\n")
 	}
