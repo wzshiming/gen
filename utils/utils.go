@@ -60,14 +60,6 @@ func GetPackagePath(path string) string {
 	return strings.TrimLeft(path, "/")
 }
 
-func GetName(name string) string {
-	i := strings.Index(name, ".")
-	if i == -1 {
-		return name
-	}
-	return name[:i]
-}
-
 func MergeLine(t string) string {
 	return strings.TrimSpace(strings.Replace(t, "\n", " ", -1))
 }

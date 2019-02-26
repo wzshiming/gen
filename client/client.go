@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/wzshiming/gen/model"
+	"github.com/wzshiming/gen/named"
 	"github.com/wzshiming/gen/spec"
 	"github.com/wzshiming/gen/srcgen"
 	"github.com/wzshiming/gen/utils"
@@ -14,6 +15,7 @@ type GenClient struct {
 	api *spec.API
 	buf *srcgen.File
 	model.GenModel
+	named *named.Named
 }
 
 func NewGenClient(api *spec.API) *GenClient {
@@ -22,6 +24,7 @@ func NewGenClient(api *spec.API) *GenClient {
 		api:      api,
 		buf:      buf,
 		GenModel: *model.NewGenModel(api, buf, ""),
+		named:    named.NewNamed("_"),
 	}
 }
 
@@ -56,7 +59,7 @@ func (g *GenClient) generateSchemas() (err error) {
 		}
 		g.buf.WriteString(utils.CommentLine(v.Description))
 		g.buf.WriteString("type ")
-		g.buf.WriteString(utils.GetName(k))
+		g.buf.WriteString(g.getTypeName(v))
 		g.buf.WriteByte(' ')
 		err = g.TypesDefine(v)
 		if err != nil {

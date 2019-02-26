@@ -73,7 +73,7 @@ func (g *GenClient) generateOperations(oper *spec.Operation) (err error) {
 		}
 		g.buf.WriteByte(')')
 	}
-	g.buf.WriteString(utils.GetName(oper.Name))
+	g.buf.WriteString(g.getFuncName(oper))
 	g.buf.WriteByte('(')
 	reqs, err := g.mergeMiddlewareRequests(oper.Requests)
 	if err != nil {

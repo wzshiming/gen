@@ -40,7 +40,7 @@ func (g *GenClient) generateSecurity(oper *spec.Security) (err error) {
 		}
 		g.buf.WriteByte(')')
 	}
-	g.buf.WriteString(utils.GetName(oper.Name))
+	g.buf.WriteString(g.getSecurityName(oper))
 	g.buf.WriteByte('(')
 	reqs := []*spec.Request{}
 	for _, req := range oper.Requests {

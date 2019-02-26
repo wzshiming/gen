@@ -98,7 +98,7 @@ func (g *GenModel) PtrTypes(typ *spec.Type) (err error) {
 			g.buf.WriteString("*")
 		}
 		g.Paths(typ)
-		g.buf.WriteString(utils.GetName(typ.Ref))
+		g.buf.WriteString(getName(typ.Ref))
 		return nil
 	}
 
@@ -117,7 +117,7 @@ func (g *GenModel) PtrTypes(typ *spec.Type) (err error) {
 func (g *GenModel) Types(typ *spec.Type) (err error) {
 	if typ.Ref != "" {
 		g.Paths(typ)
-		g.buf.WriteString(utils.GetName(typ.Ref))
+		g.buf.WriteString(getName(typ.Ref))
 		return nil
 	}
 
@@ -205,4 +205,12 @@ func (g *GenModel) TypesDefine(typ *spec.Type) (err error) {
 		g.buf.WriteString(strings.ToLower(typ.Kind.String()))
 	}
 	return
+}
+
+func getName(name string) string {
+	i := strings.Index(name, ".")
+	if i == -1 {
+		return name
+	}
+	return name[:i]
 }
