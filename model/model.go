@@ -115,6 +115,11 @@ func (g *GenModel) PtrTypes(typ *spec.Type) (err error) {
 }
 
 func (g *GenModel) Types(typ *spec.Type) (err error) {
+
+	if g.typeRoot(typ) {
+		return
+	}
+
 	if typ.Ref != "" {
 		g.Paths(typ)
 		g.buf.WriteString(getName(typ.Ref))
@@ -130,7 +135,7 @@ func (g *GenModel) Types(typ *spec.Type) (err error) {
 	return g.TypesDefine(typ)
 }
 
-func (g *GenModel) TypesDefine(typ *spec.Type) (err error) {
+func (g *GenModel) typeRoot(typ *spec.Type) bool {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
@@ -139,7 +144,18 @@ func (g *GenModel) TypesDefine(typ *spec.Type) (err error) {
 		g.buf.AddImport("", typ.PkgPath)
 		_, pkgname := path.Split(typ.PkgPath)
 		g.buf.WriteFormat("%s.%s", pkgname, typ.Name)
-		return nil
+		return true
+	}
+	return false
+}
+
+func (g *GenModel) TypesDefine(typ *spec.Type) (err error) {
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+
+	if g.typeRoot(typ) {
+		return
 	}
 
 	switch typ.Kind {
