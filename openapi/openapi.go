@@ -471,13 +471,13 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 		case spec.Int64, spec.Int:
 			sch = oaspec.Int64Property() // .WithMinimum(math.MinInt64, false).WithMaximum(math.MaxInt64, false)
 		case spec.Uint8:
-			sch = oaspec.IntFmtProperty("uin8").WithMinimum(0, false).WithMaximum(math.MaxUint8, false)
+			sch = oaspec.IntFmtProperty("uint8").WithMinimum(0, false).WithMaximum(math.MaxUint8, false)
 		case spec.Uint16:
-			sch = oaspec.IntFmtProperty("uin16").WithMinimum(0, false).WithMaximum(math.MaxUint16, false)
+			sch = oaspec.IntFmtProperty("uint16").WithMinimum(0, false).WithMaximum(math.MaxUint16, false)
 		case spec.Uint32:
-			sch = oaspec.IntFmtProperty("uin32") // .WithMinimum(0, false).WithMaximum(math.MaxUint32, false)
+			sch = oaspec.IntFmtProperty("uint32") // .WithMinimum(0, false).WithMaximum(math.MaxUint32, false)
 		case spec.Uint64, spec.Uint:
-			sch = oaspec.IntFmtProperty("uin64") // .WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
+			sch = oaspec.IntFmtProperty("uint64") // .WithMinimum(0, false).WithMaximum(math.MaxUint64, false)
 		case spec.Map:
 			sch, err = g.generateSchemas(typ.Elem)
 			if err != nil {
@@ -513,6 +513,13 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 				val, err := g.generateSchemas(v.Type)
 				if err != nil {
 					return nil, err
+				}
+				if val.Ref != "" {
+					tt := g.openapi.Components.Schemas[val.Ref]
+					oldval := val
+					val = &oaspec.Schema{}
+					val.AllOf = []*oaspec.Schema{oldval}
+					val.Description = tt.Description
 				}
 				if v.Description != "" {
 					val.Description += "\n" + v.Description
