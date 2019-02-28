@@ -26,7 +26,7 @@ func (g *GenClient) getVarName(name string, typ *spec.Type) string {
 }
 
 func (g *GenClient) getTypeName(typ *spec.Type) string {
-	name := namecase.ToUpperHumpInitialisms(typ.Name)
+	name := typ.Name
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(typ))), 16)
 	return g.named.GetName(name, addr)
 }
