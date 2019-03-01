@@ -32,14 +32,28 @@ func (g *GenClient) getTypeName(typ *spec.Type) string {
 
 func (g *GenClient) getFuncName(oper *spec.Operation) string {
 	name := oper.Name
+
+	named := g.named
+	if oper.Type != nil {
+		addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(oper.Type))), 16)
+		named = named.GetSubNamed(addr)
+	}
+
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(oper))), 16)
-	return g.named.GetName(name, addr)
+	return named.GetName(name, addr)
 }
 
 func (g *GenClient) getSecurityName(secu *spec.Security) string {
 	name := secu.Name
+
+	named := g.named
+	if secu.Type != nil {
+		addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(secu.Type))), 16)
+		named = named.GetSubNamed(addr)
+	}
+
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(secu))), 16)
-	return g.named.GetName(name, addr)
+	return named.GetName(name, addr)
 }
 
 func (g *GenClient) getEnumName(name, value string) string {
