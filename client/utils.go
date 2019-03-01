@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"strconv"
 	"unsafe"
 
@@ -32,13 +31,13 @@ func (g *GenClient) getTypeName(typ *spec.Type) string {
 }
 
 func (g *GenClient) getFuncName(oper *spec.Operation) string {
-	name := namecase.ToUpperHumpInitialisms(fmt.Sprintf("%s_%s", oper.Method, oper.Path))
+	name := oper.Name
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(oper))), 16)
 	return g.named.GetName(name, addr)
 }
 
 func (g *GenClient) getSecurityName(secu *spec.Security) string {
-	name := namecase.ToLowerHumpInitialisms(fmt.Sprintf("security_%s_%s", secu.Schema, secu.Name))
+	name := secu.Name
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(secu))), 16)
 	return g.named.GetName(name, addr)
 }
