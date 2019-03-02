@@ -24,25 +24,14 @@ func %s(`, name, oper.Name, name)
 	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) {
 `)
 
-	for _, req := range oper.Requests {
-		if req.Ref != "" {
-			req = g.api.Requests[req.Ref]
-		}
-		if req.Type == nil {
-			continue
-		}
-		g.buf.WriteFormat("var %s ", g.getVarName(req.Name, req.Type))
-		g.Types(req.Type)
-		g.buf.WriteString("\n")
+	err = g.generateRequestsVar(oper.Requests, true)
+	if err != nil {
+		return err
 	}
 
-	for _, resp := range oper.Responses {
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		g.buf.WriteFormat("var %s ", g.getVarName(resp.Name, resp.Type))
-		g.Types(resp.Type)
-		g.buf.WriteString("\n")
+	err = g.generateResponsesVar(oper.Responses)
+	if err != nil {
+		return err
 	}
 
 	err = g.generateCallExec(oper.Name, oper.PkgPath, oper.Type, oper.Requests, oper.Responses, false)

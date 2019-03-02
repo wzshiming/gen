@@ -33,19 +33,12 @@ func %s(`, name, secu.Name, name)
 		g.buf.WriteFormat("%s ", g.getVarName(resp.Name, resp.Type))
 		g.Types(resp.Type)
 	}
-	g.buf.WriteString(`){
+	g.buf.WriteString(`) {
 `)
 
-	for _, req := range secu.Requests {
-		if req.Ref != "" {
-			req = g.api.Requests[req.Ref]
-		}
-		if req.Type == nil {
-			continue
-		}
-		g.buf.WriteFormat("var %s ", g.getVarName(req.Name, req.Type))
-		g.Types(req.Type)
-		g.buf.WriteString("\n")
+	err = g.generateRequestsVar(secu.Requests, false)
+	if err != nil {
+		return err
 	}
 
 	err = g.generateCallExec(secu.Name, secu.PkgPath, secu.Type, secu.Requests, secu.Responses, true)

@@ -7,6 +7,27 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
+func (g *GenRoute) generateResponsesVar(resps []*spec.Response) error {
+
+	for _, resp := range resps {
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		if resp.Type == nil {
+			continue
+		}
+		if resp.Type.Kind == spec.Error {
+			continue
+		}
+
+		g.buf.WriteFormat("var %s ", g.getVarName(resp.Name, resp.Type))
+		g.Types(resp.Type)
+		g.buf.WriteString("\n")
+	}
+
+	return nil
+}
+
 func (g *GenRoute) generateResponse(resp *spec.Response) error {
 	if resp.Ref != "" {
 		resp = g.api.Responses[resp.Ref]
