@@ -70,20 +70,20 @@ func (g *GenRoute) generateCall(name, pkgpath string, typ *spec.Type, requests [
 `, pkgpath, name)
 	}
 
-	for i, resp := range responses {
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		if i != 0 {
-			g.buf.WriteByte(',')
-		}
-		g.buf.WriteString(g.getVarName(resp.Name, resp.Type))
-	}
 	if len(responses) != 0 {
+		for i, resp := range responses {
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+			if i != 0 {
+				g.buf.WriteByte(',')
+			}
+			g.buf.WriteString(g.getVarName(resp.Name, resp.Type))
+		}
 		g.buf.WriteString(" = ")
 	}
 	if typ != nil {
-		g.buf.WriteString(" s.")
+		g.buf.WriteString("s.")
 	} else {
 		g.PkgPath(pkgpath)
 	}
