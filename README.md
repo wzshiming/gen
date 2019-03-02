@@ -29,10 +29,27 @@ generating clients is also supported
 
 1. Install gen tool `go get -v github.com/wzshiming/gen/cmd/gen`
 2. Add gen tool to $PATH
-3. Execute it `gen run github.com/wzshiming/gen-examples/service/...`
+3. Start it `gen run github.com/wzshiming/gen-examples/service/...`
 4. Open [http://127.0.0.1:8080/swagger/?url=./openapi.json#](http://127.0.0.1:8080/swagger/?url=./openapi.json#) with your browser
 
 [Examples](https://github.com/wzshiming/gen-examples/)  
+
+Or try to quickly build services from scratch
+
+1. Make a directory `mkdir -p $(go env GOPATH)/src/gentest`
+2. Change directory `cd $(go env GOPATH)/src/gentest/`
+3. Define models
+``` shell
+cat > models.go <<EOF
+package gentest
+type Gentest struct {
+    Name string \`json:"name"\`
+    Age  int    \`json:"age"\`
+}
+EOF
+```
+4. Generated from CRUD template `gen crud -t mock -n Gentest`
+5. Start it `gen run gentest`
 
 ## License
 
