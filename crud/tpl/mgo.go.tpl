@@ -61,23 +61,59 @@ func (s *< .UpperHump >Service) Create(< .LowerHump > *< .UpperHump >) (< .Lower
 
 // Update the < .UpperHump > #route:"PUT /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Update(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, < .LowerHump > *< .UpperHump >) (err error) {
-	if err := s.record(< .LowerHump >ID, < .LowerHump >); err != nil {
+	recent, err := s.Get(< .LowerHump >ID)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil
+		}
 		return err
 	}
 
-	return s.db.UpdateId(< .LowerHump >ID, bson.D{{"$set", &< .UpperHump >WithID{
+	err = s.db.UpdateId(< .LowerHump >ID, bson.D{{"$set", &< .UpperHump >WithID{
 		< .UpperHump >:   *< .LowerHump >,
 		UpdateTime: bson.Now(),
 	}}})
+	if err != nil {
+		return err
+	}
+
+	current, err := s.Get(< .LowerHump >ID)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil
+		}
+		return err
+	}
+
+	err = s.record(recent, &current.< .UpperHump >)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Delete the < .UpperHump > #route:"DELETE /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Delete(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */) (err error) {
-	if err := s.record(< .LowerHump >ID, nil); err != nil {
+	recent, err := s.Get(< .LowerHump >ID)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil
+		}
 		return err
 	}
 
-	return s.db.RemoveId(< .LowerHump >ID)
+	err = s.db.RemoveId(< .LowerHump >ID)
+	if err != nil {
+		return err
+	}
+
+	err = s.record(recent, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Get the < .UpperHump > #route:"GET /{< .LowerSnake >_id}"#
@@ -146,24 +182,21 @@ func (s *< .UpperHump >Service) RecordCount(< .LowerHump >ID bson.ObjectId /* #n
 	return q.Count()
 }
 
-func (s *< .UpperHump >Service) record(< .LowerHump >ID bson.ObjectId, current *< .UpperHump >) error {
-	v, err := s.Get(< .LowerHump >ID)
-	if err != nil && err != mgo.ErrNotFound{
-		return err
+func (s *< .UpperHump >Service) record(< .LowerHump > *< .UpperHump >WithID, current *< .UpperHump >) error {
+	if < .LowerHump > == nil {
+		return nil
 	}
-	count, err := s.dbRecord.Find(bson.D{{"< .LowerSnake >_id", < .LowerHump >ID}}).Count()
+	count, err := s.dbRecord.Find(bson.D{{"< .LowerSnake >_id", < .LowerHump >.ID}}).Count()
 	if err != nil {
 		return err
 	}
 	record := &< .UpperHump >Record{
-		< .UpperHump >ID: < .LowerHump >ID,
+		< .UpperHump >ID: < .LowerHump >.ID,
 		Current:          current,
 		CurrentTime:      bson.Now(),
 		Times:            count + 1,
-	}
-	if v != nil {
-		record.Recent = &v.< .UpperHump >
-		record.RecentTime = v.UpdateTime
+		Recent:           &< .LowerHump >.< .UpperHump >,
+		RecentTime:       < .LowerHump >.UpdateTime,
 	}
 	return s.dbRecord.Insert(record)
 }

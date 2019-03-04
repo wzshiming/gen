@@ -6,7 +6,6 @@ import (
 	"errors"
 )
 
-
 // < .UpperHump >WithID is < .UpperHump > with ID
 type < .UpperHump >WithID struct {
 	ID int `json:"< .LowerSnake >_id,string"`
