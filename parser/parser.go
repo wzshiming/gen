@@ -153,10 +153,6 @@ func (g *Parser) importOnce(pkgpath string) error {
 }
 
 func (g *Parser) addPaths(t gotype.Type) (err error) {
-	numm := t.NumMethod()
-	if numm == 0 {
-		return nil
-	}
 	doc := strings.TrimSpace(t.Doc().Text())
 	if doc == "" {
 		return nil
@@ -172,6 +168,11 @@ func (g *Parser) addPaths(t gotype.Type) (err error) {
 		return err
 	}
 
+	return g.addMethods(path, sch, t)
+}
+
+func (g *Parser) addMethods(path string, sch *spec.Type, t gotype.Type) (err error) {
+	numm := t.NumMethod()
 	for i := 0; i != numm; i++ {
 		v := t.Method(i)
 		if !IsExported(v.Name()) {
@@ -197,6 +198,23 @@ func (g *Parser) addPaths(t gotype.Type) (err error) {
 		err = g.addOperation(path, sch, v)
 		if err != nil {
 			return err
+		}
+	}
+	if t.Kind() == gotype.Ptr {
+		t = t.Elem()
+	}
+	if t.Kind() == gotype.Struct {
+		numf := t.NumField()
+		for i := 0; i != numf; i++ {
+			v := t.Field(i)
+			if !v.IsAnonymous() {
+				continue
+			}
+			v = v.Elem()
+			err = g.addMethods(path, sch, v)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return
