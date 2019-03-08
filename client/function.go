@@ -59,7 +59,7 @@ SetBody(%s)`, g.getVarName(req.Name, req.Type))
 		}
 	}
 	g.buf.WriteFormat(`.
-%s("%s")`, namecase.ToUpperHump(strings.SplitN(oper.Method, ",", 2)[0]), oper.Path)
+%s("%s")`, namecase.ToUpperHump(strings.SplitN(oper.Method, ",", 2)[0]), strings.Trim(oper.Path, "/"))
 
 	g.generateErrror(oper.Responses)
 	return nil
