@@ -100,7 +100,9 @@ func (g *GenClient) generateResponses(oper *spec.Operation) (err error) {
 	}
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteString(`default:
-		err = fmt.Errorf("Undefined code %d %s", code, http.StatusText(code))
+		if code >= 400 {
+			err = fmt.Errorf("Undefined code %d %s", code, http.StatusText(code))
+		}
 	}
 `)
 
