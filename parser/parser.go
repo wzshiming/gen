@@ -168,16 +168,19 @@ func (g *Parser) addPaths(t gotype.Type) (err error) {
 		return err
 	}
 
-	return g.addMethods(path, sch, t)
+	filter := map[string]bool{}
+	return g.addMethods(path, sch, t, filter)
 }
 
-func (g *Parser) addMethods(path string, sch *spec.Type, t gotype.Type) (err error) {
+func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, filter map[string]bool) (err error) {
 	numm := t.NumMethod()
 	for i := 0; i != numm; i++ {
 		v := t.Method(i)
-		if !IsExported(v.Name()) {
+		name := v.Name()
+		if !IsExported(name) || filter[name] {
 			continue
 		}
+		filter[name] = true
 
 		if len(g.ways) != 0 {
 			doc := v.Doc().Text()
@@ -195,7 +198,7 @@ func (g *Parser) addMethods(path string, sch *spec.Type, t gotype.Type) (err err
 		if err != nil {
 			return err
 		}
-		err = g.addOperation(path, sch, v)
+		err = g.addOperation(basePath, sch, v)
 		if err != nil {
 			return err
 		}
@@ -207,14 +210,22 @@ func (g *Parser) addMethods(path string, sch *spec.Type, t gotype.Type) (err err
 		numf := t.NumField()
 		for i := 0; i != numf; i++ {
 			v := t.Field(i)
-			if !v.IsAnonymous() {
-				continue
+			if v.IsAnonymous() {
+				doc := strings.TrimSpace(v.Doc().Text())
+				if doc == "" {
+					return nil
+				}
+				tag := GetTag(doc)
+				basePath := path.Join(basePath, tag.Get("path"))
+
+				v = v.Elem()
+
+				err = g.addMethods(basePath, sch, v, filter)
+				if err != nil {
+					return err
+				}
 			}
-			v = v.Elem()
-			err = g.addMethods(path, sch, v)
-			if err != nil {
-				return err
-			}
+
 		}
 	}
 	return
@@ -441,12 +452,12 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 	}, nil
 }
 
-func (g *Parser) addRequests(path string, t gotype.Type) (reqs []*spec.Request, err error) {
+func (g *Parser) addRequests(basePath string, t gotype.Type) (reqs []*spec.Request, err error) {
 	numin := t.NumIn()
 
 	for i := 0; i != numin; i++ {
 		v := t.In(i)
-		req, err := g.addRequest(path, v)
+		req, err := g.addRequest(basePath, v)
 		if err != nil {
 			return nil, err
 		}
@@ -455,7 +466,7 @@ func (g *Parser) addRequests(path string, t gotype.Type) (reqs []*spec.Request, 
 	return reqs, nil
 }
 
-func (g *Parser) addRequest(path string, t gotype.Type) (par *spec.Request, err error) {
+func (g *Parser) addRequest(basePath string, t gotype.Type) (par *spec.Request, err error) {
 
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
@@ -507,7 +518,7 @@ func (g *Parser) addRequest(path string, t gotype.Type) (par *spec.Request, err 
 				content = "file"
 			}
 		} else if typ.Attr.Has(spec.AttrTextUnmarshaler) {
-			if path != "" && strings.Index(path, "{"+name+"}") != -1 {
+			if basePath != "" && strings.Index(basePath, "{"+name+"}") != -1 {
 				in = "path"
 			} else {
 				in = "query"
@@ -525,7 +536,7 @@ func (g *Parser) addRequest(path string, t gotype.Type) (par *spec.Request, err 
 			case spec.Interface:
 				in = "middleware"
 			default:
-				if path != "" && strings.Index(path, "{"+name+"}") != -1 {
+				if basePath != "" && strings.Index(basePath, "{"+name+"}") != -1 {
 					in = "path"
 				} else {
 					in = "query"

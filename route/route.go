@@ -91,6 +91,96 @@ func (g *GenRoute) WithOpenAPI(api interface{}) *GenRoute {
 	return g
 }
 
+func (g *GenRoute) generateSubRoutes(basePath string, op []*spec.Operation) (err error) {
+
+	sort.Slice(op, func(i, j int) bool {
+		io := op[i].Path
+		jo := op[j].Path
+		if io == jo {
+			return true
+		}
+		ip := strings.Count(io, "{")
+		jp := strings.Count(jo, "{")
+		if ip == jp {
+			return io > jo
+		}
+		return ip < jp
+	})
+
+	g.buf.WriteFormat(`
+	{
+		subrouter := router.PathPrefix("%s").Subrouter()
+		if len(fs) != 0 {
+			subrouter.Use(fs...)
+		}
+`, basePath)
+
+	for _, v := range op {
+		typ := v.Type
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+
+		err = g.generateRoute(v)
+		if err != nil {
+			return err
+		}
+	}
+	g.buf.WriteFormat(`
+	}
+`)
+	return nil
+}
+
+func (g *GenRoute) generateRouteFunc(typ *spec.Type, op []*spec.Operation) (err error) {
+	name := g.getRouteName(typ)
+	g.buf.WriteFormat(`
+	// %s is routing for %s
+	func %s(router *mux.Router, %s `, name, typ.Name, name, g.getVarName("", typ))
+	g.PtrTypes(typ)
+	g.buf.WriteFormat(`, fs ...mux.MiddlewareFunc) *mux.Router {
+	if router == nil {
+		router = mux.NewRouter()
+	}
+`)
+
+	group := map[string][]*spec.Operation{}
+	sortGroup := []string{}
+	for _, v := range op {
+		if group[v.BasePath] == nil {
+			sortGroup = append(sortGroup, v.BasePath)
+		}
+		group[v.BasePath] = append(group[v.BasePath], v)
+	}
+
+	sort.Slice(sortGroup, func(i, j int) bool {
+		io := sortGroup[i]
+		jo := sortGroup[j]
+		if io == jo {
+			return true
+		}
+		ip := strings.Count(io, "{")
+		jp := strings.Count(jo, "{")
+		if ip == jp {
+			return io > jo
+		}
+		return ip < jp
+	})
+
+	for _, basePath := range sortGroup {
+		op := group[basePath]
+		err := g.generateSubRoutes(basePath, op)
+		if err != nil {
+			return err
+		}
+	}
+	g.buf.WriteString(`
+	return router
+}
+`)
+	return nil
+}
+
 func (g *GenRoute) generateRoutes(funcName string) (err error) {
 	g.buf.AddImport("", "github.com/gorilla/mux")
 	g.buf.AddImport("", "net/http")
@@ -130,67 +220,57 @@ func %s() http.Handler {
 }
 `)
 
-	opers := map[string][]*spec.Operation{}
+	group := map[*spec.Type][]*spec.Operation{}
+	sortGroup := []*spec.Type{}
 	for _, v := range g.api.Operations {
 		if v.Type == nil {
 			continue
 		}
-		opers[v.BasePath] = append(opers[v.BasePath], v)
-	}
-
-	basepaths := []string{}
-	for k, _ := range opers {
-		basepaths = append(basepaths, k)
-	}
-	sort.Strings(basepaths)
-
-	for _, p := range basepaths {
-		op := opers[p]
-
-		sort.Slice(op, func(i, j int) bool {
-			io := op[i].Path
-			jo := op[j].Path
-			ip := strings.Count(io, "{")
-			jp := strings.Count(jo, "{")
-			if ip == jp {
-				return io > jo
-			}
-			return ip < jp
-		})
-
-		for i, v := range op {
-			typ := v.Type
-			if typ.Ref != "" {
-				typ = g.api.Types[typ.Ref]
-			}
-
-			if i == 0 {
-				name := g.getRouteName(typ)
-				g.buf.WriteFormat(`
-// %s is routing for %s
-func %s(router *mux.Router, %s `, name, typ.Name, name, g.getVarName("", typ))
-				g.PtrTypes(v.Type)
-				g.buf.WriteFormat(`, fs ...mux.MiddlewareFunc) *mux.Router {
-	if router == nil {
-		router = mux.NewRouter()
-	}
-	subrouter := router.PathPrefix("%s").Subrouter()
-	if len(fs) != 0 {
-		subrouter.Use(fs...)
-	}
-`, v.BasePath)
-			}
-
-			err = g.generateRoute(v)
-			if err != nil {
-				return err
-			}
+		typ := v.Type
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
 		}
-		g.buf.WriteString(`
-	return router
-}
-`)
+		if group[typ] == nil {
+			sortGroup = append(sortGroup, typ)
+		}
+		group[typ] = append(group[typ], v)
 	}
+
+	for _, typ := range sortGroup {
+		op := group[typ]
+		err := g.generateRouteFunc(typ, op)
+		if err != nil {
+			return err
+		}
+	}
+	// c := 0
+	// for i := range g.api.Operations {
+	// 	v := g.api.Operations[i]
+	// 	if v.Type == nil {
+	// 		continue
+	// 	}
+	// 	typ := v.Type
+	// 	if typ.Ref != "" {
+	// 		typ = g.api.Types[typ.Ref]
+	// 	}
+
+	// 	if len(g.api.Operations)-1 == i {
+	// 		err := g.generateRouteFunc(typ, g.api.Operations[c:])
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// 	if i == c {
+	// 		continue
+	// 	}
+	// 	if g.api.Operations[i] != g.api.Operations[i-1] {
+	// 		err := g.generateRouteFunc(typ, g.api.Operations[c:i])
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		c = i
+	// 	}
+	// }
 
 	reqKey := make([]string, 0, len(g.api.Requests))
 	for k := range g.api.Requests {
