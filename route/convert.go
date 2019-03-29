@@ -117,13 +117,55 @@ func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
 		case spec.Byte, spec.Rune:
 			return g.convertBytes(in, out, typ)
 		}
-
+		return g.convertSlice(in, out, typ.Elem)
+	case spec.Array:
 		return g.convertSlice(in, out, typ.Elem)
 	}
 
 	g.buf.WriteFormat("// Conversion of string to ")
 	g.Types(typ)
 	g.buf.WriteString(" is not supported.")
+
+	return nil
+}
+
+func (g *GenRoute) convertMulti(in, out string, typ *spec.Type) error {
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+	g.buf.WriteFormat(`
+	if len(%s) == 0 {
+		return
+	}
+`, in)
+
+	switch typ.Kind {
+	default:
+		return g.convert(in+"[0]", out, typ)
+	case spec.Slice, spec.Array:
+	}
+
+	g.buf.WriteFormat(`%s = make(`, out)
+	g.Types(typ)
+	g.buf.WriteFormat(`, 0, len(%s))
+`, in)
+
+	g.buf.WriteFormat(`
+	for _, m := range %s {
+		var _m `, in)
+	g.Types(typ.Elem)
+	g.buf.WriteFormat(`
+`)
+
+	err := g.convert("m", "_m", typ.Elem)
+	if err != nil {
+		return err
+	}
+
+	g.buf.WriteFormat(`
+		%s = append(%s, _m)
+	}
+`, out, out)
 
 	return nil
 }

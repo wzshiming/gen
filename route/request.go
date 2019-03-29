@@ -330,15 +330,15 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 
 	case "query":
 		g.buf.WriteFormat(`
-	var _raw%s = r.URL.Query().Get("%s")
+	var _raw%s = r.URL.Query()["%s"]
 `, name, req.Name)
-		g.convert("_raw"+name, name, req.Type)
+		g.convertMulti("_raw"+name, name, req.Type)
 
 	case "header":
 		g.buf.WriteFormat(`
-	var _raw%s = r.Header.Get("%s")
+	var _raw%s = r.Header["%s"]
 `, name, req.Name)
-		g.convert("_raw"+name, name, req.Type)
+		g.convertMulti("_raw"+name, name, req.Type)
 
 	case "path":
 		g.buf.WriteFormat(`
