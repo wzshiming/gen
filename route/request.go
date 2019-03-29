@@ -329,22 +329,25 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 `)
 
 	case "query":
+		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
-	var _raw%s = r.URL.Query()["%s"]
-`, name, req.Name)
-		g.convertMulti("_raw"+name, name, req.Type)
+	var %s = r.URL.Query()["%s"]
+`, varName, req.Name)
+		g.convertMulti(varName, name, req.Type)
 
 	case "header":
+		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
-	var _raw%s = r.Header.Get("%s")
-`, name, req.Name)
-		g.convert("_raw"+name, name, req.Type)
+	var %s = r.Header.Get("%s")
+`, varName, req.Name)
+		g.convert(varName, name, req.Type)
 
 	case "path":
+		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
-	var _raw%s = mux.Vars(r)["%s"]
-`, name, req.Name)
-		g.convert("_raw"+name, name, req.Type)
+	var %s = mux.Vars(r)["%s"]
+`, varName, req.Name)
+		g.convert(varName, name, req.Type)
 
 	default:
 		return fmt.Errorf("undefine in %s", req.In)

@@ -107,13 +107,14 @@ func (g *GenRoute) generateSubRoutes(basePath string, op []*spec.Operation) (err
 		return ip < jp
 	})
 
+	name := g.getVarName("route_"+basePath, op[0].Type)
+
 	g.buf.WriteFormat(`
-	{
-		subrouter := router.PathPrefix("%s").Subrouter()
+		%s := router.PathPrefix("%s").Subrouter()
 		if len(fs) != 0 {
-			subrouter.Use(fs...)
+			%s.Use(fs...)
 		}
-`, basePath)
+`, name, basePath, name)
 
 	for _, v := range op {
 		typ := v.Type
@@ -121,14 +122,12 @@ func (g *GenRoute) generateSubRoutes(basePath string, op []*spec.Operation) (err
 			typ = g.api.Types[typ.Ref]
 		}
 
-		err = g.generateRoute(v)
+		err = g.generateRoute(name, v)
 		if err != nil {
 			return err
 		}
 	}
-	g.buf.WriteFormat(`
-	}
-`)
+
 	return nil
 }
 
@@ -195,16 +194,6 @@ func %s() http.Handler {
 
 	for _, v := range g.api.Operations {
 		err = g.generateRouteTypes(v, m)
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, v := range g.api.Operations {
-		if v.Type != nil {
-			continue
-		}
-		err = g.generateRoute(v)
 		if err != nil {
 			return err
 		}
@@ -361,7 +350,7 @@ var %s `, typ.Name, name)
 	return
 }
 
-func (g *GenRoute) generateRoute(oper *spec.Operation) (err error) {
+func (g *GenRoute) generateRoute(subrouter string, oper *spec.Operation) (err error) {
 	name := g.getOperationFunctionName(oper)
 
 	methods := strings.Split(oper.Method, ",")
@@ -388,7 +377,7 @@ func (g *GenRoute) generateRoute(oper *spec.Operation) (err error) {
 	_%s := http.HandlerFunc(%s)`, name, name)
 	}
 	g.buf.WriteFormat(`
-	subrouter.Methods("%s").Path("%s").Handler(_%s)
-`, strings.Join(methods, `", "`), path, name)
+	%s.Methods("%s").Path("%s").Handler(_%s)
+`, subrouter, strings.Join(methods, `", "`), path, name)
 	return
 }
