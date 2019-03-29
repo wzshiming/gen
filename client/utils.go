@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"strconv"
 	"unsafe"
 
@@ -15,13 +16,24 @@ func (g *GenClient) getVarName(name string, typ *spec.Type) string {
 		}
 		return name
 	}
+
+	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(typ))), 16)
+
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
 	if typ.Kind == spec.Error {
 		return "err"
 	}
-	if name == "" {
+	for typ != nil && (name == "_" || name == "") {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
 		name = typ.Name
+		typ = typ.Elem
 	}
-	return "_" + namecase.ToLowerHumpInitialisms(name)
+
+	return g.named.GetSubNamed("").GetName("_"+namecase.ToLowerHumpInitialisms(fmt.Sprintf("%s", name)), addr)
 }
 
 func (g *GenClient) getTypeName(typ *spec.Type) string {

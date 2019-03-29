@@ -5,6 +5,13 @@ import (
 	"github.com/wzshiming/gen/utils"
 )
 
+var errResponse = &spec.Response{
+	Name: "err",
+	Type: &spec.Type{
+		Kind: spec.Error,
+	},
+}
+
 func (g *GenClient) generateClient() (err error) {
 	g.buf.AddImport("", "github.com/wzshiming/requests")
 	g.buf.WriteFormat(`
@@ -13,6 +20,24 @@ func (g *GenClient) generateClient() (err error) {
 
 	operations := g.api.Operations
 	for _, v := range operations {
+		resps := v.Responses
+		if len(resps) == 0 {
+			resps = append(resps, errResponse)
+		} else {
+			resp := resps[len(resps)-1]
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+			typ := resp.Type
+			if typ.Ref != "" {
+				typ = g.api.Types[typ.Ref]
+			}
+			if typ.Kind != spec.Error {
+				resps = append(resps, errResponse)
+			}
+		}
+		v.Responses = resps
+
 		err = g.generateOperations(v)
 		if err != nil {
 			return err
@@ -21,7 +46,6 @@ func (g *GenClient) generateClient() (err error) {
 		if err != nil {
 			return err
 		}
-		g.buf.WriteString("\n\n")
 	}
 	return
 }
@@ -61,9 +85,8 @@ func (g *GenClient) mergeMiddlewareRequests(sreq []*spec.Request) (reqs []*spec.
 }
 
 func (g *GenClient) generateOperations(oper *spec.Operation) (err error) {
-
-	g.buf.WriteString(utils.CommentLine(oper.Description))
-	g.buf.WriteString("func ")
+	g.buf.WriteFormat(`
+	%sfunc `, utils.CommentLine(oper.Description))
 
 	if oper.Type != nil {
 		g.buf.WriteByte('(')

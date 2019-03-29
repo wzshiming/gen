@@ -9,13 +9,20 @@ import (
 
 func (g *GenClient) generateFuncBody(oper *spec.Operation) (err error) {
 
-	g.buf.WriteString("{\n")
-	defer g.buf.WriteString(`
+	g.buf.WriteString(`{
+`)
+	err = g.generateRequests(oper)
+	if err != nil {
+		return err
+	}
+	err = g.generateResponses(oper)
+	if err != nil {
+		return err
+	}
+	g.buf.WriteString(`
 	return
 }
 `)
-	g.generateRequests(oper)
-	g.generateResponses(oper)
 	return nil
 }
 
