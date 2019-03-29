@@ -156,12 +156,10 @@ func (g *GenRoute) convertMulti(in, out string, typ *spec.Type) error {
 	g.Types(typ.Elem)
 	g.buf.WriteFormat(`
 `)
-
 	err := g.convert("m", "_m", typ.Elem)
 	if err != nil {
 		return err
 	}
-
 	g.buf.WriteFormat(`
 		%s = append(%s, _m)
 	}
