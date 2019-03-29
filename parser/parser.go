@@ -502,7 +502,7 @@ func (g *Parser) addRequest(path string, t gotype.Type) (par *spec.Request, err 
 				}
 			}
 			switch typ.Kind {
-			case spec.Array, spec.Slice, spec.Map, spec.Struct:
+			case spec.Map, spec.Struct:
 				in = "body"
 			case spec.Interface:
 				in = "middleware"
