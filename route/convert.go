@@ -43,6 +43,35 @@ func (g *GenRoute) convertBytes(in, out string, typ *spec.Type) error {
 	return nil
 }
 
+func (g *GenRoute) convertSlice(in, out string, typ *spec.Type) error {
+	g.buf.AddImport("", "strconv")
+	g.buf.AddImport("", "strings")
+	g.buf.WriteFormat(`
+	list := strings.Split(%s, ",")
+`, in)
+	g.buf.WriteFormat(`%s = make([]`, out)
+	g.Types(typ)
+	g.buf.WriteFormat(`, 0, len(list))
+`)
+
+	g.buf.WriteFormat(`
+	for _, v := range list {
+		var _v `)
+	g.Types(typ)
+	g.buf.WriteFormat(`
+`)
+	err := g.convert("v", "_v", typ)
+	if err != nil {
+		return err
+	}
+	g.buf.WriteFormat(`
+		%s = append(%s, _v)
+	}
+`, out, out)
+
+	return nil
+}
+
 func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
@@ -88,6 +117,8 @@ func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
 		case spec.Byte, spec.Rune:
 			return g.convertBytes(in, out, typ)
 		}
+
+		return g.convertSlice(in, out, typ.Elem)
 	}
 
 	g.buf.WriteFormat("// Conversion of string to ")
