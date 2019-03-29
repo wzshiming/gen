@@ -47,27 +47,27 @@ func (g *GenRoute) convertSlice(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.AddImport("", "strings")
 	g.buf.WriteFormat(`
-	list := strings.Split(%s, ",")
-`, in)
+	_list_%s := strings.Split(%s, ",")
+`, in, in)
 	g.buf.WriteFormat(`%s = make([]`, out)
 	g.Types(typ)
-	g.buf.WriteFormat(`, 0, len(list))
-`)
+	g.buf.WriteFormat(`, 0, len(_list_%s))
+`, in)
 
 	g.buf.WriteFormat(`
-	for _, v := range list {
-		var _v `)
+	for _, _%s := range _list_%s {
+		var _%s `, in, in, out)
 	g.Types(typ)
 	g.buf.WriteFormat(`
 `)
-	err := g.convert("v", "_v", typ)
+	err := g.convert("_"+in, "_"+out, typ)
 	if err != nil {
 		return err
 	}
 	g.buf.WriteFormat(`
-		%s = append(%s, _v)
+		%s = append(%s, _%s)
 	}
-`, out, out)
+`, out, out, out)
 
 	return nil
 }
@@ -151,19 +151,19 @@ func (g *GenRoute) convertMulti(in, out string, typ *spec.Type) error {
 `, in)
 
 	g.buf.WriteFormat(`
-	for _, m := range %s {
-		var _m `, in)
+	for _, _%s := range %s {
+		var _%s `, in, in, out)
 	g.Types(typ.Elem)
 	g.buf.WriteFormat(`
 `)
-	err := g.convert("m", "_m", typ.Elem)
+	err := g.convert("_"+in, "_"+out, typ.Elem)
 	if err != nil {
 		return err
 	}
 	g.buf.WriteFormat(`
-		%s = append(%s, _m)
+		%s = append(%s, _%s)
 	}
-`, out, out)
+`, out, out, out)
 
 	return nil
 }
