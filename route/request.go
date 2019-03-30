@@ -203,7 +203,9 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 	name := g.getVarName(req.Name, req.Type)
 	switch req.In {
 	case "body":
-
+		g.buf.WriteFormat(`
+	defer r.Body.Close()
+`)
 		switch req.Content {
 		case "json":
 			g.buf.AddImport("", "io/ioutil")
@@ -211,10 +213,11 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 			g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = ioutil.ReadAll(r.Body)
-	if err == nil {
-		r.Body.Close()
-		err = json.Unmarshal(_%s, &%s)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
 	}
+	err = json.Unmarshal(_%s, &%s)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
@@ -226,10 +229,11 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 			g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = ioutil.ReadAll(r.Body)
-	if err == nil {
-		r.Body.Close()
-		err = xml.Unmarshal(_%s, &%s)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
 	}
+	err = xml.Unmarshal(_%s, &%s)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
@@ -275,11 +279,6 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	err = r.Body.Close()
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	}
 	%s = _%s
 `, req.Name, name, name, name, name)
 		case "image":
@@ -289,6 +288,7 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 			g.buf.AddImport("", "strings")
 			g.buf.WriteFormat(`
 	body := r.Body
+	defer r.Body.Close()
 	contentType := r.Header.Get("Content-Type")
 	if strings.HasPrefix(contentType, "multipart/form-data") {
 		if r.MultipartForm == nil {
@@ -311,11 +311,7 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	err = r.Body.Close()
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	}
+
 `, req.Name, name)
 
 		}
