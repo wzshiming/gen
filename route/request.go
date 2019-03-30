@@ -114,8 +114,15 @@ if err != nil {
 
 				switch secu.Schema {
 				case "basic":
-					g.buf.WriteFormat(`if r.URL.User != nil { 	// Call %s.
+					g.buf.AddImport("", "strings")
+					g.buf.WriteFormat(`if strings.HasPrefix(r.Header.Get("Authorization"), "Basic ") { // Call %s.
 		%s, err = %s(`, secu.Name, vname, name)
+
+				case "bearer":
+					g.buf.AddImport("", "strings")
+					g.buf.WriteFormat(`if strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") { // Call %s.
+		%s, err = %s(`, secu.Name, vname, name)
+
 				case "apiKey":
 					req := secu.Requests[0]
 					if req.Ref != "" {
