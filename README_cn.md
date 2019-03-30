@@ -12,6 +12,34 @@
 - [English](https://github.com/wzshiming/gen/blob/master/README.md)
 - [简体中文](https://github.com/wzshiming/gen/blob/master/README_cn.md)
 
+## 示例
+
+1. 安装 gen 工具 `go get -v github.com/wzshiming/gen/cmd/gen`
+2. 添加 gen 工具到 $PATH
+3. 启动 `gen run github.com/wzshiming/gen-examples/service/...`
+4. 在浏览器中打开 [http://127.0.0.1:8080/swagger/?url=./openapi.json#](http://127.0.0.1:8080/swagger/?url=./openapi.json#)
+
+[示例](https://github.com/wzshiming/gen-examples/)  
+
+或者尝试从零快速搭建web服务
+
+1. 新建目录 `mkdir -p $(go env GOPATH)/src/gentest`
+2. 移动到刚创建的目录 `cd $(go env GOPATH)/src/gentest/`
+3. 定义数据类型
+``` shell
+cat > models.go <<EOF
+package gentest
+type Gentest struct {
+    Name string \`json:"name"\`
+    Age  int    \`json:"age"\`
+}
+EOF
+```
+4. 根据CRUD模板生成
+`gen crud -t mock -n Gentest`
+5. 启动
+`gen run gentest`
+
 ## 支持的功能
 
 - [X] 生成文档
@@ -62,34 +90,6 @@
   - [Javascript 客户端](https://github.com/swagger-api/swagger-js)
   - [其他语言客户端](https://github.com/swagger-api/swagger-codegen/tree/3.0.0)
 - [ ] gRPC & Proto3
-
-## 示例
-
-1. 安装 gen 工具 `go get -v github.com/wzshiming/gen/cmd/gen`
-2. 添加 gen 工具到 $PATH
-3. 启动 `gen run github.com/wzshiming/gen-examples/service/...`
-4. 在浏览器中打开 [http://127.0.0.1:8080/swagger/?url=./openapi.json#](http://127.0.0.1:8080/swagger/?url=./openapi.json#)
-
-[示例](https://github.com/wzshiming/gen-examples/)  
-
-或者尝试从零快速搭建web服务
-
-1. 新建目录 `mkdir -p $(go env GOPATH)/src/gentest`
-2. 移动到刚创建的目录 `cd $(go env GOPATH)/src/gentest/`
-3. 定义数据类型
-``` shell
-cat > models.go <<EOF
-package gentest
-type Gentest struct {
-    Name string \`json:"name"\`
-    Age  int    \`json:"age"\`
-}
-EOF
-```
-4. 根据CRUD模板生成
-`gen crud -t mock -n Gentest`
-5. 启动
-`gen run gentest`
 
 ## 许可证
 
