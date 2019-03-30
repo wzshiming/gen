@@ -129,6 +129,7 @@ if err != nil {
 			}
 			g.buf.WriteString(`w, r)`)
 			for _, secu := range secus[1:] {
+				name := g.getSecurityFunctionName(secu)
 				g.buf.WriteFormat(`
 if err != nil {
 	// Permission verification call %s.
