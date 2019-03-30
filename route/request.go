@@ -99,57 +99,55 @@ if err != nil {
 		switch len(secus) {
 		case 0:
 			g.buf.WriteFormat(`
-// Permission verification undefined.
-var %s `, vname)
+		// Permission verification undefined.
+		var %s `, vname)
 			g.Types(req.Type)
 			g.buf.WriteFormat(`
-`)
-		case 1:
-			secu := secus[0]
-			name := g.getSecurityFunctionName(secu)
-			g.buf.WriteFormat(`
-// Permission verification call %s.
-%s, err = %s(`, secu.Name, vname, name)
-			if secu.Type != nil {
-				g.buf.WriteString(`s, `)
-			}
-			g.buf.WriteString(`w, r)
-if err != nil {
-	return
-}
+		http.Error(w, err.Error(), 401)
 `)
 		default:
-			secu := secus[0]
-			name := g.getSecurityFunctionName(secu)
 			g.buf.WriteFormat(`
-// Permission verification call %s.
-%s, err = %s(`, secu.Name, vname, name)
-			if secu.Type != nil {
-				g.buf.WriteString(`s, `)
-			}
-			g.buf.WriteString(`w, r)`)
-			for _, secu := range secus[1:] {
+		// Permission verification
+`)
+			for _, secu := range secus {
 				name := g.getSecurityFunctionName(secu)
-				g.buf.WriteFormat(`
-if err != nil {
-	// Permission verification call %s.
-	%s, err = %s(`, secu.Name, vname, name)
+
+				switch secu.Schema {
+				case "basic":
+					g.buf.WriteFormat(`if r.URL.User != nil { 	// Call %s.
+		%s, err = %s(`, secu.Name, vname, name)
+				case "apiKey":
+					req := secu.Requests[0]
+					if req.Ref != "" {
+						req = g.api.Requests[req.Ref]
+					}
+
+					switch req.In {
+					default:
+					case "header":
+						g.buf.WriteFormat(`if r.Header.Get("%s") != "" { // Call %s.
+		%s, err = %s(`, req.Name, secu.Name, vname, name)
+					case "query":
+						g.buf.WriteFormat(`if r.URL.Query().Get("%s") != "" { // Call %s.
+		%s, err = %s(`, req.Name, secu.Name, vname, name)
+					case "cookie":
+						g.buf.WriteFormat(`if cookie, err := r.Cookie("%s"); err == nil && cookie.Value != "" { // Call %s.
+		%s, err = %s(`, req.Name, secu.Name, vname, name)
+					}
+
+				}
 				if secu.Type != nil {
 					g.buf.WriteString(`s, `)
 				}
-				g.buf.WriteString(`w, r)`)
+				g.buf.WriteString(`w, r)
+	} else `)
 			}
-
-			for range secus[1:] {
-				g.buf.WriteString(`
-}
-`)
-			}
-
-			g.buf.WriteString(`
-if err != nil {
-	return
-}
+			g.buf.WriteString(` {
+		http.Error(w, err.Error(), 401)
+	}
+	if err != nil {
+		return
+	}
 `)
 		}
 	default:
