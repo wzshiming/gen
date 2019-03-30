@@ -484,11 +484,15 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 			}
 			sch = oaspec.MapProperty(sch)
 		case spec.Slice:
-			sch, err = g.generateSchemas(typ.Elem)
-			if err != nil {
-				return nil, err
+			if typ.Elem.Kind == spec.Byte {
+				sch = oaspec.StrFmtProperty("binary")
+			} else {
+				sch, err = g.generateSchemas(typ.Elem)
+				if err != nil {
+					return nil, err
+				}
+				sch = oaspec.ArrayProperty(sch)
 			}
-			sch = oaspec.ArrayProperty(sch)
 		case spec.Array:
 			sch, err = g.generateSchemas(typ.Elem)
 			if err != nil {
