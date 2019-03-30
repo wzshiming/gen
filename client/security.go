@@ -42,27 +42,37 @@ func (g *GenClient) generateSecurity(oper *spec.Security) (err error) {
 	}
 	g.buf.WriteString(g.getSecurityName(oper))
 	g.buf.WriteByte('(')
-	reqs := []*spec.Request{}
-	for _, req := range oper.Requests {
-		if req.Ref != "" {
-			req = g.api.Requests[req.Ref]
+
+	switch oper.Schema {
+	case "apiKey":
+		reqs := []*spec.Request{}
+		for _, req := range oper.Requests {
+			if req.Ref != "" {
+				req = g.api.Requests[req.Ref]
+			}
+			switch req.In {
+			case "security":
+				// No action
+			case "header", "path", "query", "body":
+				reqs = append(reqs, req)
+			}
 		}
-		switch req.In {
-		case "security":
-			// No action
-		case "header", "path", "query", "body":
-			reqs = append(reqs, req)
+
+		for i, req := range reqs {
+			if i != 0 {
+				g.buf.WriteByte(',')
+			}
+			err = g.generateParameterRequests(req, "")
+			if err != nil {
+				return err
+			}
 		}
+	case "basic":
+		g.buf.WriteString("username string, password string")
+	case "bearer":
+		g.buf.WriteString("token string")
 	}
-	for i, req := range reqs {
-		if i != 0 {
-			g.buf.WriteByte(',')
-		}
-		err = g.generateParameterRequests(req, "")
-		if err != nil {
-			return err
-		}
-	}
+
 	g.buf.WriteString(")")
 	return
 }
@@ -70,35 +80,49 @@ func (g *GenClient) generateSecurity(oper *spec.Security) (err error) {
 func (g *GenClient) generateSecurityBody(oper *spec.Security) (err error) {
 	g.buf.WriteString(`{
 Client = Client`)
-	defer g.buf.WriteString(`
-}`)
 
-	for _, req := range oper.Requests {
-		if req.Ref != "" {
-			req = g.api.Requests[req.Ref]
-		}
-		switch req.In {
-		case "security":
-			// No action
-		case "header":
-			g.buf.AddImport("", "fmt")
-			g.buf.WriteFormat(`.
+	switch oper.Schema {
+	case "apiKey":
+		for _, req := range oper.Requests {
+			if req.Ref != "" {
+				req = g.api.Requests[req.Ref]
+			}
+			switch req.In {
+			case "none":
+
+			case "security":
+				// No action
+			case "header":
+				g.buf.AddImport("", "fmt")
+				g.buf.WriteFormat(`.
 SetHeader("%s", fmt.Sprint(%s))
 `, req.Name, g.getVarName(req.Name, req.Type))
-		case "cookie":
-			// TODO
-		case "path":
-			g.buf.AddImport("", "fmt")
-			g.buf.WriteFormat(`.
+			case "cookie":
+				// TODO
+			case "path":
+				g.buf.AddImport("", "fmt")
+				g.buf.WriteFormat(`.
 SetPath("%s", fmt.Sprint(%s))
 `, req.Name, g.getVarName(req.Name, req.Type))
-		case "query":
-			g.buf.WriteFormat(`.
+			case "query":
+				g.buf.WriteFormat(`.
 SetQuery("%s", fmt.Sprint(%s))
 `, req.Name, g.getVarName(req.Name, req.Type))
-		case "body":
-			// No action
+			case "body":
+				// No action
+			}
 		}
+	case "basic":
+		g.buf.WriteString(`.
+SetBasicAuth(username, password)
+`)
+	case "bearer":
+		g.buf.WriteString(`.
+SetAuthToken(token)
+`)
 	}
+	g.buf.WriteString(`
+	}
+`)
 	return nil
 }
