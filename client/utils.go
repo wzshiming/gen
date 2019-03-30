@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"unsafe"
 
 	"github.com/wzshiming/gen/spec"
@@ -43,7 +44,7 @@ func (g *GenClient) getTypeName(typ *spec.Type) string {
 }
 
 func (g *GenClient) getFuncName(oper *spec.Operation) string {
-	name := oper.Name
+	name := namecase.ToUpperHumpInitialisms(strings.Join(append(oper.Chain, oper.Name), "_"))
 
 	named := g.named
 	if oper.Type != nil {
