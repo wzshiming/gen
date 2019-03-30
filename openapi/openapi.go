@@ -563,8 +563,7 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 }
 
 func (g *GenOpenAPI) generateSecurityScheme(sec *spec.Security) (err error) {
-	secu := &oaspec.SecurityScheme{}
-	secu.Type = sec.Schema
+
 	if len(sec.Requests) == 0 {
 		return nil
 	}
@@ -572,8 +571,24 @@ func (g *GenOpenAPI) generateSecurityScheme(sec *spec.Security) (err error) {
 	if req.Ref != "" {
 		req = g.api.Requests[req.Ref]
 	}
-	secu.In = req.In
-	secu.Name = req.Name
+
+	secu := &oaspec.SecurityScheme{}
+
+	sch := strings.Split(sec.Schema, ",")
+	switch sch[0] {
+	case oaspec.SecurityAPIKey:
+		secu = oaspec.APIKeyAuth(req.Name, req.In)
+	case "basic":
+		secu = oaspec.BasicAuth()
+	case "bearer":
+		bearerFormat := ""
+		if len(sch) > 1 {
+			bearerFormat = sch[1]
+		}
+		secu = oaspec.BearerAuth(bearerFormat)
+	default:
+		secu.Type = sec.Schema
+	}
 	secu.Description = sec.Description
 	g.openapi.Components.SecuritySchemes[sec.Name] = secu
 	return

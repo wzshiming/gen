@@ -510,6 +510,12 @@ func (g *Parser) addRequest(basePath string, t gotype.Type) (par *spec.Request, 
 				Ident: "*net/http.Request",
 				Name:  "r",
 			}, nil
+		} else if req, ok := g.importChild("net/url", "Userinfo"); ok && gotype.Equal(t.Elem(), req) {
+			return &spec.Request{
+				In:    "none",
+				Ident: "*net/url.Userinfo",
+				Name:  "r.URL.User",
+			}, nil
 		}
 
 	case gotype.Interface:
