@@ -232,34 +232,6 @@ func %s() http.Handler {
 			return err
 		}
 	}
-	// c := 0
-	// for i := range g.api.Operations {
-	// 	v := g.api.Operations[i]
-	// 	if v.Type == nil {
-	// 		continue
-	// 	}
-	// 	typ := v.Type
-	// 	if typ.Ref != "" {
-	// 		typ = g.api.Types[typ.Ref]
-	// 	}
-
-	// 	if len(g.api.Operations)-1 == i {
-	// 		err := g.generateRouteFunc(typ, g.api.Operations[c:])
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// 	if i == c {
-	// 		continue
-	// 	}
-	// 	if g.api.Operations[i] != g.api.Operations[i-1] {
-	// 		err := g.generateRouteFunc(typ, g.api.Operations[c:i])
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		c = i
-	// 	}
-	// }
 
 	reqKey := make([]string, 0, len(g.api.Requests))
 	for k := range g.api.Requests {
