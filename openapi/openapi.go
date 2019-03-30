@@ -508,7 +508,7 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 			for _, v := range typ.Fields {
 				name := v.Name
 				tag := v.Tag
-
+				required := true
 				val, err := g.generateSchemas(v.Type)
 				if err != nil {
 					return nil, err
@@ -533,17 +533,56 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 					sch.Properties = map[string]*oaspec.Schema{}
 				}
 
-				if n := strings.Split(tag.Get("json"), ",")[0]; n != "" {
-					if n == "-" {
-						continue
+				if raw := tag.Get("xml"); raw != "" {
+					tags := strings.Split(raw, ",")
+					if n := tags[0]; n != "" && n != "-" {
+						if name == "XMLName" {
+							sch.WithXMLName(n)
+						} else {
+							if index := strings.Index(n, ">"); index != -1 {
+								lname := n[:index]
+								if lname == "" {
+									lname = name
+								}
+								val = val.WithXMLName(lname)
+								rname := n[index+1:]
+								if rname == lname && val.Type == "array" {
+									val.XML.Wrapped = true
+								}
+							} else {
+								val = val.WithXMLName(n)
+							}
+							for _, tag := range tags {
+								switch tag {
+								case "attr":
+									val.XML.Attribute = true
+								case "string":
+									val.Type = "string"
+								case "omitempty":
+									required = false
+								}
+							}
+						}
 					}
-					name = n
 				}
-				if n := strings.Split(tag.Get("xml"), ",")[0]; n != "" {
-					if n == "-" {
-						continue
+
+				if raw := tag.Get("json"); raw != "" {
+					tags := strings.Split(raw, ",")
+					if n := tags[0]; n != "" && n != "-" {
+						name = n
+						for _, tag := range tags {
+							switch tag {
+							case "string":
+								val.Type = "string"
+							case "omitempty":
+								required = false
+							}
+						}
 					}
-					val = val.WithXMLName(n)
+				}
+
+				if required {
+					sch.AddRequired(name)
 				}
 				sch.Properties[name] = val
 			}
