@@ -312,22 +312,8 @@ func (g *GenOpenAPI) generateResponsesBody(res *spec.Response) (code string, res
 		return "", nil, err
 	}
 
-	switch res.Content {
-	case "json":
-		resp = oaspec.JSONResponse(sch)
-	case "xml":
-		resp = oaspec.XMLResponse(sch)
-	case "octetstream":
-		resp = oaspec.OctetStreamResponse(sch)
-	case "urlencoded":
-		resp = oaspec.URLEncodedResponse(sch)
-	case "formdata":
-		resp = oaspec.FormDataResponse(sch)
-	case "textplain", "error":
-		resp = oaspec.TextPlainResponse(sch)
-	default:
-		resp = oaspec.NewResponse(res.Content, nil)
-	}
+	resp = &oaspec.Response{}
+	resp.Content = g.generateContents(res.Name, res.Content, sch)
 	resp.Description = res.Description
 	if resp.Description == "" {
 		resp.Description = "Response code is " + res.Code
@@ -383,51 +369,64 @@ func (g *GenOpenAPI) generateRequestBody(req *spec.Request) (body *oaspec.Reques
 		return nil, err
 	}
 
-	switch req.Content {
-	case "json":
-		body = oaspec.JSONRequestBody(sch)
-	case "xml":
-		body = oaspec.XMLRequestBody(sch)
-	case "textplain":
-		body = oaspec.TextPlainRequestBody(sch)
-	case "urlencoded":
-		body = oaspec.URLEncodedRequestBody(sch)
-	case "formdata":
-		body = oaspec.FormDataRequestBody(sch)
-	case "octetstream", "file":
-		body = oaspec.OctetStreamRequestBody(sch)
-
-		prop := &oaspec.Schema{}
-		prop.Type = "object"
-		prop.Properties = map[string]*oaspec.Schema{
-			req.Name: sch,
-		}
-		body.Content[oaspec.MimeFormData] = &oaspec.MediaType{
-			Schema: prop,
-		}
-
-	case "image":
-		body = &oaspec.RequestBody{}
-		body.Content = map[string]*oaspec.MediaType{
-			"image/*": &oaspec.MediaType{
-				Schema: sch,
-			},
-		}
-
-		prop := &oaspec.Schema{}
-		prop.Type = "object"
-		prop.Properties = map[string]*oaspec.Schema{
-			req.Name: sch,
-		}
-		body.Content[oaspec.MimeFormData] = &oaspec.MediaType{
-			Schema: prop,
-		}
-
-	default:
-		body = oaspec.NewRequestBody(req.Content, sch)
-	}
+	body = &oaspec.RequestBody{}
+	body.Content = g.generateContents(req.Name, req.Content, sch)
 	body.Description = req.Description
 	return
+}
+
+func (g *GenOpenAPI) generateContents(name string, content string, sch *oaspec.Schema) (medias map[string]*oaspec.MediaType) {
+	medias = map[string]*oaspec.MediaType{}
+
+	switch content {
+	case "json":
+		medias[oaspec.MimeJSON] = &oaspec.MediaType{
+			Schema: sch,
+		}
+	case "xml":
+		medias[oaspec.MimeXML] = &oaspec.MediaType{
+			Schema: sch,
+		}
+	case "octetstream", "file":
+		prop := &oaspec.Schema{}
+		prop.Type = "object"
+		prop.Properties = map[string]*oaspec.Schema{
+			name: sch,
+		}
+		medias[oaspec.MimeFormData] = &oaspec.MediaType{
+			Schema: prop,
+		}
+	case "urlencoded":
+		medias[oaspec.MimeURLEncoded] = &oaspec.MediaType{
+			Schema: sch,
+		}
+	case "formdata":
+		medias[oaspec.MimeFormData] = &oaspec.MediaType{
+			Schema: sch,
+		}
+	case "textplain", "error":
+		medias[oaspec.MimeTextPlain] = &oaspec.MediaType{
+			Schema: sch,
+		}
+	case "image":
+		medias["image/*"] = &oaspec.MediaType{
+			Schema: sch,
+		}
+		prop := &oaspec.Schema{}
+		prop.Type = "object"
+		prop.Properties = map[string]*oaspec.Schema{
+			name: sch,
+		}
+		medias[oaspec.MimeFormData] = &oaspec.MediaType{
+			Schema: prop,
+		}
+	default:
+		medias[content] = &oaspec.MediaType{
+			Schema: sch,
+		}
+	}
+
+	return medias
 }
 
 func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
