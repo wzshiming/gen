@@ -20,7 +20,45 @@ generating clients is also supported
   - [X] [ReDoc](https://github.com/Rebilly/ReDoc)
 - [X] RESTful
   - [X] Generate Go router
+    - [X] Security
+      - [X] apiKey
+      - [X] http
+        - [X] basic
+        - [ ] bearer
+      - [ ] oauth2
+      - [ ] openIdConnet
+    - [X] Content
+      - [X] Query
+      - [X] Path
+      - [X] Header
+      - [X] Cookie
+      - [X] Body
+        - [X] JSON
+        - [ ] XML
+        - [ ] Formdata
+          - [X] File
+          - [ ] Value
+        - [ ] URLEncode
   - [X] Generate Go client
+    - [X] Security
+      - [X] apiKey
+      - [X] http
+        - [X] basic
+        - [X] bearer
+      - [ ] oauth2
+      - [ ] openIdConnet
+    - [X] Content
+      - [X] Query
+      - [X] Path
+      - [X] Header
+      - [X] Cookie
+      - [X] Body
+        - [X] JSON
+        - [X] XML
+        - [X] Formdata
+          - [X] File
+          - [X] Value
+        - [ ] URLEncode
   - [Javascript client](https://github.com/swagger-api/swagger-js)
   - [Other language client](https://github.com/swagger-api/swagger-codegen/tree/3.0.0)
 - [ ] gRPC & Proto3

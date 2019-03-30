@@ -20,7 +20,45 @@
   - [X] [ReDoc](https://github.com/Rebilly/ReDoc)
 - [X] RESTful
   - [X] 生成Go路由
+    - [X] Security
+      - [X] apiKey
+      - [X] http
+        - [X] basic
+        - [ ] bearer
+      - [ ] oauth2
+      - [ ] openIdConnet
+    - [X] Content
+      - [X] Query
+      - [X] Path
+      - [X] Header
+      - [X] Cookie
+      - [X] Body
+        - [X] JSON
+        - [ ] XML
+        - [ ] Formdata
+          - [X] File
+          - [ ] Value
+        - [ ] URLEncode
   - [X] 生成Go客户端
+    - [X] Security
+      - [X] apiKey
+      - [X] http
+        - [X] basic
+        - [X] bearer
+      - [ ] oauth2
+      - [ ] openIdConnet
+    - [X] Content
+      - [X] Query
+      - [X] Path
+      - [X] Header
+      - [X] Cookie
+      - [X] Body
+        - [X] JSON
+        - [X] XML
+        - [X] Formdata
+          - [X] File
+          - [X] Value
+        - [ ] URLEncode
   - [Javascript 客户端](https://github.com/swagger-api/swagger-js)
   - [其他语言客户端](https://github.com/swagger-api/swagger-codegen/tree/3.0.0)
 - [ ] gRPC & Proto3
