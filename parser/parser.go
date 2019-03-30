@@ -126,7 +126,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 			if err != nil {
 				return err
 			}
-			err = g.addOperation("", nil, v)
+			err = g.addOperation("", nil, v, nil)
 			if err != nil {
 				return err
 			}
@@ -169,10 +169,10 @@ func (g *Parser) addPaths(t gotype.Type) (err error) {
 	}
 
 	filter := map[string]bool{}
-	return g.addMethods(path, sch, t, filter)
+	return g.addMethods(path, sch, t, nil, filter)
 }
 
-func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, filter map[string]bool) (err error) {
+func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chain []string, filter map[string]bool) (err error) {
 	numm := t.NumMethod()
 	for i := 0; i != numm; i++ {
 		v := t.Method(i)
@@ -198,7 +198,7 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, filt
 		if err != nil {
 			return err
 		}
-		err = g.addOperation(basePath, sch, v)
+		err = g.addOperation(basePath, sch, v, chain)
 		if err != nil {
 			return err
 		}
@@ -213,19 +213,46 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, filt
 			if v.IsAnonymous() {
 				doc := strings.TrimSpace(v.Doc().Text())
 				if doc == "" {
-					return nil
+					continue
 				}
 				tag := GetTag(doc)
 				basePath := path.Join(basePath, tag.Get("path"))
 
 				v = v.Elem()
 
-				err = g.addMethods(basePath, sch, v, filter)
+				err = g.addMethods(basePath, sch, v, chain, filter)
+				if err != nil {
+					return err
+				}
+
+			} else {
+				name := v.Name()
+				if !IsExported(name) {
+					continue
+				}
+				doc := strings.TrimSpace(v.Doc().Text())
+				if doc == "" {
+					continue
+				}
+
+				tag := GetTag(doc)
+				lpath := tag.Get("path")
+				if lpath == "" {
+					continue
+				}
+				basePath := path.Join(basePath, lpath)
+
+				v = v.Elem()
+
+				newChain := make([]string, len(chain), len(chain)+1)
+				copy(newChain, chain)
+				newChain = append(newChain, name)
+				filter := map[string]bool{}
+				err = g.addMethods(basePath, sch, v, newChain, filter)
 				if err != nil {
 					return err
 				}
 			}
-
 		}
 	}
 	return
@@ -315,7 +342,7 @@ func (g *Parser) addSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	return nil
 }
 
-func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type) (err error) {
+func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type, chain []string) (err error) {
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
@@ -353,6 +380,7 @@ func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type) (e
 	oper.Deprecated = deprecated
 	oper.Type = sch
 	oper.Name = name
+	oper.Chain = chain
 
 	if sch != nil {
 		sch := sch

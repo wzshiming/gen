@@ -54,6 +54,7 @@ type Operation struct {
 	Tags      []string
 	Name      string
 	Type      *Type
+	Chain     []string
 	Requests  []*Request
 	Responses []*Response
 	Securitys []*Security
