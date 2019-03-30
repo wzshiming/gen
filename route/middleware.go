@@ -40,7 +40,7 @@ func %s(`, name, midd.Name, name)
 		return err
 	}
 
-	err = g.generateCallExec(midd.Name, midd.PkgPath, midd.Type, midd.Requests, midd.Responses, true)
+	err = g.generateCallExec(midd.Name, nil, midd.PkgPath, midd.Type, midd.Requests, midd.Responses, true)
 	if err != nil {
 		return err
 	}

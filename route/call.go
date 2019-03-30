@@ -1,10 +1,12 @@
 package route
 
 import (
+	"strings"
+
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) generateCallExec(name, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response, onErr bool) (err error) {
+func (g *GenRoute) generateCallExec(name string, chain []string, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response, onErr bool) (err error) {
 
 	for _, req := range requests {
 		req := req
@@ -25,7 +27,7 @@ func (g *GenRoute) generateCallExec(name, pkgpath string, typ *spec.Type, reques
 		}
 	}
 
-	err = g.generateCall(name, pkgpath, typ, requests, responses)
+	err = g.generateCall(name, chain, pkgpath, typ, requests, responses)
 	if err != nil {
 		return err
 	}
@@ -48,7 +50,7 @@ func (g *GenRoute) generateCallExec(name, pkgpath string, typ *spec.Type, reques
 	return nil
 }
 
-func (g *GenRoute) generateCall(name, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response) (err error) {
+func (g *GenRoute) generateCall(name string, chain []string, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response) (err error) {
 
 	for _, req := range requests {
 		err = g.generateRequest(req)
@@ -57,6 +59,7 @@ func (g *GenRoute) generateCall(name, pkgpath string, typ *spec.Type, requests [
 		}
 	}
 
+	name = strings.Join(append(chain, name), ".")
 	if typ != nil {
 		if typ.Ref != "" {
 			typ = g.api.Types[typ.Ref]

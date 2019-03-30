@@ -34,7 +34,7 @@ func %s(`, name, oper.Name, name)
 		return err
 	}
 
-	err = g.generateCallExec(oper.Name, oper.PkgPath, oper.Type, oper.Requests, oper.Responses, false)
+	err = g.generateCallExec(oper.Name, oper.Chain, oper.PkgPath, oper.Type, oper.Requests, oper.Responses, false)
 	if err != nil {
 		return err
 	}
