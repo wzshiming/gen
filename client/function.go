@@ -27,8 +27,24 @@ func (g *GenClient) generateFuncBody(oper *spec.Operation) (err error) {
 }
 
 func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
+	for _, v := range oper.Requests {
+		req := v
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
+		}
 
-	g.buf.WriteString(`resp, err := Client.Clone()`)
+		switch req.In {
+		case "header", "cookie", "path", "query":
+			name := g.getVarName(req.Name, req.Type)
+			err = g.convertFrom(name, "_"+name, req.Type)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	g.buf.WriteString(`
+	resp, err := Client.Clone()`)
 	for _, v := range oper.Requests {
 		req := v
 		if req.Ref != "" {
@@ -41,16 +57,16 @@ func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 		case "header":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetHeader("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name, req.Type))
+SetHeader("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 		case "cookie":
 			// TODO
 		case "path":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetPath("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name, req.Type))
+SetPath("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 		case "query":
 			g.buf.WriteFormat(`.
-SetQuery("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name, req.Type))
+SetQuery("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 		case "body":
 			switch req.Content {
 			case "json":
