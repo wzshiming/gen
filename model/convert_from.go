@@ -1,17 +1,17 @@
-package client
+package model
 
 import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenClient) convertString(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertFromString(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat(`%s = `, out)
 	g.buf.WriteFormat(`string(%s)
 `, in)
 	return nil
 }
 
-func (g *GenClient) convertFromInt64(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertFromInt64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
 	%s = `, out)
@@ -21,7 +21,7 @@ func (g *GenClient) convertFromInt64(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenClient) convertFromUint64(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertFromUint64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
 	%s = `, out)
@@ -30,14 +30,14 @@ func (g *GenClient) convertFromUint64(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenClient) convertFromBytes(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertFromBytes(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat(`%s = `, out)
 	g.buf.WriteFormat(`%s
 `, in)
 	return nil
 }
 
-func (g *GenClient) convertFromSlice(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertFromSlice(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strings")
 
 	g.buf.WriteFormat(`_list_%s := make([]string`, out)
@@ -63,7 +63,7 @@ func (g *GenClient) convertFromSlice(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenClient) convertFrom(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertFrom(in, out string, typ *spec.Type) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
@@ -99,7 +99,7 @@ func (g *GenClient) convertFrom(in, out string, typ *spec.Type) error {
 
 	switch typ.Kind {
 	case spec.String:
-		return g.convertString(in, out, typ)
+		return g.convertFromString(in, out, typ)
 	case spec.Int8, spec.Int16, spec.Int32, spec.Int64, spec.Int:
 		return g.convertFromInt64(in, out, typ)
 	case spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64, spec.Uint:
@@ -119,4 +119,8 @@ func (g *GenClient) convertFrom(in, out string, typ *spec.Type) error {
 	g.buf.WriteString(" is not supported.")
 
 	return nil
+}
+
+func (g *GenModel) ConvertFrom(in, out string, typ *spec.Type) error {
+	return g.convertFrom(in, out, typ)
 }

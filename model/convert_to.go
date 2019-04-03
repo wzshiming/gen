@@ -1,17 +1,17 @@
-package route
+package model
 
 import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) convertString(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertToString(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat(`%s = `, out)
 	g.Types(typ)
 	g.buf.WriteFormat(`(%s)`, in)
 	return nil
 }
 
-func (g *GenRoute) convertInt64(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertToInt64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
 	if _%s, err := strconv.ParseInt(%s, 0, 0); err == nil {
@@ -23,7 +23,7 @@ func (g *GenRoute) convertInt64(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenRoute) convertUint64(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertToUint64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
 	if _%s, err := strconv.ParseUint(%s, 0, 0); err == nil {
@@ -35,7 +35,7 @@ func (g *GenRoute) convertUint64(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenRoute) convertBytes(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertToBytes(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat(`%s := `, out)
 	g.Types(typ)
 	g.buf.WriteFormat(`(%s)
@@ -43,7 +43,7 @@ func (g *GenRoute) convertBytes(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenRoute) convertSlice(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertToSlice(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.AddImport("", "strings")
 	g.buf.WriteFormat(`
@@ -60,11 +60,14 @@ func (g *GenRoute) convertSlice(in, out string, typ *spec.Type) error {
 	g.Types(typ)
 	g.buf.WriteFormat(`
 `)
-	err := g.convert("_"+in, "_"+out, typ)
+	err := g.convertTo("_"+in, "_"+out, typ)
 	if err != nil {
 		return err
 	}
 	g.buf.WriteFormat(`
+		if err != nil {
+			break
+		}
 		%s = append(%s, _%s)
 	}
 `, out, out, out)
@@ -72,7 +75,7 @@ func (g *GenRoute) convertSlice(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertTo(in, out string, typ *spec.Type) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
@@ -84,7 +87,7 @@ func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
 	if %s != "" {
 		err = %s.UnmarshalText(*(*[]byte)(unsafe.Pointer(&%s)))
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+			return
 		}
 	}
 `, in, out, in)
@@ -107,19 +110,19 @@ func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
 
 	switch typ.Kind {
 	case spec.String:
-		return g.convertString(in, out, typ)
+		return g.convertToString(in, out, typ)
 	case spec.Int8, spec.Int16, spec.Int32, spec.Int64, spec.Int:
-		return g.convertInt64(in, out, typ)
+		return g.convertToInt64(in, out, typ)
 	case spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64, spec.Uint:
-		return g.convertUint64(in, out, typ)
+		return g.convertToUint64(in, out, typ)
 	case spec.Slice:
 		switch typ.Elem.Kind {
 		case spec.Byte, spec.Rune:
-			return g.convertBytes(in, out, typ)
+			return g.convertToBytes(in, out, typ)
 		}
-		return g.convertSlice(in, out, typ.Elem)
+		return g.convertToSlice(in, out, typ.Elem)
 	case spec.Array:
-		return g.convertSlice(in, out, typ.Elem)
+		return g.convertToSlice(in, out, typ.Elem)
 	}
 
 	g.buf.WriteFormat("// Conversion of string to ")
@@ -129,7 +132,11 @@ func (g *GenRoute) convert(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenRoute) convertMulti(in, out string, typ *spec.Type) error {
+func (g *GenModel) ConvertTo(in, out string, typ *spec.Type) error {
+	return g.convertTo(in, out, typ)
+}
+
+func (g *GenModel) convertToMulti(in, out string, typ *spec.Type) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
@@ -141,7 +148,7 @@ func (g *GenRoute) convertMulti(in, out string, typ *spec.Type) error {
 
 	switch typ.Kind {
 	default:
-		return g.convert(in+"[0]", out, typ)
+		return g.convertTo(in+"[0]", out, typ)
 	case spec.Slice, spec.Array:
 	}
 
@@ -156,14 +163,21 @@ func (g *GenRoute) convertMulti(in, out string, typ *spec.Type) error {
 	g.Types(typ.Elem)
 	g.buf.WriteFormat(`
 `)
-	err := g.convert("_"+in, "_"+out, typ.Elem)
+	err := g.convertTo("_"+in, "_"+out, typ.Elem)
 	if err != nil {
 		return err
 	}
 	g.buf.WriteFormat(`
+		if err != nil {
+			break
+		}
 		%s = append(%s, _%s)
 	}
 `, out, out, out)
 
 	return nil
+}
+
+func (g *GenModel) ConvertToMulti(in, out string, typ *spec.Type) error {
+	return g.convertToMulti(in, out, typ)
 }

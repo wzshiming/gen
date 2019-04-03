@@ -319,40 +319,60 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
 	var cookie *http.Cookie
-	cookie, err = r.Cookie("%s")
-	if err == nil {`, req.Name)
-		g.convert(`cookie.Value`, name, req.Type)
+	cookie, err = r.Cookie("%s")`, req.Name)
 		g.buf.WriteFormat(`
-	}
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
 	}
 `)
 
+		g.GenModel.ConvertTo(`cookie.Value`, name, req.Type)
+		g.buf.WriteFormat(`
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+`)
 	case "query":
 		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
 	var %s = r.URL.Query()["%s"]
 `, varName, req.Name)
-		g.convertMulti(varName, name, req.Type)
-
+		g.GenModel.ConvertToMulti(varName, name, req.Type)
+		g.buf.WriteFormat(`
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+`)
 	case "header":
 		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
 	var %s = r.Header.Get("%s")
 `, varName, req.Name)
-		g.convert(varName, name, req.Type)
-
+		g.GenModel.ConvertTo(varName, name, req.Type)
+		g.buf.WriteFormat(`
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+`)
 	case "path":
 		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
 	var %s = mux.Vars(r)["%s"]
 `, varName, req.Name)
-		g.convert(varName, name, req.Type)
-
+		g.GenModel.ConvertTo(varName, name, req.Type)
+		g.buf.WriteFormat(`
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+`)
 	default:
 		return fmt.Errorf("undefine in %s", req.In)
 	}
+
 	return nil
 }

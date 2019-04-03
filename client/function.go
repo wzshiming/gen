@@ -50,7 +50,7 @@ func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 		switch req.In {
 		case "header", "cookie", "path", "query":
 			name := g.getVarName(req.Name, req.Type)
-			err = g.convertFrom(name, "_"+name, req.Type)
+			err = g.GenModel.ConvertFrom(name, "_"+name, req.Type)
 			if err != nil {
 				return err
 			}
