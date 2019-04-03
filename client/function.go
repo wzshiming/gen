@@ -41,7 +41,7 @@ func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 		case "header":
 			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
-SetHead("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name, req.Type))
+SetHeader("%s", fmt.Sprint(%s))`, req.Name, g.getVarName(req.Name, req.Type))
 		case "cookie":
 			// TODO
 		case "path":
