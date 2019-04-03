@@ -6,8 +6,7 @@ import (
 
 func (g *GenClient) convertString(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat(`%s = `, out)
-	g.Types(typ)
-	g.buf.WriteFormat(`(%s)
+	g.buf.WriteFormat(`string(%s)
 `, in)
 	return nil
 }
@@ -16,8 +15,7 @@ func (g *GenClient) convertFromInt64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
 	%s = `, out)
-	g.Types(typ)
-	g.buf.WriteFormat(`(strconv.FormatInt(%s, 10))
+	g.buf.WriteFormat(`strconv.FormatInt(int64(%s), 10)
 `, in)
 
 	return nil
@@ -27,16 +25,14 @@ func (g *GenClient) convertFromUint64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
 	%s = `, out)
-	g.Types(typ)
-	g.buf.WriteFormat(`(strconv.FormatUint(%s, 10))
+	g.buf.WriteFormat(`strconv.FormatUint(uint64(%s), 10)
 `, in)
 	return nil
 }
 
 func (g *GenClient) convertFromBytes(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat(`%s = `, out)
-	g.Types(typ)
-	g.buf.WriteFormat(`(%s)
+	g.buf.WriteFormat(`%s
 `, in)
 	return nil
 }
@@ -44,17 +40,15 @@ func (g *GenClient) convertFromBytes(in, out string, typ *spec.Type) error {
 func (g *GenClient) convertFromSlice(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strings")
 
-	g.buf.WriteFormat(`_list_%s = make([]`, out)
-	g.Types(typ)
+	g.buf.WriteFormat(`_list_%s := make([]string`, out)
 	g.buf.WriteFormat(`, 0, len(%s))
 `, in)
 
 	g.buf.WriteFormat(`
 	for _, _%s := range %s {
-		var _%s `, in, in, out)
-	g.Types(typ)
-	g.buf.WriteFormat(`
-`)
+		var _%s string
+`, in, in, out)
+
 	err := g.convertFrom("_"+in, "_"+out, typ)
 	if err != nil {
 		return err
@@ -63,7 +57,7 @@ func (g *GenClient) convertFromSlice(in, out string, typ *spec.Type) error {
 		_list_%s = append(_list_%s, _%s)
 	}
 
-	_%s = strings.Join(_list_%s, ",")
+	%s = strings.Join(_list_%s, ",")
 `, out, out, out, out, out)
 
 	return nil

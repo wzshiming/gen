@@ -36,6 +36,20 @@ func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 		switch req.In {
 		case "header", "cookie", "path", "query":
 			name := g.getVarName(req.Name, req.Type)
+			g.buf.WriteFormat(`var _%s string
+`, name)
+		}
+	}
+
+	for _, v := range oper.Requests {
+		req := v
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
+		}
+
+		switch req.In {
+		case "header", "cookie", "path", "query":
+			name := g.getVarName(req.Name, req.Type)
 			err = g.convertFrom(name, "_"+name, req.Type)
 			if err != nil {
 				return err

@@ -13,16 +13,20 @@ import (
 
 // GenModel is the generating generating
 type GenModel struct {
-	pkgpath string
-	api     *spec.API
-	buf     *srcgen.File
+	ps  map[string]bool
+	api *spec.API
+	buf *srcgen.File
 }
 
-func NewGenModel(api *spec.API, buf *srcgen.File, pkgpath string) *GenModel {
+func NewGenModel(api *spec.API, buf *srcgen.File, pkgpath []string) *GenModel {
+	ps := map[string]bool{}
+	for _, p := range pkgpath {
+		ps[p] = true
+	}
 	return &GenModel{
-		api:     api,
-		buf:     buf,
-		pkgpath: pkgpath,
+		api: api,
+		buf: buf,
+		ps:  ps,
 	}
 }
 
@@ -62,16 +66,32 @@ func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
 	return nil
 }
 
-func (g *GenModel) PkgPath(path string) bool {
+func (g *GenModel) GetPkgPath(path string) (string, bool) {
 	const (
 		vendor = "/vendor/"
 	)
+
 	if i := strings.LastIndex(path, vendor); i != -1 {
 		path = path[i+len(vendor):]
 	}
-	if g.pkgpath == "" || path == g.pkgpath {
+
+	if len(g.ps) == 0 {
+		return path, false
+	}
+
+	if g.ps[path] {
+		return path, false
+	}
+
+	return path, true
+}
+
+func (g *GenModel) PkgPath(path string) bool {
+	path, ok := g.GetPkgPath(path)
+	if !ok {
 		return false
 	}
+
 	pkgname := namecase.ToCamel(path)
 	g.buf.AddImport(pkgname, path)
 	g.buf.WriteFormat("%s.", pkgname)

@@ -23,7 +23,7 @@ func NewGenClient(api *spec.API) *GenClient {
 	return &GenClient{
 		api:      api,
 		buf:      buf,
-		GenModel: *model.NewGenModel(api, buf, ""),
+		GenModel: *model.NewGenModel(api, buf, api.Imports),
 		named:    named.NewNamed("_"),
 	}
 }
@@ -55,6 +55,9 @@ func (g *GenClient) generateSchemas() (err error) {
 	for _, k := range schKey {
 		v := schemas[k]
 		if v.Attr.Has(spec.AttrRoot) {
+			continue
+		}
+		if _, ok := g.GenModel.GetPkgPath(v.PkgPath); ok {
 			continue
 		}
 		g.buf.WriteString(utils.CommentLine(v.Description))

@@ -99,6 +99,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 	if err != nil {
 		return err
 	}
+	g.api.Imports = append(g.api.Imports, pkgpath)
 	g.api.Package = pkg.Name()
 	numchi := pkg.NumChild()
 

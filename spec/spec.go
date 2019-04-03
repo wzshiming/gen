@@ -5,6 +5,7 @@ import (
 )
 
 type API struct {
+	Imports     []string
 	Package     string
 	Operations  []*Operation
 	Middlewares map[string]*Middleware
