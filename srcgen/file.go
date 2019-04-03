@@ -2,13 +2,14 @@ package srcgen
 
 import (
 	"go/build"
-	"go/format"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"unsafe"
+
+	"golang.org/x/tools/imports"
 )
 
 type File struct {
@@ -98,7 +99,7 @@ package %s
 
 	data := buf.Bytes()
 
-	dataf, err := format.Source(data)
+	dataf, err := imports.Process(f.filename, data, nil)
 	if err != nil {
 		return data
 	}
