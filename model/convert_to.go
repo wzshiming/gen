@@ -86,9 +86,6 @@ func (g *GenModel) convertTo(in, out string, typ *spec.Type) error {
 		g.buf.WriteFormat(`
 	if %s != "" {
 		err = %s.UnmarshalText(*(*[]byte)(unsafe.Pointer(&%s)))
-		if err != nil {
-			return
-		}
 	}
 `, in, out, in)
 		return nil
