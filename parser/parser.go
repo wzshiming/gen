@@ -392,9 +392,15 @@ func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type, ch
 	}
 
 	reqs, err := g.addRequests(pat, t)
+	if err != nil {
+		return err
+	}
 	oper.Requests = reqs
 
 	resps, err := g.addResponses(t)
+	if err != nil {
+		return err
+	}
 	oper.Responses = resps
 
 	g.api.Operations = append(g.api.Operations, oper)
