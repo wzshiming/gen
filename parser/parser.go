@@ -464,7 +464,7 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 		si = sch.Ident
 	}
 	hash := utils.Hash(oname, in, code, content, doc, si)
-	key := g.namedResp.GetName(name, hash)
+	key := g.namedResp.GetName(name+"_"+in, hash)
 
 	if g.api.Responses[key] != nil {
 		return &spec.Response{
@@ -595,7 +595,7 @@ func (g *Parser) addRequest(basePath string, t gotype.Type) (par *spec.Request, 
 		si = sch.Ident
 	}
 	hash := utils.Hash(oname, in, content, doc, si)
-	key := g.namedReq.GetName(name, hash)
+	key := g.namedReq.GetName(name+"_"+in, hash)
 
 	if g.api.Requests[key] != nil {
 		return &spec.Request{
