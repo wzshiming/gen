@@ -1,13 +1,11 @@
 package run
 
 import (
-	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"text/template"
 
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
@@ -106,40 +104,26 @@ func file(pkgs []string, port string, way string) ([]byte, error) {
 	router.AddImport("", "os")
 	router.AddImport("", "github.com/gorilla/handlers")
 
-	buf := bytes.NewBuffer(nil)
-	err = tpl.Execute(buf, map[string]interface{}{
-		"Server": server,
-		"Port":   port,
-		"Router": router,
-	})
-	if err != nil {
-		return nil, err
+	router.WriteFormat(`
+
+	func main() {
+		mux := Router()
+		mux0 := handlers.RecoveryHandler()(mux)
+		mux0 = handlers.CombinedLoggingHandler(os.Stdout, mux0)
+	
+		fmt.Printf("Open %s/swagger/#\n")
+		fmt.Printf("  or %s/swaggerui/#\n")
+		fmt.Printf("  or %s/swaggereditor/#\n")
+		fmt.Printf("  or %s/redoc/#\n")
+		fmt.Printf("  with your browser.\n")
+	
+		err := http.ListenAndServe("%s", mux0)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return
 	}
+`, server, server, server, server, port)
 
-	return buf.Bytes(), nil
+	return router.Bytes(), nil
 }
-
-var tpl = template.Must(template.New("").Parse(temp))
-
-const temp = `
-{{ .Router }}
-
-func main() {
-	mux := Router()
-	mux0 := handlers.RecoveryHandler()(mux)
-	mux0 = handlers.CombinedLoggingHandler(os.Stdout, mux0)
-
-	fmt.Printf("Open {{ .Server }}/swagger/#\n")
-	fmt.Printf("  or {{ .Server }}/swaggerui/#\n")
-	fmt.Printf("  or {{ .Server }}/swaggereditor/#\n")
-	fmt.Printf("  or {{ .Server }}/redoc/#\n")
-	fmt.Printf("  with your browser.\n")
-
-	err := http.ListenAndServe("{{ .Port }}", mux0)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return
-}
-
-`
