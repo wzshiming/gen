@@ -650,6 +650,10 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 	if time, ok := g.importChild("time", "Time"); ok && gotype.Equal(time, t) {
 		sch.Description = "This is the time string in RFC3339 format"
 		sch.Kind = spec.Time
+		sch.Attr.Add(spec.AttrTextUnmarshaler)
+		sch.Attr.Add(spec.AttrTextMarshaler)
+		sch.Attr.Add(spec.AttrJSONUnmarshaler)
+		sch.Attr.Add(spec.AttrJSONMarshaler)
 		return sch, nil
 	}
 

@@ -441,7 +441,9 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 		return oaspec.RefSchemas(typ.Ref), nil
 	}
 
-	if typ.Attr.HasOne(spec.AttrReader | spec.AttrImage) {
+	if typ.Kind == spec.Time {
+		sch = oaspec.DateTimeProperty()
+	} else if typ.Attr.HasOne(spec.AttrReader | spec.AttrImage) {
 		sch = &oaspec.Schema{}
 		sch.Type = "string"
 		sch.Format = "binary"
@@ -451,8 +453,6 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 		switch typ.Kind {
 		default:
 			sch = oaspec.StrFmtProperty(strings.ToLower(typ.Kind.String()))
-		case spec.Time:
-			sch = oaspec.DateTimeProperty()
 		case spec.String:
 			sch = oaspec.StringProperty()
 		case spec.Bool:

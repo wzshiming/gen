@@ -68,7 +68,7 @@ func (g *GenModel) convertFrom(in, out string, typ *spec.Type) error {
 		typ = g.api.Types[typ.Ref]
 	}
 
-	if typ.Attr.Has(spec.AttrTextMarshaler) || typ.Kind == spec.Time {
+	if typ.Attr.Has(spec.AttrTextMarshaler) {
 		g.buf.AddImport("", "unsafe")
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
