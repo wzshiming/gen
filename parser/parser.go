@@ -113,7 +113,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 
 			if len(g.ways) != 0 {
 				doc := v.Doc().Text()
-				tag := GetTag(doc)
+				_, tag := utils.GetTag(doc)
 				if !g.isWay(tag.Get("way")) {
 					continue
 				}
@@ -135,7 +135,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 
 			if len(g.ways) != 0 {
 				doc := v.Doc().Text()
-				tag := GetTag(doc)
+				_, tag := utils.GetTag(doc)
 				if !g.isWay(tag.Get("way")) {
 					continue
 				}
@@ -158,7 +158,7 @@ func (g *Parser) addPaths(t gotype.Type) (err error) {
 	if doc == "" {
 		return nil
 	}
-	tag := GetTag(doc)
+	_, tag := utils.GetTag(doc)
 	path := tag.Get("path")
 	if path == "" {
 		return nil
@@ -185,7 +185,7 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 
 		if len(g.ways) != 0 {
 			doc := v.Doc().Text()
-			tag := GetTag(doc)
+			_, tag := utils.GetTag(doc)
 			if !g.isWay(tag.Get("way")) {
 				continue
 			}
@@ -216,7 +216,7 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 				if doc == "" {
 					continue
 				}
-				tag := GetTag(doc)
+				_, tag := utils.GetTag(doc)
 				basePath := path.Join(basePath, tag.Get("path"))
 
 				v = v.Elem()
@@ -236,7 +236,7 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 					continue
 				}
 
-				tag := GetTag(doc)
+				_, tag := utils.GetTag(doc)
 				lpath := tag.Get("path")
 				if lpath == "" {
 					continue
@@ -271,7 +271,7 @@ func (g *Parser) addMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 		return nil
 	}
 
-	tag := GetTag(doc)
+	doc, tag := utils.GetTag(doc)
 	name := GetName(oname, tag)
 	middleware := tag.Get("middleware")
 	if middleware == "" {
@@ -316,7 +316,7 @@ func (g *Parser) addSecurity(sch *spec.Type, t gotype.Type) (err error) {
 		return nil
 	}
 
-	tag := GetTag(doc)
+	doc, tag := utils.GetTag(doc)
 	name := GetName(oname, tag)
 	security := tag.Get("security")
 	if security == "" {
@@ -355,7 +355,7 @@ func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type, ch
 	if t.Kind() != gotype.Func {
 		return nil
 	}
-	tag := GetTag(doc)
+	doc, tag := utils.GetTag(doc)
 	name := GetName(oname, tag)
 	route := tag.Get("route")
 	if route == "" {
@@ -424,7 +424,7 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
-	tag := GetTag(doc)
+	doc, tag := utils.GetTag(doc)
 	name := GetName(oname, tag)
 	code := tag.Get("code")
 	in := tag.Get("in")
@@ -505,7 +505,7 @@ func (g *Parser) addRequest(basePath string, t gotype.Type) (par *spec.Request, 
 
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
-	tag := GetTag(doc)
+	doc, tag := utils.GetTag(doc)
 	name := GetName(oname, tag)
 	in := tag.Get("in")
 	t = t.Declaration()
@@ -621,7 +621,7 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 	oname := t.Name()
 	pkgpath := t.PkgPath()
 	doc := strings.TrimSpace(t.Doc().Text())
-	tag := GetTag(doc)
+	doc, tag := utils.GetTag(doc)
 	name := GetName(oname, tag)
 	kind := t.Kind()
 	isRoot := t.IsGoroot()

@@ -1,12 +1,15 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"go/build"
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -78,4 +81,34 @@ func Hash(s ...string) string {
 		h.Write([]byte(v))
 	}
 	return hex.EncodeToString(h.Sum(nil)[:])
+}
+
+// GetTag [#[^#]+#]...
+func GetTag(text string) (string, reflect.StructTag) {
+	ss := []string{}
+	prev := -1
+	other := bytes.NewBuffer(nil)
+	for i, v := range text {
+		if v != '#' {
+			if prev == -1 {
+				other.WriteRune(v)
+			}
+			continue
+		}
+		if prev == -1 {
+			prev = i
+		} else {
+			ss = append(ss, strings.TrimSpace(text[prev+1:i]))
+			prev = -1
+		}
+	}
+
+	sort.Strings(ss)
+	tag := strings.Join(ss, "#\n#")
+	if tag != "" {
+		other.WriteString("\n#")
+		other.WriteString(tag)
+		other.WriteRune('#')
+	}
+	return other.String(), reflect.StructTag(tag)
 }

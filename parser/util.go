@@ -17,24 +17,6 @@ func GetName(t string, tag reflect.StructTag) string {
 	return name
 }
 
-// GetTag [#[^#]+#]...
-func GetTag(text string) reflect.StructTag {
-	ss := []string{}
-	prev := -1
-	for i, v := range text {
-		if v != '#' {
-			continue
-		}
-		if prev == -1 {
-			prev = i
-		} else {
-			ss = append(ss, text[prev+1:i])
-			prev = -1
-		}
-	}
-	return reflect.StructTag(strings.Join(ss, " "))
-}
-
 func IsExported(name string) bool {
 	return ast.IsExported(name)
 }
