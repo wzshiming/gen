@@ -96,9 +96,14 @@ func (g *GenClient) generateParameterRequests(req *spec.Request, typ string) (er
 	if err != nil {
 		return err
 	}
-	if req.Description != "" {
-		g.buf.WriteFormat("/* %s */", utils.MergeLine(req.Description))
+
+	desc := req.Description
+	_, tag := utils.GetTag(desc)
+	if tag.Get("name") == "" {
+		desc += "\n#name:\"" + req.Name + "\"#"
 	}
+	g.buf.WriteFormat("/* %s */", utils.MergeLine(desc))
+
 	return nil
 }
 
@@ -111,8 +116,13 @@ func (g *GenClient) generateParameterResponses(resp *spec.Response) (err error) 
 	if err != nil {
 		return err
 	}
-	if resp.Description != "" {
-		g.buf.WriteFormat("/* %s */", utils.MergeLine(resp.Description))
+
+	desc := resp.Description
+	_, tag := utils.GetTag(desc)
+	if tag.Get("name") == "" {
+		desc += "\n#name:\"" + resp.Name + "\"#"
 	}
+	g.buf.WriteFormat("/* %s */", utils.MergeLine(desc))
+
 	return nil
 }

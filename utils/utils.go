@@ -110,5 +110,5 @@ func GetTag(text string) (string, reflect.StructTag) {
 		other.WriteString(tag)
 		other.WriteRune('#')
 	}
-	return other.String(), reflect.StructTag(tag)
+	return other.String(), reflect.StructTag(strings.Join(ss, " "))
 }
