@@ -69,13 +69,11 @@ func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 		case "security":
 			// No action
 		case "header":
-			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
 SetHeader("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 		case "cookie":
 			// TODO
 		case "path":
-			g.buf.AddImport("", "fmt")
 			g.buf.WriteFormat(`.
 SetPath("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 		case "query":

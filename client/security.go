@@ -79,6 +79,38 @@ func (g *GenClient) generateSecurity(oper *spec.Security) (err error) {
 
 func (g *GenClient) generateSecurityBody(oper *spec.Security) (err error) {
 	g.buf.WriteString(`{
+`)
+	for _, v := range oper.Requests {
+		req := v
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
+		}
+
+		switch req.In {
+		case "header", "cookie", "path", "query":
+			name := g.getVarName(req.Name, req.Type)
+			g.buf.WriteFormat(`var _%s string
+`, name)
+		}
+	}
+
+	for _, v := range oper.Requests {
+		req := v
+		if req.Ref != "" {
+			req = g.api.Requests[req.Ref]
+		}
+
+		switch req.In {
+		case "header", "cookie", "path", "query":
+			name := g.getVarName(req.Name, req.Type)
+			err = g.GenModel.ConvertFrom(name, "_"+name, req.Type)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	g.buf.WriteString(`
 Client = Client`)
 
 	switch oper.Schema {
@@ -93,21 +125,16 @@ Client = Client`)
 			case "security":
 				// No action
 			case "header":
-				g.buf.AddImport("", "fmt")
 				g.buf.WriteFormat(`.
-SetHeader("%s", fmt.Sprint(%s))
-`, req.Name, g.getVarName(req.Name, req.Type))
+SetHeader("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 			case "cookie":
 				// TODO
 			case "path":
-				g.buf.AddImport("", "fmt")
 				g.buf.WriteFormat(`.
-SetPath("%s", fmt.Sprint(%s))
-`, req.Name, g.getVarName(req.Name, req.Type))
+SetPath("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 			case "query":
 				g.buf.WriteFormat(`.
-SetQuery("%s", fmt.Sprint(%s))
-`, req.Name, g.getVarName(req.Name, req.Type))
+SetQuery("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 			case "body":
 				// No action
 			}
