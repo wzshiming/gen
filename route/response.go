@@ -1,6 +1,7 @@
 package route
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -84,14 +85,14 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 	switch resp.Content {
 	case "json":
 		g.buf.AddImport("", "encoding/json")
-		contentType = "application/json; charset=utf-8"
+		contentType = "\"application/json; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = json.Marshal(%s)`, name, name, name)
 		g.generateResponseError()
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
-		contentType = "application/xml; charset=utf-8"
+		contentType = "\"application/xml; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = xml.Marshal(%s)`, name, name, name)
@@ -104,7 +105,13 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 		return nil
 	default:
 		typ := resp.Type
-		if typ.Attr.Has(spec.AttrTextMarshaler) {
+		if typ.Attr.Has(spec.AttrReader) {
+			g.buf.AddImport("", "io/ioutil")
+			g.buf.WriteFormat(`
+	var _%s []byte
+	_%s, err = ioutil.ReadAll(%s)
+`, name, name, name)
+		} else if typ.Attr.Has(spec.AttrTextMarshaler) {
 			g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = %s.MarshalText()
@@ -124,14 +131,20 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 `, name, name, name, name, name, name)
 		}
 
-		contentType = resp.Content
-		if contentType == "" {
-			contentType = "text/plain; charset=utf-8"
+		switch resp.Content {
+		case "":
+			contentType = "\"text/plain; charset=utf-8\""
+		case "file":
+			g.buf.AddImport("", "net/http")
+			contentType = fmt.Sprintf("http.DetectContentType(_%s)", name)
+		default:
+			contentType = strconv.Quote(resp.Content)
 		}
+
 	}
 
 	g.buf.WriteFormat(`
-	w.Header().Set("Content-Type","%s")
+	w.Header().Set("Content-Type", %s)
 	w.WriteHeader(%s)
 	w.Write(_%s)
 `, contentType, resp.Code, name)
