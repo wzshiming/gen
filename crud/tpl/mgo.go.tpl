@@ -17,6 +17,7 @@ type < .UpperHump >WithID struct {
 	UpdateTime time.Time `bson:"update_time,omitempty" json:"update_time"`
 }
 
+// < .UpperHump >Record is record of the < .UpperHump >
 type < .UpperHump >Record struct {
 	ID                bson.ObjectId   `bson:"_id,omitempty" json:"< .LowerSnake >_record_id"`
 	< .UpperHump >ID  bson.ObjectId   `bson:"< .LowerSnake >_id,omitempty" json:"< .LowerSnake >_id"`
@@ -27,7 +28,8 @@ type < .UpperHump >Record struct {
 	Times             int             `bson:"times,omitempty" json:"times"`
 }
 
-// < .UpperHump >Service #path:"/< .LowerSnake >/"#
+// < .UpperHump >Service is service of the < .UpperHump >
+// #path:"/< .LowerSnake >/"#
 type < .UpperHump >Service struct {
 	db       *mgo.Collection
 	dbRecord *mgo.Collection
@@ -43,7 +45,8 @@ func New< .UpperHump >Service(db *mgo.Collection) (*< .UpperHump >Service, error
 	}, nil
 }
 
-// Create a < .UpperHump > #route:"POST /"#
+// Create a < .UpperHump >
+// #route:"POST /"#
 func (s *< .UpperHump >Service) Create(< .LowerHump > *< .UpperHump >) (< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, err error) {
 	< .LowerHump >ID = bson.NewObjectId()
 	now := bson.Now()
@@ -59,7 +62,8 @@ func (s *< .UpperHump >Service) Create(< .LowerHump > *< .UpperHump >) (< .Lower
 	return < .LowerHump >ID, nil
 }
 
-// Update the < .UpperHump > #route:"PUT /{< .LowerSnake >_id}"#
+// Update the < .UpperHump >
+// #route:"PUT /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Update(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, < .LowerHump > *< .UpperHump >) (err error) {
 	recent, err := s.Get(< .LowerHump >ID)
 	if err != nil {
@@ -93,7 +97,8 @@ func (s *< .UpperHump >Service) Update(< .LowerHump >ID bson.ObjectId /* #name:"
 	return nil
 }
 
-// Delete the < .UpperHump > #route:"DELETE /{< .LowerSnake >_id}"#
+// Delete the < .UpperHump >
+// #route:"DELETE /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Delete(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */) (err error) {
 	recent, err := s.Get(< .LowerHump >ID)
 	if err != nil {
@@ -116,7 +121,8 @@ func (s *< .UpperHump >Service) Delete(< .LowerHump >ID bson.ObjectId /* #name:"
 	return nil
 }
 
-// Get the < .UpperHump > #route:"GET /{< .LowerSnake >_id}"#
+// Get the < .UpperHump >
+// #route:"GET /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Get(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */) (< .LowerHump > *< .UpperHump >WithID, err error) {
 	q := s.db.FindId(< .LowerHump >ID)
 	err = q.One(&< .LowerHump >)
@@ -126,8 +132,9 @@ func (s *< .UpperHump >Service) Get(< .LowerHump >ID bson.ObjectId /* #name:"< .
 	return < .LowerHump >, nil
 }
 
-// List of the < .UpperHump > #route:"GET /"#
-func (s *< .UpperHump >Service) List(startTime /* #name:"start_time"# */, endTime time.Time /* #name:"end_time"# */, offset, limit int) (< .LowerHump >s []*< .UpperHump >WithID, err error) {
+// List of the < .UpperHump >
+// #route:"GET /"#
+func (s *< .UpperHump >Service) List(startTime /* #name:"start_time"# */, endTime time.Time /* #name:"end_time"# */, offset, limit int, sort string) (< .LowerHump >s []*< .UpperHump >WithID, err error) {
 	m := bson.D{}
 	if !startTime.IsZero() || !endTime.IsZero() {
 		m0 := bson.D{}
@@ -139,7 +146,7 @@ func (s *< .UpperHump >Service) List(startTime /* #name:"start_time"# */, endTim
 		}
 		m = append(m, bson.DocElem{"create_time", m0})
 	}
-	q := s.db.Find(m).Skip(offset).Limit(limit)
+	q := s.db.Find(m).Skip(offset).Limit(limit).Sort(sort)
 	err = q.All(&< .LowerHump >s)
 	if err != nil {
 		return nil, err
@@ -147,7 +154,8 @@ func (s *< .UpperHump >Service) List(startTime /* #name:"start_time"# */, endTim
 	return < .LowerHump >s, nil
 }
 
-// Count of the < .UpperHump > #route:"GET /count"#
+// Count of the < .UpperHump >
+// #route:"GET /count"#
 func (s *< .UpperHump >Service) Count(startTime /* #name:"start_time"# */, endTime time.Time /* #name:"end_time"# */) (count int, err error) {
 	m := bson.D{}
 	if !startTime.IsZero() || !endTime.IsZero() {
@@ -164,7 +172,8 @@ func (s *< .UpperHump >Service) Count(startTime /* #name:"start_time"# */, endTi
 	return q.Count()
 }
 
-// RecordList of the < .UpperHump > record list #route:"GET /{< .LowerSnake >_id}/record"#
+// RecordList of the < .UpperHump > record list
+// #route:"GET /{< .LowerSnake >_id}/record"#
 func (s *< .UpperHump >Service) RecordList(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */, offset, limit int) (< .LowerHump >Records []*< .UpperHump >Record, err error) {
 	m := bson.D{{"< .LowerSnake >_id", < .LowerHump >ID}}
 	q := s.dbRecord.Find(m).Skip(offset).Limit(limit)
@@ -175,7 +184,8 @@ func (s *< .UpperHump >Service) RecordList(< .LowerHump >ID bson.ObjectId /* #na
 	return < .LowerHump >Records, nil
 }
 
-// RecordCount of the < .UpperHump > record count #route:"GET /{< .LowerSnake >_id}/record/count"#
+// RecordCount of the < .UpperHump > record count
+// #route:"GET /{< .LowerSnake >_id}/record/count"#
 func (s *< .UpperHump >Service) RecordCount(< .LowerHump >ID bson.ObjectId /* #name:"< .LowerSnake >_id"# */) (count int, err error) {
 	m := bson.D{{"< .LowerSnake >_id", < .LowerHump >ID}}
 	q := s.dbRecord.Find(m)
