@@ -436,6 +436,11 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 		in = "body"
 	}
 
+	sch, err := g.addType(t)
+	if err != nil {
+		return nil, err
+	}
+
 	if in == "body" {
 		if code == "" {
 			if kind != gotype.Error {
@@ -446,17 +451,21 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 		}
 
 		if content == "" {
-			if kind != gotype.Error {
+			typ := sch
+			if typ.Ref != "" {
+				typ = g.api.Types[typ.Ref]
+			}
+
+			if typ.Attr.Has(spec.AttrImage) {
+				content = "image"
+			} else if typ.Attr.Has(spec.AttrReader) {
+				content = "file"
+			} else if kind != gotype.Error {
 				content = "json"
 			} else {
 				content = "error"
 			}
 		}
-	}
-
-	sch, err := g.addType(t)
-	if err != nil {
-		return nil, err
 	}
 
 	si := sch.Ref
