@@ -273,11 +273,10 @@ func %s() http.Handler {
 		for k := range g.api.Securitys {
 			secuKey = append(secuKey, k)
 		}
-
 		sort.Strings(secuKey)
 		for _, k := range secuKey {
-			v := g.api.Securitys[k]
-			err = g.generateSecurityFunction(v)
+			secu := g.api.Securitys[k]
+			err = g.generateSecurityFunction(secu)
 			if err != nil {
 				return err
 			}

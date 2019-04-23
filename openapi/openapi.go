@@ -3,6 +3,7 @@ package openapi
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/wzshiming/gen/spec"
@@ -64,8 +65,14 @@ func (g *GenOpenAPI) Generate() (*oaspec.OpenAPI, error) {
 
 func (g *GenOpenAPI) generateComponents() (err error) {
 
-	for _, v := range g.api.Securitys {
-		err := g.generateSecurityScheme(v)
+	secuKey := make([]string, 0, len(g.api.Securitys))
+	for k := range g.api.Securitys {
+		secuKey = append(secuKey, k)
+	}
+	sort.Strings(secuKey)
+	for _, k := range secuKey {
+		secu := g.api.Securitys[k]
+		err := g.generateSecurityScheme(secu)
 		if err != nil {
 			return err
 		}
@@ -173,7 +180,13 @@ func (g *GenOpenAPI) generateRequests(oper *oaspec.Operation, reqs []*spec.Reque
 				}
 			}
 		case "security":
-			for _, v := range g.api.Securitys {
+			secuKey := make([]string, 0, len(g.api.Securitys))
+			for k := range g.api.Securitys {
+				secuKey = append(secuKey, k)
+			}
+			sort.Strings(secuKey)
+			for _, k := range secuKey {
+				v := g.api.Securitys[k]
 				if len(v.Responses) == 0 {
 					continue
 				}

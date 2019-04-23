@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/wzshiming/gen/spec"
 )
@@ -82,7 +83,13 @@ if err != nil {
 		}
 	case "security":
 		secus := []*spec.Security{}
-		for _, secu := range g.api.Securitys {
+		secuKey := make([]string, 0, len(g.api.Securitys))
+		for k := range g.api.Securitys {
+			secuKey = append(secuKey, k)
+		}
+		sort.Strings(secuKey)
+		for _, k := range secuKey {
+			secu := g.api.Securitys[k]
 			if len(secu.Responses) == 0 {
 				continue
 			}
