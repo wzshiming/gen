@@ -9,6 +9,7 @@ type API struct {
 	Package     string
 	Operations  []*Operation
 	Middlewares map[string]*Middleware
+	Wrappings   map[string]*Wrapping
 	Securitys   map[string]*Security
 	Requests    map[string]*Request
 	Responses   map[string]*Response
@@ -18,6 +19,7 @@ type API struct {
 func NewAPI() *API {
 	return &API{
 		Middlewares: map[string]*Middleware{},
+		Wrappings:   map[string]*Wrapping{},
 		Securitys:   map[string]*Security{},
 		Requests:    map[string]*Request{},
 		Responses:   map[string]*Response{},
@@ -27,6 +29,16 @@ func NewAPI() *API {
 
 type Middleware struct {
 	Ref         string
+	PkgPath     string
+	Schema      string
+	Name        string
+	Type        *Type
+	Requests    []*Request
+	Responses   []*Response
+	Description string
+}
+
+type Wrapping struct {
 	PkgPath     string
 	Schema      string
 	Name        string

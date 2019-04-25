@@ -21,6 +21,7 @@ type Parser struct {
 	namedReq  *named.Named
 	namedResp *named.Named
 	namedMidd *named.Named
+	namedWrap *named.Named
 	namedSecu *named.Named
 	namedTyp  *named.Named
 }
@@ -34,6 +35,7 @@ func NewParser(imp *gotype.Importer) *Parser {
 		namedReq:  named.NewNamed("."),
 		namedResp: named.NewNamed("."),
 		namedMidd: named.NewNamed("."),
+		namedWrap: named.NewNamed("."),
 		namedSecu: named.NewNamed("."),
 		namedTyp:  named.NewNamed("."),
 	}
@@ -301,6 +303,51 @@ func (g *Parser) addMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	midd.Responses = resps
 
 	g.api.Middlewares[key] = midd
+	return nil
+}
+
+func (g *Parser) addWrapping(sch *spec.Type, t gotype.Type) (err error) {
+	oname := t.Name()
+	doc := strings.TrimSpace(t.Doc().Text())
+	pkgpath := t.PkgPath()
+	if doc == "" {
+		return nil
+	}
+	t = t.Declaration()
+	if t.Kind() != gotype.Func {
+		return nil
+	}
+
+	doc, tag := utils.GetTag(doc)
+	name := GetName(oname, tag)
+	wrapping := tag.Get("wrapping")
+	if wrapping == "" {
+		return nil
+	}
+
+	path := ""
+	route := tag.Get("route")
+	if route != "" {
+		_, _, path, _ = GetRoute(route)
+	}
+
+	hash := utils.Hash(oname, pkgpath, wrapping, doc)
+	key := g.namedMidd.GetName(name, hash)
+
+	wrap := &spec.Wrapping{}
+	wrap.Name = name
+	wrap.PkgPath = pkgpath
+	wrap.Schema = wrapping
+	wrap.Description = doc
+	wrap.Type = sch
+
+	reqs, err := g.addRequests(path, t)
+	wrap.Requests = reqs
+
+	resps, err := g.addResponses(t)
+	wrap.Responses = resps
+
+	g.api.Wrappings[key] = wrap
 	return nil
 }
 
