@@ -12,7 +12,8 @@ type < .UpperHump >WithID struct {
 	< .Original >
 }
 
-// < .UpperHump >Service #path:"/< .LowerSnake >/"#
+// < .UpperHump >Service is service of the < .UpperHump >
+// #path:"/< .LowerSnake >/"#
 type < .UpperHump >Service struct {
 	datas []*< .UpperHump >WithID
 }
@@ -22,7 +23,8 @@ func New< .UpperHump >Service() (*< .UpperHump >Service, error) {
 	return &< .UpperHump >Service{}, nil
 }
 
-// Create a < .UpperHump > #route:"POST /"#
+// Create a < .UpperHump >
+// #route:"POST /"#
 func (s *< .UpperHump >Service) Create(< .LowerHump > *< .Original >) (err error) {
 	< .LowerHump >ID := len(s.datas) + 1
 	data := &< .UpperHump >WithID {
@@ -33,7 +35,8 @@ func (s *< .UpperHump >Service) Create(< .LowerHump > *< .Original >) (err error
 	return nil
 }
 
-// Update the < .UpperHump > #route:"PUT /{< .LowerSnake >_id}"#
+// Update the < .UpperHump >
+// #route:"PUT /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Update(< .LowerHump >ID int /* #name:"< .LowerSnake >_id"# */, < .LowerHump > *< .Original >) (err error) {
 	if 0 >= < .LowerHump >ID || < .LowerHump >ID > len(s.datas) || s.datas[< .LowerHump >ID-1] == nil {
 		return errors.New("id does not exist")
@@ -43,7 +46,8 @@ func (s *< .UpperHump >Service) Update(< .LowerHump >ID int /* #name:"< .LowerSn
 	return nil
 }
 
-// Delete the < .UpperHump > #route:"DELETE /{< .LowerSnake >_id}"#
+// Delete the < .UpperHump >
+// #route:"DELETE /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Delete(< .LowerHump >ID int /* #name:"< .LowerSnake >_id"# */) (err error) {
 	if 0 >= < .LowerHump >ID || < .LowerHump >ID > len(s.datas) || s.datas[< .LowerHump >ID-1] == nil {
 		return errors.New("id does not exist")
@@ -52,7 +56,8 @@ func (s *< .UpperHump >Service) Delete(< .LowerHump >ID int /* #name:"< .LowerSn
 	return nil
 }
 
-// Get the < .UpperHump > #route:"GET /{< .LowerSnake >_id}"#
+// Get the < .UpperHump >
+// #route:"GET /{< .LowerSnake >_id}"#
 func (s *< .UpperHump >Service) Get(< .LowerHump >ID int /* #name:"< .LowerSnake >_id"# */) (< .LowerHump > *< .UpperHump >WithID, err error) {
 	if 0 >= < .LowerHump >ID || < .LowerHump >ID > len(s.datas) || s.datas[< .LowerHump >ID-1] == nil {
 		return nil, errors.New("id does not exist")
@@ -60,7 +65,8 @@ func (s *< .UpperHump >Service) Get(< .LowerHump >ID int /* #name:"< .LowerSnake
 	return s.datas[< .LowerHump >ID-1], nil
 }
 
-// List of the < .UpperHump > #route:"GET /"#
+// List of the < .UpperHump >
+// #route:"GET /"#
 func (s *< .UpperHump >Service) List(offset, limit int) (< .LowerHump >s []*< .UpperHump >WithID, err error) {
 	off := 0
 	lim := 0
