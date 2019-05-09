@@ -82,6 +82,11 @@ func (g *GenRoute) generateResponseError() error {
 func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 	contentType := ""
 	name := g.getVarName(resp.Name, resp.Type)
+
+	g.buf.WriteFormat(`
+	w.WriteHeader(%s)
+`, resp.Code)
+
 	switch resp.Content {
 	case "json":
 		g.buf.AddImport("", "encoding/json")
@@ -92,10 +97,16 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 		g.generateResponseError()
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
+		g.buf.AddImport("", "io")
+		g.buf.WriteFormat(`
+	io.WriteString(w, xml.Header)
+	`)
 		contentType = "\"application/xml; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
-	_%s, err = xml.Marshal(%s)`, name, name, name)
+	_%s, err = xml.Marshal(%s)
+	`, name, name, name)
+
 		g.generateResponseError()
 	case "error":
 		g.buf.AddImport("", "net/http")
@@ -145,8 +156,8 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 
 	g.buf.WriteFormat(`
 	w.Header().Set("Content-Type", %s)
-	w.WriteHeader(%s)
 	w.Write(_%s)
-`, contentType, resp.Code, name)
+`, contentType, name)
+
 	return nil
 }
