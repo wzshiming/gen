@@ -83,10 +83,6 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 	contentType := ""
 	name := g.getVarName(resp.Name, resp.Type)
 
-	g.buf.WriteFormat(`
-	w.WriteHeader(%s)
-`, resp.Code)
-
 	switch resp.Content {
 	case "json":
 		g.buf.AddImport("", "encoding/json")
@@ -97,10 +93,6 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 		g.generateResponseError()
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
-		g.buf.AddImport("", "io")
-		g.buf.WriteFormat(`
-	io.WriteString(w, xml.Header)
-	`)
 		contentType = "\"application/xml; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
@@ -156,8 +148,23 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 
 	g.buf.WriteFormat(`
 	w.Header().Set("Content-Type", %s)
+`, contentType)
+
+	g.buf.WriteFormat(`
+	w.WriteHeader(%s)
+`, resp.Code)
+
+	switch resp.Content {
+	case "xml":
+		g.buf.AddImport("", "io")
+		g.buf.WriteFormat(`
+	io.WriteString(w, xml.Header)
+	`)
+	}
+
+	g.buf.WriteFormat(`
 	w.Write(_%s)
-`, contentType, name)
+`, name)
 
 	return nil
 }
