@@ -588,6 +588,12 @@ func (g *Parser) addRequest(basePath string, t gotype.Type) (par *spec.Request, 
 				Ident: "net/http.ResponseWriter",
 				Name:  "w",
 			}, nil
+		} else if resp, ok := g.importChild("context", "Context"); ok && gotype.Implements(resp, t) {
+			return &spec.Request{
+				In:    "none",
+				Ident: "context.Context",
+				Name:  "r.Context()",
+			}, nil
 		}
 	}
 
