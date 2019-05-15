@@ -8,6 +8,23 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
+func (g *GenRoute) generateResponsesErrorName(resps []*spec.Response) (string, error) {
+	for i := 0; i != len(resps); i++ {
+		resp := resps[len(resps)-i-1]
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		if resp.Type == nil {
+			continue
+		}
+		if resp.Type.Kind == spec.Error {
+			return g.getVarName(resp.Name, resp.Type), nil
+		}
+	}
+	g.buf.WriteFormat("var err error")
+	return "err", nil
+}
+
 func (g *GenRoute) generateResponsesVar(resps []*spec.Response) error {
 
 	for _, resp := range resps {
@@ -26,7 +43,7 @@ func (g *GenRoute) generateResponsesVar(resps []*spec.Response) error {
 	return nil
 }
 
-func (g *GenRoute) generateResponse(resp *spec.Response) error {
+func (g *GenRoute) generateResponse(resp *spec.Response, errName string) error {
 	if resp.Ref != "" {
 		resp = g.api.Responses[resp.Ref]
 	}
@@ -34,7 +51,7 @@ func (g *GenRoute) generateResponse(resp *spec.Response) error {
 	case "header":
 		return g.generateResponseHeader(resp)
 	case "body":
-		return g.generateResponseBody(resp)
+		return g.generateResponseBody(resp, errName)
 	}
 	return nil
 }
@@ -47,7 +64,7 @@ func (g *GenRoute) generateResponseHeader(resp *spec.Response) error {
 	return nil
 }
 
-func (g *GenRoute) generateResponseBody(resp *spec.Response) error {
+func (g *GenRoute) generateResponseBody(resp *spec.Response, errName string) error {
 	text := ""
 	if i, err := strconv.Atoi(resp.Code); err == nil {
 		text = http.StatusText(i)
@@ -57,7 +74,7 @@ func (g *GenRoute) generateResponseBody(resp *spec.Response) error {
 	if %s != `, resp.Code, text, resp.Name, g.getVarName(resp.Name, resp.Type))
 	g.TypesZero(resp.Type)
 	g.buf.WriteString(`{`)
-	g.generateResponseBodyItem(resp)
+	g.generateResponseBodyItem(resp, errName)
 	g.buf.WriteString(`return
 }
 `)
@@ -65,18 +82,18 @@ func (g *GenRoute) generateResponseBody(resp *spec.Response) error {
 
 }
 
-func (g *GenRoute) generateResponseError() error {
+func (g *GenRoute) generateResponseError(errName string) error {
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
-	if err != nil {
-		http.Error(w, err.Error(), 500)
+	if %s != nil {
+		http.Error(w, %s.Error(), 500)
 		return
 	}
-`)
+`, errName, errName)
 	return nil
 }
 
-func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
+func (g *GenRoute) generateResponseBodyItem(resp *spec.Response, errName string) error {
 	contentType := ""
 	name := g.getVarName(resp.Name, resp.Type)
 
@@ -86,17 +103,17 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 		contentType = "\"application/json; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
-	_%s, err = json.Marshal(%s)`, name, name, name)
-		g.generateResponseError()
+	_%s, %s = json.Marshal(%s)`, name, name, errName, name)
+		g.generateResponseError(errName)
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
 		contentType = "\"application/xml; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
-	_%s, err = xml.Marshal(%s)
-	`, name, name, name)
+	_%s, %s = xml.Marshal(%s)
+	`, name, name, errName, name)
 
-		g.generateResponseError()
+		g.generateResponseError(errName)
 	case "error":
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
@@ -109,13 +126,13 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 			g.buf.AddImport("", "io/ioutil")
 			g.buf.WriteFormat(`
 	var _%s []byte
-	_%s, err = ioutil.ReadAll(%s)
-`, name, name, name)
+	_%s, %s = ioutil.ReadAll(%s)
+`, name, name, errName, name)
 		} else if typ.Attr.Has(spec.AttrTextMarshaler) {
 			g.buf.WriteFormat(`
 	var _%s []byte
-	_%s, err = %s.MarshalText()
-`, name, name, name)
+	_%s, %s = %s.MarshalText()
+`, name, name, errName, name)
 		} else if typ.Kind == spec.Slice && typ.Elem.Kind == spec.Byte {
 			g.buf.WriteFormat(`
 	var _%s []byte

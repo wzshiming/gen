@@ -24,7 +24,12 @@ func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error)
 		return err
 	}
 
-	err = g.generateCallExec(midd.Name, nil, midd.PkgPath, midd.Type, midd.Requests, midd.Responses, true)
+	errName, err := g.generateResponsesErrorName(midd.Responses)
+	if err != nil {
+		return err
+	}
+
+	err = g.generateCallExec(midd.Name, nil, midd.PkgPath, midd.Type, midd.Requests, midd.Responses, errName, true)
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,12 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 		return err
 	}
 
-	err = g.generateCallExec(oper.Name, oper.Chain, oper.PkgPath, oper.Type, oper.Requests, oper.Responses, false)
+	errName, err := g.generateResponsesErrorName(oper.Responses)
+	if err != nil {
+		return err
+	}
+
+	err = g.generateCallExec(oper.Name, oper.Chain, oper.PkgPath, oper.Type, oper.Requests, oper.Responses, errName, false)
 	if err != nil {
 		return err
 	}
@@ -56,7 +61,7 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 				resp = g.api.Responses[resp.Ref]
 			}
 			if resp.In == "body" && resp.Content != "error" {
-				g.generateResponseBodyItem(resp)
+				g.generateResponseBodyItem(resp, errName)
 				noCtx = false
 				break
 			}

@@ -24,7 +24,12 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 		return err
 	}
 
-	err = g.generateCallExec(wrap.Name, nil, wrap.PkgPath, wrap.Type, wrap.Requests, wrap.Responses, true)
+	errName, err := g.generateResponsesErrorName(wrap.Responses)
+	if err != nil {
+		return err
+	}
+
+	err = g.generateCallExec(wrap.Name, nil, wrap.PkgPath, wrap.Type, wrap.Requests, wrap.Responses, errName, true)
 	if err != nil {
 		return err
 	}

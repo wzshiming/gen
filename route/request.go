@@ -9,7 +9,6 @@ import (
 
 func (g *GenRoute) generateRequestsVar(reqs []*spec.Request) error {
 
-	var one bool
 	for _, req := range reqs {
 		if req.Ref != "" {
 			req = g.api.Requests[req.Ref]
@@ -17,15 +16,7 @@ func (g *GenRoute) generateRequestsVar(reqs []*spec.Request) error {
 		if req.Type == nil {
 			continue
 		}
-		if !one {
-			g.buf.WriteString(`
-		var err error
-	`)
-			one = true
-		}
-		// if req.Type.Kind == spec.Error {
-		// 	continue
-		// }
+
 		g.buf.WriteFormat("var %s ", g.getVarName(req.Name, req.Type))
 		g.Types(req.Type)
 		g.buf.WriteString("\n")
@@ -33,7 +24,7 @@ func (g *GenRoute) generateRequestsVar(reqs []*spec.Request) error {
 	return nil
 }
 
-func (g *GenRoute) generateRequest(req *spec.Request) error {
+func (g *GenRoute) generateRequest(req *spec.Request, errName string) error {
 	if req.Ref != "" {
 		req = g.api.Requests[req.Ref]
 	}
@@ -74,15 +65,15 @@ func (g *GenRoute) generateRequest(req *spec.Request) error {
 			name := g.getMiddlewareFunctionName(midd)
 			g.buf.WriteFormat(`
 // Permission middlewares call %s.
-%s, err = %s(`, midd.Name, vname, name)
+%s, %s = %s(`, midd.Name, vname, errName, name)
 			if midd.Type != nil {
 				g.buf.WriteString(`s, `)
 			}
-			g.buf.WriteString(`w, r)
-if err != nil {
+			g.buf.WriteFormat(`w, r)
+if %s != nil {
 	return
 }
-`)
+`, errName)
 		}
 	case "security":
 		secus := []*spec.Security{}
@@ -113,8 +104,8 @@ if err != nil {
 		var %s `, vname)
 			g.Types(req.Type)
 			g.buf.WriteFormat(`
-		http.Error(w, err.Error(), 401)
-`)
+		http.Error(w, %s.Error(), 401)
+`, errName)
 		default:
 			g.buf.WriteFormat(`
 		// Permission verification
@@ -126,12 +117,12 @@ if err != nil {
 				case "basic":
 					g.buf.AddImport("", "strings")
 					g.buf.WriteFormat(`if strings.HasPrefix(r.Header.Get("Authorization"), "Basic ") { // Call %s.
-		%s, err = %s(`, secu.Name, vname, name)
+		%s, %s = %s(`, secu.Name, vname, errName, name)
 
 				case "bearer":
 					g.buf.AddImport("", "strings")
 					g.buf.WriteFormat(`if strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") { // Call %s.
-		%s, err = %s(`, secu.Name, vname, name)
+		%s, %s = %s(`, secu.Name, vname, errName, name)
 
 				case "apiKey":
 					req := secu.Requests[0]
@@ -143,13 +134,13 @@ if err != nil {
 					default:
 					case "header":
 						g.buf.WriteFormat(`if r.Header.Get("%s") != "" { // Call %s.
-		%s, err = %s(`, req.Name, secu.Name, vname, name)
+		%s, %s = %s(`, req.Name, secu.Name, vname, errName, name)
 					case "query":
 						g.buf.WriteFormat(`if r.URL.Query().Get("%s") != "" { // Call %s.
-		%s, err = %s(`, req.Name, secu.Name, vname, name)
+		%s, %s = %s(`, req.Name, secu.Name, vname, errName, name)
 					case "cookie":
 						g.buf.WriteFormat(`if cookie, err := r.Cookie("%s"); err == nil && cookie.Value != "" { // Call %s.
-		%s, err = %s(`, req.Name, secu.Name, vname, name)
+		%s, %s = %s(`, req.Name, secu.Name, vname, errName, name)
 					}
 
 				}
@@ -159,23 +150,23 @@ if err != nil {
 				g.buf.WriteString(`w, r)
 	} else `)
 			}
-			g.buf.WriteString(` {
-		http.Error(w, err.Error(), 401)
+			g.buf.WriteFormat(` {
+		http.Error(w, %s.Error(), 401)
 	}
-	if err != nil {
+	if %s != nil {
 		return
 	}
-`)
+`, errName, errName)
 		}
 	default:
 		g.buf.WriteFormat(`
 // Parsing %s.
-%s, err = %s(w, r)`, req.Name, vname, g.getRequestFunctionName(req))
-		g.buf.WriteString(`
-if err != nil {
+%s, %s = %s(w, r)`, req.Name, vname, errName, g.getRequestFunctionName(req))
+		g.buf.WriteFormat(`
+if %s != nil {
 	return
 }
-`)
+`, errName)
 	}
 
 	return nil

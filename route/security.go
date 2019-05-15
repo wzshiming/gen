@@ -25,7 +25,12 @@ func (g *GenRoute) generateSecurityFunction(secu *spec.Security) (err error) {
 		return err
 	}
 
-	err = g.generateCallExec(secu.Name, nil, secu.PkgPath, secu.Type, secu.Requests, secu.Responses, true)
+	errName, err := g.generateResponsesErrorName(secu.Responses)
+	if err != nil {
+		return err
+	}
+
+	err = g.generateCallExec(secu.Name, nil, secu.PkgPath, secu.Type, secu.Requests, secu.Responses, errName, true)
 	if err != nil {
 		return err
 	}
