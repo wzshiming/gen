@@ -22,9 +22,6 @@ func (g *GenRoute) getVarName(name string, typ *spec.Type) string {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
-	if typ.Kind == spec.Error {
-		return "err"
-	}
 	for typ != nil && (name == "_" || name == "") {
 		if typ.Ref != "" {
 			typ = g.api.Types[typ.Ref]

@@ -19,7 +19,7 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 
 	g.buf.WriteString(`{
 `)
-	err = g.generateRequestsVar(wrap.Requests, false)
+	err = g.generateRequestsVar(wrap.Requests)
 	if err != nil {
 		return err
 	}

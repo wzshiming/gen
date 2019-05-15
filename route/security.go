@@ -20,7 +20,7 @@ func (g *GenRoute) generateSecurityFunction(secu *spec.Security) (err error) {
 	g.buf.WriteString(`{
 `)
 
-	err = g.generateRequestsVar(secu.Requests, false)
+	err = g.generateRequestsVar(secu.Requests)
 	if err != nil {
 		return err
 	}

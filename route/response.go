@@ -17,9 +17,6 @@ func (g *GenRoute) generateResponsesVar(resps []*spec.Response) error {
 		if resp.Type == nil {
 			continue
 		}
-		if resp.Type.Kind == spec.Error {
-			continue
-		}
 
 		g.buf.WriteFormat("var %s ", g.getVarName(resp.Name, resp.Type))
 		g.Types(resp.Type)

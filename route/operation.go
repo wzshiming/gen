@@ -19,7 +19,7 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 
 	g.buf.WriteFormat(`{
 `)
-	err = g.generateRequestsVar(oper.Requests, true)
+	err = g.generateRequestsVar(oper.Requests)
 	if err != nil {
 		return err
 	}

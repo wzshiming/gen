@@ -19,7 +19,7 @@ func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error)
 
 	g.buf.WriteString(`{
 `)
-	err = g.generateRequestsVar(midd.Requests, false)
+	err = g.generateRequestsVar(midd.Requests)
 	if err != nil {
 		return err
 	}
