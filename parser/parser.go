@@ -120,7 +120,10 @@ func (g *Parser) importOnce(pkgpath string) error {
 					continue
 				}
 			}
-
+			err = g.addWrapping(nil, v)
+			if err != nil {
+				return err
+			}
 			err = g.addMiddleware(nil, v)
 			if err != nil {
 				return err
@@ -192,7 +195,10 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 				continue
 			}
 		}
-
+		err = g.addWrapping(nil, v)
+		if err != nil {
+			return err
+		}
 		err = g.addMiddleware(sch, v)
 		if err != nil {
 			return err
@@ -332,7 +338,7 @@ func (g *Parser) addWrapping(sch *spec.Type, t gotype.Type) (err error) {
 	}
 
 	hash := utils.Hash(oname, pkgpath, wrapping, doc)
-	key := g.namedMidd.GetName(name, hash)
+	key := g.namedWrap.GetName(name, hash)
 
 	wrap := &spec.Wrapping{}
 	wrap.Name = name
