@@ -106,7 +106,7 @@ func (g *GenRoute) generateCall(name string, chain []string, pkgpath string, typ
 	return nil
 }
 
-func (g *GenRoute) generateFunctionDefine(commit string, name, oriName string, typ *spec.Type) error {
+func (g *GenRoute) generateFunctionDefine(commit string, name, oriName string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response) error {
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
 	// %s Is the %s of %s
@@ -116,6 +116,32 @@ func (g *GenRoute) generateFunctionDefine(commit string, name, oriName string, t
 		g.PtrTypes(typ)
 		g.buf.WriteString(", ")
 	}
-	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request)`)
+	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request`)
+	if len(requests) != 0 {
+		for _, req := range requests {
+			g.buf.WriteByte(',')
+			if req.Ref != "" {
+				req = g.api.Requests[req.Ref]
+			}
+			g.buf.WriteFormat("%s ", g.getVarName(req.Name, req.Type))
+			g.Types(req.Type)
+		}
+	}
+	g.buf.WriteFormat(`)`)
+
+	if len(responses) != 0 {
+		g.buf.WriteFormat(`(`)
+		for i, resp := range responses {
+			if i != 0 {
+				g.buf.WriteByte(',')
+			}
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+			g.buf.WriteFormat("%s ", g.getVarName(resp.Name, resp.Type))
+			g.Types(resp.Type)
+		}
+		g.buf.WriteString(`)`)
+	}
 	return nil
 }

@@ -12,23 +12,12 @@ func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error)
 	}
 	g.only[name] = true
 
-	err = g.generateFunctionDefine("middleware", name, midd.Name, midd.Type)
+	err = g.generateFunctionDefine("middleware", name, midd.Name, midd.Type, nil, midd.Responses)
 	if err != nil {
 		return err
 	}
 
-	g.buf.WriteFormat(`(`)
-	for i, resp := range midd.Responses {
-		if i != 0 {
-			g.buf.WriteByte(',')
-		}
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		g.buf.WriteFormat("%s ", g.getVarName(resp.Name, resp.Type))
-		g.Types(resp.Type)
-	}
-	g.buf.WriteString(`) {
+	g.buf.WriteString(`{
 `)
 	err = g.generateRequestsVar(midd.Requests, false)
 	if err != nil {

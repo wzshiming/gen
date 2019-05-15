@@ -12,7 +12,7 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 	}
 	g.only[name] = true
 
-	err = g.generateFunctionDefine("route", name, oper.Name, oper.Type)
+	err = g.generateFunctionDefine("route", name, oper.Name, oper.Type, nil, nil)
 	if err != nil {
 		return err
 	}

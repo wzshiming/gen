@@ -12,23 +12,12 @@ func (g *GenRoute) generateSecurityFunction(secu *spec.Security) (err error) {
 	}
 	g.only[name] = true
 
-	err = g.generateFunctionDefine("security", name, secu.Name, secu.Type)
+	err = g.generateFunctionDefine("security", name, secu.Name, secu.Type, nil, secu.Responses)
 	if err != nil {
 		return err
 	}
 
-	g.buf.WriteFormat(`(`)
-	for i, resp := range secu.Responses {
-		if i != 0 {
-			g.buf.WriteByte(',')
-		}
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		g.buf.WriteFormat("%s ", g.getVarName(resp.Name, resp.Type))
-		g.Types(resp.Type)
-	}
-	g.buf.WriteString(`) {
+	g.buf.WriteString(`{
 `)
 
 	err = g.generateRequestsVar(secu.Requests, false)

@@ -12,23 +12,12 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 	}
 	g.only[name] = true
 
-	err = g.generateFunctionDefine("wrapping", name, wrap.Name, wrap.Type)
+	err = g.generateFunctionDefine("wrapping", name, wrap.Name, wrap.Type, wrap.Requests, wrap.Responses)
 	if err != nil {
 		return err
 	}
 
-	g.buf.WriteFormat(`(`)
-	for i, resp := range wrap.Responses {
-		if i != 0 {
-			g.buf.WriteByte(',')
-		}
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		g.buf.WriteFormat("%s ", g.getVarName(resp.Name, resp.Type))
-		g.Types(resp.Type)
-	}
-	g.buf.WriteString(`) {
+	g.buf.WriteString(`{
 `)
 	err = g.generateRequestsVar(wrap.Requests, false)
 	if err != nil {
