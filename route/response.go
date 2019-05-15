@@ -147,19 +147,16 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response) error {
 	}
 
 	g.buf.WriteFormat(`
-	w.Header().Set("Content-Type", %s)
-`, contentType)
+	w.Header().Set("Content-Type", %s)`, contentType)
 
 	g.buf.WriteFormat(`
-	w.WriteHeader(%s)
-`, resp.Code)
+	w.WriteHeader(%s)`, resp.Code)
 
 	switch resp.Content {
 	case "xml":
 		g.buf.AddImport("", "io")
 		g.buf.WriteFormat(`
-	io.WriteString(w, xml.Header)
-	`)
+	io.WriteString(w, xml.Header)`)
 	}
 
 	g.buf.WriteFormat(`
