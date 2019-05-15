@@ -12,18 +12,13 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 	}
 	g.only[name] = true
 
-	g.buf.AddImport("", "net/http")
-	g.buf.WriteFormat(`
-// %s Is the route of %s
-func %s(`, name, oper.Name, name)
-	if oper.Type != nil {
-		g.buf.WriteString("s ")
-		g.PtrTypes(oper.Type)
-		g.buf.WriteString(", ")
+	err = g.generateFunctionDefine("route", name, oper.Name, oper.Type)
+	if err != nil {
+		return err
 	}
-	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) {
-`)
 
+	g.buf.WriteFormat(`{
+`)
 	err = g.generateRequestsVar(oper.Requests, true)
 	if err != nil {
 		return err

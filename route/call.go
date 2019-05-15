@@ -105,3 +105,17 @@ func (g *GenRoute) generateCall(name string, chain []string, pkgpath string, typ
 
 	return nil
 }
+
+func (g *GenRoute) generateFunctionDefine(commit string, name, oriName string, typ *spec.Type) error {
+	g.buf.AddImport("", "net/http")
+	g.buf.WriteFormat(`
+	// %s Is the %s of %s
+	func %s(`, name, commit, oriName, name)
+	if typ != nil {
+		g.buf.WriteString("s ")
+		g.PtrTypes(typ)
+		g.buf.WriteString(", ")
+	}
+	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request)`)
+	return nil
+}

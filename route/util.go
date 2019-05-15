@@ -65,3 +65,9 @@ func (g *GenRoute) getMiddlewareFunctionName(midd *spec.Middleware) string {
 	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(midd))), 16)
 	return g.named.GetName(name, addr)
 }
+
+func (g *GenRoute) getWrappingFunctionName(wrap *spec.Wrapping) string {
+	name := "_" + namecase.ToLowerHumpInitialisms(fmt.Sprintf("wrapping_%s_%s", wrap.Schema, wrap.Name))
+	addr := strconv.FormatUint(uint64(uintptr(unsafe.Pointer(wrap))), 16)
+	return g.named.GetName(name, addr)
+}

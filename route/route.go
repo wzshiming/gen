@@ -269,6 +269,22 @@ func %s() http.Handler {
 	}
 
 	{
+		wrapKey := make([]string, 0, len(g.api.Wrappings))
+		for k := range g.api.Wrappings {
+			wrapKey = append(wrapKey, k)
+		}
+		sort.Strings(wrapKey)
+
+		for _, k := range wrapKey {
+			v := g.api.Wrappings[k]
+			err = g.generateWrappingFunction(v)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	{
 		secuKey := make([]string, 0, len(g.api.Securitys))
 		for k := range g.api.Securitys {
 			secuKey = append(secuKey, k)

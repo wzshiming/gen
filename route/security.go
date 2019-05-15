@@ -12,17 +12,12 @@ func (g *GenRoute) generateSecurityFunction(secu *spec.Security) (err error) {
 	}
 	g.only[name] = true
 
-	g.buf.AddImport("", "net/http")
-	g.buf.WriteFormat(`
-// %s Is the security of %s
-func %s(`, name, secu.Name, name)
-	if secu.Type != nil {
-		g.buf.WriteString("s ")
-		g.PtrTypes(secu.Type)
-		g.buf.WriteString(", ")
+	err = g.generateFunctionDefine("security", name, secu.Name, secu.Type)
+	if err != nil {
+		return err
 	}
-	g.buf.WriteFormat(`w http.ResponseWriter, r *http.Request) (`)
 
+	g.buf.WriteFormat(`(`)
 	for i, resp := range secu.Responses {
 		if i != 0 {
 			g.buf.WriteByte(',')

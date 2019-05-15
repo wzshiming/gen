@@ -4,21 +4,21 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error) {
-	name := g.getMiddlewareFunctionName(midd)
+func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
+	name := g.getWrappingFunctionName(wrap)
 
 	if g.only[name] {
 		return nil
 	}
 	g.only[name] = true
 
-	err = g.generateFunctionDefine("middleware", name, midd.Name, midd.Type)
+	err = g.generateFunctionDefine("wrapping", name, wrap.Name, wrap.Type)
 	if err != nil {
 		return err
 	}
 
 	g.buf.WriteFormat(`(`)
-	for i, resp := range midd.Responses {
+	for i, resp := range wrap.Responses {
 		if i != 0 {
 			g.buf.WriteByte(',')
 		}
@@ -30,12 +30,12 @@ func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error)
 	}
 	g.buf.WriteString(`) {
 `)
-	err = g.generateRequestsVar(midd.Requests, false)
+	err = g.generateRequestsVar(wrap.Requests, false)
 	if err != nil {
 		return err
 	}
 
-	err = g.generateCallExec(midd.Name, nil, midd.PkgPath, midd.Type, midd.Requests, midd.Responses, true)
+	err = g.generateCallExec(wrap.Name, nil, wrap.PkgPath, wrap.Type, wrap.Requests, wrap.Responses, true)
 	if err != nil {
 		return err
 	}
