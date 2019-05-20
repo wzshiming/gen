@@ -82,14 +82,21 @@ func (g *GenRoute) generateResponseBody(resp *spec.Response, errName string) err
 
 }
 
-func (g *GenRoute) generateResponseError(errName string) error {
+func (g *GenRoute) generateResponseErrorReturn(errName string, code string) error {
 	g.buf.AddImport("", "net/http")
 	g.buf.WriteFormat(`
-	if %s != nil {
-		http.Error(w, %s.Error(), 500)
-		return
+		http.Error(w, %s.Error(), %s)
+`, errName, code)
+	return nil
+}
+
+func (g *GenRoute) generateResponseError(errName string, code string) error {
+	g.buf.WriteFormat(`
+	if %s != nil {`, errName)
+	g.generateResponseErrorReturn(errName, code)
+	g.buf.WriteFormat(`return
 	}
-`, errName, errName)
+`)
 	return nil
 }
 
@@ -104,21 +111,16 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response, errName string)
 		g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, %s = json.Marshal(%s)`, name, name, errName, name)
-		g.generateResponseError(errName)
+		g.generateResponseError(errName, "500")
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
 		contentType = "\"application/xml; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
-	_%s, %s = xml.Marshal(%s)
-	`, name, name, errName, name)
-
-		g.generateResponseError(errName)
+	_%s, %s = xml.Marshal(%s)`, name, name, errName, name)
+		g.generateResponseError(errName, "500")
 	case "error":
-		g.buf.AddImport("", "net/http")
-		g.buf.WriteFormat(`
-	http.Error(w, %s.Error(), %s)
-`, name, resp.Code)
+		g.generateResponseErrorReturn(name, resp.Code)
 		return nil
 	default:
 		typ := resp.Type
