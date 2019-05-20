@@ -302,7 +302,7 @@ func (g *Parser) addMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	midd.Description = doc
 	midd.Type = sch
 
-	reqs, err := g.addRequests(path, t)
+	reqs, err := g.addRequests(path, t, false)
 	midd.Requests = reqs
 
 	resps, err := g.addResponses(t)
@@ -347,7 +347,7 @@ func (g *Parser) addWrapping(sch *spec.Type, t gotype.Type) (err error) {
 	wrap.Description = doc
 	wrap.Type = sch
 
-	reqs, err := g.addRequests(path, t)
+	reqs, err := g.addRequests(path, t, true)
 	wrap.Requests = reqs
 
 	resps, err := g.addResponses(t)
@@ -386,7 +386,7 @@ func (g *Parser) addSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	secu.Description = doc
 	secu.Type = sch
 
-	reqs, err := g.addRequests("", t)
+	reqs, err := g.addRequests("", t, false)
 	secu.Requests = reqs
 
 	resps, err := g.addResponses(t)
@@ -444,7 +444,7 @@ func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type, ch
 		oper.Tags = append(oper.Tags, sch.Name)
 	}
 
-	reqs, err := g.addRequests(pat, t)
+	reqs, err := g.addRequests(pat, t, false)
 	if err != nil {
 		return err
 	}
@@ -549,12 +549,12 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 	}, nil
 }
 
-func (g *Parser) addRequests(basePath string, t gotype.Type) (reqs []*spec.Request, err error) {
+func (g *Parser) addRequests(basePath string, t gotype.Type, resp bool) (reqs []*spec.Request, err error) {
 	numin := t.NumIn()
 
 	for i := 0; i != numin; i++ {
 		v := t.In(i)
-		req, err := g.addRequest(basePath, v)
+		req, err := g.addRequest(basePath, v, resp)
 		if err != nil {
 			return nil, err
 		}
@@ -563,7 +563,7 @@ func (g *Parser) addRequests(basePath string, t gotype.Type) (reqs []*spec.Reque
 	return reqs, nil
 }
 
-func (g *Parser) addRequest(basePath string, t gotype.Type) (par *spec.Request, err error) {
+func (g *Parser) addRequest(basePath string, t gotype.Type, resp bool) (par *spec.Request, err error) {
 
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
@@ -611,50 +611,54 @@ func (g *Parser) addRequest(basePath string, t gotype.Type) (par *spec.Request, 
 	content := tag.Get("content")
 
 	if in == "" {
-		typ := sch
-		if typ.Ref != "" {
-			typ = g.api.Types[typ.Ref]
-		}
-
-		if typ.Attr.Has(spec.AttrImage) {
-			in = "body"
-			if content == "" {
-				content = "image"
-			}
-		} else if typ.Attr.Has(spec.AttrReader) {
-			in = "body"
-			if content == "" {
-				content = "file"
-			}
-		} else if typ.Attr.Has(spec.AttrTextUnmarshaler) {
-			if basePath != "" && strings.Index(basePath, "{"+name+"}") != -1 {
-				in = "path"
-			} else {
-				in = "query"
-			}
+		if resp {
+			in = "wrapping"
 		} else {
-			if typ.Kind == spec.Ptr {
-				typ = typ.Elem
-				if typ.Ref != "" {
-					typ = g.api.Types[typ.Ref]
-				}
+			typ := sch
+			if typ.Ref != "" {
+				typ = g.api.Types[typ.Ref]
 			}
-			switch typ.Kind {
-			case spec.Map, spec.Struct:
+
+			if typ.Attr.Has(spec.AttrImage) {
 				in = "body"
-			case spec.Interface:
-				in = "middleware"
-			default:
+				if content == "" {
+					content = "image"
+				}
+			} else if typ.Attr.Has(spec.AttrReader) {
+				in = "body"
+				if content == "" {
+					content = "file"
+				}
+			} else if typ.Attr.Has(spec.AttrTextUnmarshaler) {
 				if basePath != "" && strings.Index(basePath, "{"+name+"}") != -1 {
 					in = "path"
 				} else {
 					in = "query"
 				}
+			} else {
+				if typ.Kind == spec.Ptr {
+					typ = typ.Elem
+					if typ.Ref != "" {
+						typ = g.api.Types[typ.Ref]
+					}
+				}
+				switch typ.Kind {
+				case spec.Map, spec.Struct:
+					in = "body"
+				case spec.Interface:
+					in = "middleware"
+				default:
+					if basePath != "" && strings.Index(basePath, "{"+name+"}") != -1 {
+						in = "path"
+					} else {
+						in = "query"
+					}
+				}
 			}
 		}
 	}
 
-	if content == "" && in == "body" {
+	if content == "" {
 		content = "json"
 	}
 

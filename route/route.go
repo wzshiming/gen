@@ -243,6 +243,7 @@ func %s() http.Handler {
 		switch v.In {
 		case "security":
 		case "middleware":
+		case "wrapping":
 		case "none":
 		default:
 			err = g.generateRequestFunction(v)

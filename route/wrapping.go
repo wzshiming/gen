@@ -19,17 +19,13 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 
 	g.buf.WriteString(`{
 `)
-	err = g.generateRequestsVar(wrap.Requests)
-	if err != nil {
-		return err
-	}
 
 	errName, err := g.generateResponsesErrorName(wrap.Responses)
 	if err != nil {
 		return err
 	}
 
-	err = g.generateCallExec(wrap.Name, nil, wrap.PkgPath, wrap.Type, wrap.Requests, wrap.Responses, errName, true)
+	err = g.generateCall(wrap.Name, nil, wrap.PkgPath, wrap.Type, wrap.Requests, wrap.Responses, errName)
 	if err != nil {
 		return err
 	}
@@ -37,6 +33,5 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 	return
 }
 `)
-
 	return
 }
