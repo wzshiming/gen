@@ -43,6 +43,49 @@ func (g *GenRoute) generateResponsesVar(resps []*spec.Response) error {
 	return nil
 }
 
+func (g *GenRoute) generateResponses(resps []*spec.Response, code string, errName string) error {
+	noCtx := true
+	switch len(resps) {
+	case 1:
+		resp := resps[0]
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		typ := resp.Type
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		if typ.Kind != spec.Error {
+			noCtx = false
+		}
+	case 0:
+		// No action
+	default:
+		for _, resp := range resps {
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+			if resp.In == "body" && resp.Content != "error" {
+				g.generateResponseBodyItem(resp.Name, resp.Type, code, resp.Content, errName, false)
+				noCtx = false
+				break
+			}
+		}
+	}
+	if noCtx {
+		g.buf.WriteFormat(`
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(%s)
+	w.Write([]byte("null"))
+`, code)
+	}
+	g.buf.WriteString(`
+	return
+}
+`)
+	return nil
+}
+
 func (g *GenRoute) generateResponse(resp *spec.Response, errName string) error {
 	if resp.Ref != "" {
 		resp = g.api.Responses[resp.Ref]

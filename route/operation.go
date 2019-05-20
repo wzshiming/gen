@@ -39,44 +39,10 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 		return err
 	}
 
-	noCtx := true
-	switch len(oper.Responses) {
-	case 1:
-		resp := oper.Responses[0]
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
-		}
-		typ := resp.Type
-		if typ.Ref != "" {
-			typ = g.api.Types[typ.Ref]
-		}
-		if typ.Kind != spec.Error {
-			noCtx = false
-		}
-	case 0:
-		// No action
-	default:
-		for _, resp := range oper.Responses {
-			if resp.Ref != "" {
-				resp = g.api.Responses[resp.Ref]
-			}
-			if resp.In == "body" && resp.Content != "error" {
-				g.generateResponseBodyItem(resp.Name, resp.Type, resp.Code, resp.Content, errName, false)
-				noCtx = false
-				break
-			}
-		}
+	err = g.generateResponses(oper.Responses, "200", errName)
+	if err != nil {
+		return err
 	}
-	if noCtx {
-		g.buf.WriteString(`
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(200)
-	w.Write([]byte("null"))
-`)
-	}
-	g.buf.WriteString(`
-	return
-}
-`)
+
 	return
 }
