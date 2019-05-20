@@ -100,41 +100,87 @@ SetBody(%s)`, g.getVarName(req.Name, req.Type))
 	return nil
 }
 
-func (g *GenClient) generateResponses(oper *spec.Operation) (err error) {
+func (g *GenClient) generateResponsesUnmarshal(resp *spec.Response, define bool) (err error) {
+	if resp.Ref != "" {
+		resp = g.api.Responses[resp.Ref]
+	}
+	if resp.Code == "" {
+		return nil
+	}
+	name := g.getVarName(resp.Name, resp.Type)
 
+	if define {
+		g.buf.WriteFormat(`
+	var %s `, name)
+		err = g.Types(resp.Type)
+		if err != nil {
+			return err
+		}
+	} else {
+		g.buf.WriteFormat("case %s:", resp.Code)
+	}
+	switch resp.Content {
+	case "json":
+		g.buf.AddImport("", "encoding/json")
+		g.buf.WriteFormat(`
+	err = json.Unmarshal(resp.Body(), &%s)
+`, name)
+		if define {
+			g.buf.WriteFormat(`
+	if err == nil {
+		err = fmt.Errorf("%%+v", %s)
+	}
+`, name)
+		}
+	case "xml":
+		g.buf.AddImport("", "encoding/xml")
+		g.buf.WriteFormat(`
+	err = xml.Unmarshal(resp.Body(), &%s)
+`, name)
+		if define {
+			g.buf.WriteFormat(`
+	if err == nil {
+		err = fmt.Errorf("%%+v", %s)
+	}
+`, name)
+		}
+	case "error":
+		g.buf.AddImport("", "fmt")
+		for _, wrap := range g.api.Wrappings {
+			if len(wrap.Responses) == 0 {
+				continue
+			}
+			res := wrap.Responses[0]
+			if res.Ref != "" {
+				res = g.api.Responses[res.Ref]
+			}
+			if res.Content != resp.Content {
+				return g.generateResponsesUnmarshal(res, true)
+			}
+		}
+
+		g.buf.WriteFormat(`
+	%s = fmt.Errorf(string(resp.Body()))
+`, name)
+	}
+
+	return nil
+}
+
+func (g *GenClient) generateResponses(oper *spec.Operation) (err error) {
 	g.buf.WriteString(`
 	switch code := resp.StatusCode(); code {
 `)
 
 	for _, resp := range oper.Responses {
-		if resp.Ref != "" {
-			resp = g.api.Responses[resp.Ref]
+		err := g.generateResponsesUnmarshal(resp, false)
+		if err != nil {
+			return err
 		}
-		if resp.Code == "" {
-			continue
-		}
-		g.buf.WriteFormat("case %s:", resp.Code)
-		switch resp.Content {
-		case "json":
-			g.buf.AddImport("", "encoding/json")
-			g.buf.WriteFormat(`
-	err = json.Unmarshal(resp.Body(),&%s)
-`, g.getVarName(resp.Name, resp.Type))
-		case "xml":
-			g.buf.AddImport("", "encoding/xml")
-			g.buf.WriteFormat(`
-	err = xml.Unmarshal(resp.Body(),&%s)
-`, g.getVarName(resp.Name, resp.Type))
-		case "error":
-			g.buf.AddImport("", "fmt")
-			g.buf.WriteFormat(`
-	%s = fmt.Errorf(string(resp.Body()))
-`, g.getVarName(resp.Name, resp.Type))
-		}
-		// TODO
 	}
 	g.buf.AddImport("", "net/http")
-	g.buf.WriteString(`default:
+	g.buf.WriteString(`
+	default:
 		if code >= 400 {
 			err = fmt.Errorf("Undefined code %d %s", code, http.StatusText(code))
 		}
