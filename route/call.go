@@ -88,14 +88,9 @@ func (g *GenRoute) generateCall(name string, chain []string, pkgpath string, typ
 	}
 
 	if len(responses) != 0 {
-		for i, resp := range responses {
-			if resp.Ref != "" {
-				resp = g.api.Responses[resp.Ref]
-			}
-			if i != 0 {
-				g.buf.WriteByte(',')
-			}
-			g.buf.WriteString(g.getVarName(resp.Name, resp.Type))
+		err = g.generateArgsResponses(responses)
+		if err != nil {
+			return err
 		}
 		g.buf.WriteString(" = ")
 	}
@@ -106,7 +101,31 @@ func (g *GenRoute) generateCall(name string, chain []string, pkgpath string, typ
 	}
 
 	g.buf.WriteFormat("%s(", name)
-	for i, req := range requests {
+
+	err = g.generateArgsRequests(requests)
+	if err != nil {
+		return err
+	}
+	g.buf.WriteString(")\n")
+
+	return nil
+}
+
+func (g *GenRoute) generateArgsResponses(resps []*spec.Response) error {
+	for i, resp := range resps {
+		if resp.Ref != "" {
+			resp = g.api.Responses[resp.Ref]
+		}
+		if i != 0 {
+			g.buf.WriteByte(',')
+		}
+		g.buf.WriteString(g.getVarName(resp.Name, resp.Type))
+	}
+	return nil
+}
+
+func (g *GenRoute) generateArgsRequests(reqs []*spec.Request) error {
+	for i, req := range reqs {
 		if req.Ref != "" {
 			req = g.api.Requests[req.Ref]
 		}
@@ -115,8 +134,6 @@ func (g *GenRoute) generateCall(name string, chain []string, pkgpath string, typ
 		}
 		g.buf.WriteString(g.getVarName(req.Name, req.Type))
 	}
-	g.buf.WriteString(")\n")
-
 	return nil
 }
 
