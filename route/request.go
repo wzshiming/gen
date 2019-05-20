@@ -103,7 +103,7 @@ if %s != nil {
 		// Permission verification undefined.
 		var %s `, vname)
 			g.Types(req.Type)
-			g.generateResponseErrorReturn(errName, "401")
+			g.generateResponseErrorReturn(errName, "401", false)
 		default:
 			g.buf.WriteFormat(`
 		// Permission verification
@@ -152,7 +152,7 @@ if %s != nil {
 			g.buf.WriteFormat(`{
 		%s = errors.New("Unauthorized")
 	}`, errName)
-			g.generateResponseError(errName, "401")
+			g.generateResponseError(errName, "401", false)
 		}
 	default:
 		g.buf.WriteFormat(`
@@ -210,25 +210,25 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 			g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = ioutil.ReadAll(r.Body)`, name, name)
-			g.generateResponseError("err", "400")
+			g.generateResponseError("err", "400", false)
 			g.buf.WriteFormat(`
 	err = json.Unmarshal(_%s, &%s)`, name, name)
-			g.generateResponseError("err", "400")
+			g.generateResponseError("err", "400", false)
 		case "xml":
 			g.buf.AddImport("", "io/ioutil")
 			g.buf.AddImport("", "encoding/xml")
 			g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, err = ioutil.ReadAll(r.Body)`, name, name)
-			g.generateResponseError("err", "400")
+			g.generateResponseError("err", "400", false)
 			g.buf.WriteFormat(`
 	err = xml.Unmarshal(_%s, &%s)`, name, name)
-			g.generateResponseError("err", "400")
+			g.generateResponseError("err", "400", false)
 		case "formdata":
 			g.buf.WriteFormat(`
 	if _%s := r.MultipartForm.File["%s"]; len(_%s) != 0 {
 		%s, err = _%s[0].Open()`, name, name, name, name, name)
-			g.generateResponseError("err", "400")
+			g.generateResponseError("err", "400", false)
 			g.buf.WriteFormat(`
 	}
 `)
@@ -258,7 +258,7 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 
 	_%s := bytes.NewBuffer(nil)
 	_, err = io.Copy(_%s, body)`, req.Name, name, name)
-			g.generateResponseError("err", "400")
+			g.generateResponseError("err", "400", false)
 			g.buf.WriteFormat(`
 	%s = _%s
 `, name, name)
@@ -288,37 +288,37 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 	}
 
 	%s, _, err = image.Decode(body)`, req.Name, name)
-			g.generateResponseError("err", "400")
+			g.generateResponseError("err", "400", false)
 		}
 	case "cookie":
 		g.buf.AddImport("", "net/http")
 		g.buf.WriteFormat(`
 	var cookie *http.Cookie
 	cookie, err = r.Cookie("%s")`, req.Name)
-		g.generateResponseError("err", "400")
+		g.generateResponseError("err", "400", false)
 		g.GenModel.ConvertTo(`cookie.Value`, name, req.Type)
-		g.generateResponseError("err", "400")
+		g.generateResponseError("err", "400", false)
 	case "query":
 		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
 	var %s = r.URL.Query()["%s"]
 `, varName, req.Name)
 		g.GenModel.ConvertToMulti(varName, name, req.Type)
-		g.generateResponseError("err", "400")
+		g.generateResponseError("err", "400", false)
 	case "header":
 		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
 	var %s = r.Header.Get("%s")
 `, varName, req.Name)
 		g.GenModel.ConvertTo(varName, name, req.Type)
-		g.generateResponseError("err", "400")
+		g.generateResponseError("err", "400", false)
 	case "path":
 		varName := g.getVarName("raw_"+name, req.Type)
 		g.buf.WriteFormat(`
 	var %s = mux.Vars(r)["%s"]
 `, varName, req.Name)
 		g.GenModel.ConvertTo(varName, name, req.Type)
-		g.generateResponseError("err", "400")
+		g.generateResponseError("err", "400", false)
 
 	default:
 		return fmt.Errorf("undefine in %s", req.In)

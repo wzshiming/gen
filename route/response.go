@@ -74,56 +74,37 @@ func (g *GenRoute) generateResponseBody(resp *spec.Response, errName string) err
 	if %s != `, resp.Code, text, resp.Name, g.getVarName(resp.Name, resp.Type))
 	g.TypesZero(resp.Type)
 	g.buf.WriteString(`{`)
-	g.generateResponseBodyItem(resp, errName)
+	g.generateResponseBodyItem(resp.Name, resp.Type, resp.Code, resp.Content, errName, false)
 	g.buf.WriteString(`return
 }
 `)
 	return nil
-
 }
 
-func (g *GenRoute) generateResponseErrorReturn(errName string, code string) error {
-	g.buf.AddImport("", "net/http")
-	g.buf.WriteFormat(`
-		http.Error(w, %s.Error(), %s)
-`, errName, code)
-	return nil
-}
-
-func (g *GenRoute) generateResponseError(errName string, code string) error {
-	g.buf.WriteFormat(`
-	if %s != nil {`, errName)
-	g.generateResponseErrorReturn(errName, code)
-	g.buf.WriteFormat(`return
-	}
-`)
-	return nil
-}
-
-func (g *GenRoute) generateResponseBodyItem(resp *spec.Response, errName string) error {
+func (g *GenRoute) generateResponseBodyItem(respName string, respType *spec.Type, respCode string, respContent string, errName string, noFmtErr bool) error {
 	contentType := ""
-	name := g.getVarName(resp.Name, resp.Type)
+	name := g.getVarName(respName, respType)
 
-	switch resp.Content {
+	switch respContent {
 	case "json":
 		g.buf.AddImport("", "encoding/json")
 		contentType = "\"application/json; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, %s = json.Marshal(%s)`, name, name, errName, name)
-		g.generateResponseError(errName, "500")
+		g.generateResponseError(errName, "500", noFmtErr)
 	case "xml":
 		g.buf.AddImport("", "encoding/xml")
 		contentType = "\"application/xml; charset=utf-8\""
 		g.buf.WriteFormat(`
 	var _%s []byte
 	_%s, %s = xml.Marshal(%s)`, name, name, errName, name)
-		g.generateResponseError(errName, "500")
+		g.generateResponseError(errName, "500", noFmtErr)
 	case "error":
-		g.generateResponseErrorReturn(name, resp.Code)
+		g.generateResponseErrorReturn(name, respCode, noFmtErr)
 		return nil
 	default:
-		typ := resp.Type
+		typ := respType
 		if typ.Attr.Has(spec.AttrReader) {
 			g.buf.AddImport("", "io/ioutil")
 			g.buf.WriteFormat(`
@@ -150,14 +131,14 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response, errName string)
 `, name, name, name, name, name, name)
 		}
 
-		switch resp.Content {
+		switch respContent {
 		case "":
 			contentType = "\"text/plain; charset=utf-8\""
 		case "file":
 			g.buf.AddImport("", "net/http")
 			contentType = fmt.Sprintf("http.DetectContentType(_%s)", name)
 		default:
-			contentType = strconv.Quote(resp.Content)
+			contentType = strconv.Quote(respContent)
 		}
 
 	}
@@ -166,9 +147,9 @@ func (g *GenRoute) generateResponseBodyItem(resp *spec.Response, errName string)
 	w.Header().Set("Content-Type", %s)`, contentType)
 
 	g.buf.WriteFormat(`
-	w.WriteHeader(%s)`, resp.Code)
+	w.WriteHeader(%s)`, respCode)
 
-	switch resp.Content {
+	switch respContent {
 	case "xml":
 		g.buf.AddImport("", "io")
 		g.buf.WriteFormat(`

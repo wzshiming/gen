@@ -61,7 +61,7 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 				resp = g.api.Responses[resp.Ref]
 			}
 			if resp.In == "body" && resp.Content != "error" {
-				g.generateResponseBodyItem(resp, errName)
+				g.generateResponseBodyItem(resp.Name, resp.Type, resp.Code, resp.Content, errName, false)
 				noCtx = false
 				break
 			}

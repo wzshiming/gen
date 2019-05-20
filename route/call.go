@@ -17,7 +17,7 @@ func (g *GenRoute) generateCallExec(name string, chain []string, pkgpath string,
 			g.buf.WriteFormat(`
 	if r.MultipartForm == nil {
 		%s := r.ParseMultipartForm(10 << 20)`, errName, errName, errName)
-			g.generateResponseError(errName, "400")
+			g.generateResponseError(errName, "400", false)
 			g.buf.WriteFormat(`
 	}
 `)
@@ -25,10 +25,27 @@ func (g *GenRoute) generateCallExec(name string, chain []string, pkgpath string,
 		}
 	}
 
+	for _, req := range requests {
+		err = g.generateRequest(req, errName)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = g.generateCall(name, chain, pkgpath, typ, requests, responses, errName)
 	if err != nil {
 		return err
 	}
+
+	err = g.generateCallOnErr(name, chain, pkgpath, typ, requests, responses, errName, onErr)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *GenRoute) generateCallOnErr(name string, chain []string, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response, errName string, onErr bool) (err error) {
 
 	for _, resp := range responses {
 		if onErr {
@@ -51,18 +68,10 @@ func (g *GenRoute) generateCallExec(name string, chain []string, pkgpath string,
 			return err
 		}
 	}
-
 	return nil
 }
 
 func (g *GenRoute) generateCall(name string, chain []string, pkgpath string, typ *spec.Type, requests []*spec.Request, responses []*spec.Response, errName string) (err error) {
-
-	for _, req := range requests {
-		err = g.generateRequest(req, errName)
-		if err != nil {
-			return err
-		}
-	}
 
 	name = strings.Join(append(chain, name), ".")
 	if typ != nil {
