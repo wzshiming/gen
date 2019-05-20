@@ -320,6 +320,21 @@ func (g *GenOpenAPI) generateResponsesBody(res *spec.Response) (code string, res
 	if res.Ref != "" {
 		return g.api.Responses[res.Ref].Code, oaspec.RefResponse(res.Ref), nil
 	}
+
+	if res.Content == "error" {
+		for _, wrap := range g.api.Wrappings {
+			if len(wrap.Responses) == 0 {
+				continue
+			}
+			resp := wrap.Responses[0]
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+			res = resp
+			break
+		}
+	}
+
 	sch, err := g.generateSchemas(res.Type)
 	if err != nil {
 		return "", nil, err
