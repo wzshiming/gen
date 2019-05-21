@@ -321,27 +321,16 @@ func (g *GenOpenAPI) generateResponsesBody(res *spec.Response) (code string, res
 		return g.api.Responses[res.Ref].Code, oaspec.RefResponse(res.Ref), nil
 	}
 
-	if res.Content == "error" {
-		for _, wrap := range g.api.Wrappings {
-			if len(wrap.Responses) == 0 {
-				continue
-			}
-			resp := wrap.Responses[0]
-			if resp.Ref != "" {
-				resp = g.api.Responses[resp.Ref]
-			}
-			res = resp
-			break
-		}
-	}
-
 	sch, err := g.generateSchemas(res.Type)
 	if err != nil {
 		return "", nil, err
 	}
 
 	resp = &oaspec.Response{}
-	resp.Content = g.generateContents(res.Name, res.Content, sch)
+	resp.Content, err = g.generateContents(res.Name, res.Content, sch)
+	if err != nil {
+		return "", nil, err
+	}
 	resp.Description = res.Description
 	if resp.Description == "" {
 		resp.Description = "Response code is " + res.Code
@@ -398,12 +387,15 @@ func (g *GenOpenAPI) generateRequestBody(req *spec.Request) (body *oaspec.Reques
 	}
 
 	body = &oaspec.RequestBody{}
-	body.Content = g.generateContents(req.Name, req.Content, sch)
+	body.Content, err = g.generateContents(req.Name, req.Content, sch)
+	if err != nil {
+		return nil, err
+	}
 	body.Description = req.Description
 	return
 }
 
-func (g *GenOpenAPI) generateContents(name string, content string, sch *oaspec.Schema) (medias map[string]*oaspec.MediaType) {
+func (g *GenOpenAPI) generateContents(name string, content string, sch *oaspec.Schema) (medias map[string]*oaspec.MediaType, err error) {
 	medias = map[string]*oaspec.MediaType{}
 
 	switch content {
@@ -432,9 +424,38 @@ func (g *GenOpenAPI) generateContents(name string, content string, sch *oaspec.S
 		medias[oaspec.MimeFormData] = &oaspec.MediaType{
 			Schema: sch,
 		}
-	case "textplain", "error":
+	case "textplain":
 		medias[oaspec.MimeTextPlain] = &oaspec.MediaType{
 			Schema: sch,
+		}
+
+	case "error":
+		medias[oaspec.MimeTextPlain] = &oaspec.MediaType{
+			Schema: sch,
+		}
+
+		for _, wrap := range g.api.Wrappings {
+			if len(wrap.Responses) == 0 {
+				continue
+			}
+			resp := wrap.Responses[0]
+			if resp.Ref != "" {
+				resp = g.api.Responses[resp.Ref]
+			}
+
+			sch, err := g.generateSchemas(resp.Type)
+			if err != nil {
+				return nil, err
+			}
+			med, err := g.generateContents(resp.Name, resp.Content, sch)
+			if err != nil {
+				return nil, err
+			}
+			for k, v := range med {
+				if medias[k] == nil {
+					medias[k] = v
+				}
+			}
 		}
 	case "image":
 		medias["image/*"] = &oaspec.MediaType{
@@ -454,7 +475,7 @@ func (g *GenOpenAPI) generateContents(name string, content string, sch *oaspec.S
 		}
 	}
 
-	return medias
+	return medias, nil
 }
 
 func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err error) {
