@@ -16,7 +16,7 @@ func (g *GenRoute) generateCallExec(name string, chain []string, pkgpath string,
 		if req.Content == "formdata" {
 			g.buf.WriteFormat(`
 	if r.MultipartForm == nil {
-		%s := r.ParseMultipartForm(10 << 20)`, errName, errName, errName)
+		%s := r.ParseMultipartForm(10 << 20)`, errName)
 			g.generateResponseError(errName, "400", false)
 			g.buf.WriteFormat(`
 	}
