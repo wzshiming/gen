@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"strings"
 
@@ -83,13 +84,13 @@ func (g *Parser) isWay(way string) bool {
 	return g.ways[way[pre:]]
 }
 
-func (g *Parser) importChild(pkgpath, name string) (gotype.Type, bool) {
+func (g *Parser) importChild(pkgpath string, src string, name string) (gotype.Type, bool) {
 	t, ok := g.consts[name]
 	if ok {
 		return t, true
 	}
 
-	pkg, err := g.imp.Import(pkgpath)
+	pkg, err := g.imp.Import(pkgpath, src)
 	if err != nil {
 		return nil, false
 	}
@@ -97,12 +98,21 @@ func (g *Parser) importChild(pkgpath, name string) (gotype.Type, bool) {
 }
 
 func (g *Parser) importOnce(pkgpath string) error {
-	pkg, err := g.imp.Import(pkgpath)
+	pkg, err := g.imp.Import(pkgpath, "")
 	if err != nil {
-		return err
+		err0 := err
+		dir, err := os.Getwd()
+		if err != nil {
+			return err0
+		}
+		pkg, err = g.imp.Import(pkgpath, dir)
+		if err != nil {
+			return err0
+		}
 	}
 	g.api.Imports = append(g.api.Imports, pkgpath)
-	g.api.Package = pkg.Name()
+	src := pkg.Name()
+	g.api.Package = src
 	numchi := pkg.NumChild()
 
 	for i := 0; i != numchi; i++ {
@@ -112,7 +122,6 @@ func (g *Parser) importOnce(pkgpath string) error {
 		}
 		switch v.Kind() {
 		case gotype.Declaration:
-
 			if len(g.ways) != 0 {
 				doc := v.Doc().Text()
 				_, tag := utils.GetTag(doc)
@@ -120,19 +129,19 @@ func (g *Parser) importOnce(pkgpath string) error {
 					continue
 				}
 			}
-			err = g.addWrapping(nil, v)
+			err = g.addWrapping(src, nil, v)
 			if err != nil {
 				return err
 			}
-			err = g.addMiddleware(nil, v)
+			err = g.addMiddleware(src, nil, v)
 			if err != nil {
 				return err
 			}
-			err = g.addSecurity(nil, v)
+			err = g.addSecurity(src, nil, v)
 			if err != nil {
 				return err
 			}
-			err = g.addOperation("", nil, v, nil)
+			err = g.addOperation(src, "", nil, v, nil)
 			if err != nil {
 				return err
 			}
@@ -146,7 +155,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 				}
 			}
 
-			err = g.addPaths(v)
+			err = g.addPaths(src, v)
 			if err != nil {
 				return err
 			}
@@ -158,7 +167,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 	return nil
 }
 
-func (g *Parser) addPaths(t gotype.Type) (err error) {
+func (g *Parser) addPaths(src string, t gotype.Type) (err error) {
 	doc := strings.TrimSpace(t.Doc().Text())
 	if doc == "" {
 		return nil
@@ -169,16 +178,16 @@ func (g *Parser) addPaths(t gotype.Type) (err error) {
 		return nil
 	}
 
-	sch, err := g.addType(t)
+	sch, err := g.addType(src, t)
 	if err != nil {
 		return err
 	}
 
 	filter := map[string]bool{}
-	return g.addMethods(path, sch, t, nil, filter)
+	return g.addMethods(src, path, sch, t, nil, filter)
 }
 
-func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chain []string, filter map[string]bool) (err error) {
+func (g *Parser) addMethods(src string, basePath string, sch *spec.Type, t gotype.Type, chain []string, filter map[string]bool) (err error) {
 	numm := t.NumMethod()
 	for i := 0; i != numm; i++ {
 		v := t.Method(i)
@@ -195,19 +204,19 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 				continue
 			}
 		}
-		err = g.addWrapping(nil, v)
+		err = g.addWrapping(src, nil, v)
 		if err != nil {
 			return err
 		}
-		err = g.addMiddleware(sch, v)
+		err = g.addMiddleware(src, sch, v)
 		if err != nil {
 			return err
 		}
-		err = g.addSecurity(sch, v)
+		err = g.addSecurity(src, sch, v)
 		if err != nil {
 			return err
 		}
-		err = g.addOperation(basePath, sch, v, chain)
+		err = g.addOperation(src, basePath, sch, v, chain)
 		if err != nil {
 			return err
 		}
@@ -229,7 +238,7 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 
 				v = v.Elem()
 
-				err = g.addMethods(basePath, sch, v, chain, filter)
+				err = g.addMethods(src, basePath, sch, v, chain, filter)
 				if err != nil {
 					return err
 				}
@@ -257,7 +266,7 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 				copy(newChain, chain)
 				newChain = append(newChain, name)
 				filter := map[string]bool{}
-				err = g.addMethods(basePath, sch, v, newChain, filter)
+				err = g.addMethods(src, basePath, sch, v, newChain, filter)
 				if err != nil {
 					return err
 				}
@@ -267,7 +276,7 @@ func (g *Parser) addMethods(basePath string, sch *spec.Type, t gotype.Type, chai
 	return
 }
 
-func (g *Parser) addMiddleware(sch *spec.Type, t gotype.Type) (err error) {
+func (g *Parser) addMiddleware(src string, sch *spec.Type, t gotype.Type) (err error) {
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
@@ -302,17 +311,17 @@ func (g *Parser) addMiddleware(sch *spec.Type, t gotype.Type) (err error) {
 	midd.Description = doc
 	midd.Type = sch
 
-	reqs, err := g.addRequests(path, t, false)
+	reqs, err := g.addRequests(src, path, t, false)
 	midd.Requests = reqs
 
-	resps, err := g.addResponses(t)
+	resps, err := g.addResponses(src, t)
 	midd.Responses = resps
 
 	g.api.Middlewares[key] = midd
 	return nil
 }
 
-func (g *Parser) addWrapping(sch *spec.Type, t gotype.Type) (err error) {
+func (g *Parser) addWrapping(src string, sch *spec.Type, t gotype.Type) (err error) {
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
@@ -347,17 +356,17 @@ func (g *Parser) addWrapping(sch *spec.Type, t gotype.Type) (err error) {
 	wrap.Description = doc
 	wrap.Type = sch
 
-	reqs, err := g.addRequests(path, t, true)
+	reqs, err := g.addRequests(src, path, t, true)
 	wrap.Requests = reqs
 
-	resps, err := g.addResponses(t)
+	resps, err := g.addResponses(src, t)
 	wrap.Responses = resps
 
 	g.api.Wrappings[key] = wrap
 	return nil
 }
 
-func (g *Parser) addSecurity(sch *spec.Type, t gotype.Type) (err error) {
+func (g *Parser) addSecurity(src string, sch *spec.Type, t gotype.Type) (err error) {
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
@@ -386,17 +395,17 @@ func (g *Parser) addSecurity(sch *spec.Type, t gotype.Type) (err error) {
 	secu.Description = doc
 	secu.Type = sch
 
-	reqs, err := g.addRequests("", t, false)
+	reqs, err := g.addRequests(src, "", t, false)
 	secu.Requests = reqs
 
-	resps, err := g.addResponses(t)
+	resps, err := g.addResponses(src, t)
 	secu.Responses = resps
 
 	g.api.Securitys[key] = secu
 	return nil
 }
 
-func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type, chain []string) (err error) {
+func (g *Parser) addOperation(src string, basePath string, sch *spec.Type, t gotype.Type, chain []string) (err error) {
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Doc().Text())
 	pkgpath := t.PkgPath()
@@ -444,13 +453,13 @@ func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type, ch
 		oper.Tags = append(oper.Tags, sch.Name)
 	}
 
-	reqs, err := g.addRequests(pat, t, false)
+	reqs, err := g.addRequests(src, pat, t, false)
 	if err != nil {
 		return err
 	}
 	oper.Requests = reqs
 
-	resps, err := g.addResponses(t)
+	resps, err := g.addResponses(src, t)
 	if err != nil {
 		return err
 	}
@@ -460,11 +469,11 @@ func (g *Parser) addOperation(basePath string, sch *spec.Type, t gotype.Type, ch
 	return nil
 }
 
-func (g *Parser) addResponses(t gotype.Type) (resps []*spec.Response, err error) {
+func (g *Parser) addResponses(src string, t gotype.Type) (resps []*spec.Response, err error) {
 	numout := t.NumOut()
 	for i := 0; i != numout; i++ {
 		v := t.Out(i)
-		resp, err := g.addResponse(v)
+		resp, err := g.addResponse(src, v)
 		if err != nil {
 			return nil, err
 		}
@@ -473,7 +482,7 @@ func (g *Parser) addResponses(t gotype.Type) (resps []*spec.Response, err error)
 	return resps, nil
 }
 
-func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
+func (g *Parser) addResponse(src string, t gotype.Type) (resp *spec.Response, err error) {
 
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
@@ -489,7 +498,7 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 		in = "body"
 	}
 
-	sch, err := g.addType(t)
+	sch, err := g.addType(src, t)
 	if err != nil {
 		return nil, err
 	}
@@ -549,12 +558,12 @@ func (g *Parser) addResponse(t gotype.Type) (resp *spec.Response, err error) {
 	}, nil
 }
 
-func (g *Parser) addRequests(basePath string, t gotype.Type, resp bool) (reqs []*spec.Request, err error) {
+func (g *Parser) addRequests(src string, basePath string, t gotype.Type, resp bool) (reqs []*spec.Request, err error) {
 	numin := t.NumIn()
 
 	for i := 0; i != numin; i++ {
 		v := t.In(i)
-		req, err := g.addRequest(basePath, v, resp)
+		req, err := g.addRequest(src, basePath, v, resp)
 		if err != nil {
 			return nil, err
 		}
@@ -563,7 +572,7 @@ func (g *Parser) addRequests(basePath string, t gotype.Type, resp bool) (reqs []
 	return reqs, nil
 }
 
-func (g *Parser) addRequest(basePath string, t gotype.Type, resp bool) (par *spec.Request, err error) {
+func (g *Parser) addRequest(src string, basePath string, t gotype.Type, resp bool) (par *spec.Request, err error) {
 
 	oname := t.Name()
 	doc := strings.TrimSpace(t.Comment().Text())
@@ -573,13 +582,13 @@ func (g *Parser) addRequest(basePath string, t gotype.Type, resp bool) (par *spe
 	t = t.Declaration()
 	switch t.Kind() {
 	case gotype.Ptr:
-		if req, ok := g.importChild("net/http", "Request"); ok && gotype.Equal(t.Elem(), req) {
+		if req, ok := g.importChild("net/http", "", "Request"); ok && gotype.Equal(t.Elem(), req) {
 			return &spec.Request{
 				In:    "none",
 				Ident: "*net/http.Request",
 				Name:  "r",
 			}, nil
-		} else if req, ok := g.importChild("net/url", "Userinfo"); ok && gotype.Equal(t.Elem(), req) {
+		} else if req, ok := g.importChild("net/url", "", "Userinfo"); ok && gotype.Equal(t.Elem(), req) {
 			return &spec.Request{
 				In:    "none",
 				Ident: "*net/url.Userinfo",
@@ -588,13 +597,13 @@ func (g *Parser) addRequest(basePath string, t gotype.Type, resp bool) (par *spe
 		}
 
 	case gotype.Interface:
-		if resp, ok := g.importChild("net/http", "ResponseWriter"); ok && gotype.Implements(resp, t) {
+		if resp, ok := g.importChild("net/http", "", "ResponseWriter"); ok && gotype.Implements(resp, t) {
 			return &spec.Request{
 				In:    "none",
 				Ident: "net/http.ResponseWriter",
 				Name:  "w",
 			}, nil
-		} else if resp, ok := g.importChild("context", "Context"); ok && gotype.Implements(resp, t) {
+		} else if resp, ok := g.importChild("context", "", "Context"); ok && gotype.Implements(resp, t) {
 			return &spec.Request{
 				In:    "none",
 				Ident: "context.Context",
@@ -603,7 +612,7 @@ func (g *Parser) addRequest(basePath string, t gotype.Type, resp bool) (par *spe
 		}
 	}
 
-	sch, err := g.addType(t)
+	sch, err := g.addType(src, t)
 	if err != nil {
 		return nil, err
 	}
@@ -689,7 +698,7 @@ func (g *Parser) addRequest(basePath string, t gotype.Type, resp bool) (par *spe
 	}, nil
 }
 
-func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
+func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) {
 	oname := t.Name()
 	pkgpath := t.PkgPath()
 	doc := strings.TrimSpace(t.Doc().Text())
@@ -719,7 +728,7 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 	sch.PkgPath = pkgpath
 	sch.Description = doc
 
-	if time, ok := g.importChild("time", "Time"); ok && gotype.Equal(time, t) {
+	if time, ok := g.importChild("time", "", "Time"); ok && gotype.Equal(time, t) {
 		sch.Description = "This is the time string in RFC3339 format"
 		sch.Kind = spec.Time
 		sch.Attr.Add(spec.AttrTextUnmarshaler)
@@ -741,7 +750,7 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 					continue
 				}
 				tag := v.Tag()
-				val, err := g.addType(v.Elem())
+				val, err := g.addType(src, v.Elem())
 				if err != nil {
 					return nil, err
 				}
@@ -766,7 +775,7 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 		gotype.Byte, gotype.Rune:
 
 		if name != "_" && name != strings.ToLower(kind.String()) {
-			scope, err := g.imp.Import(t.PkgPath())
+			scope, err := g.imp.Import(t.PkgPath(), src)
 			if err != nil {
 				return nil, err
 			}
@@ -793,31 +802,31 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 			}
 		}
 	case gotype.Map:
-		schk, err := g.addType(t.Key())
+		schk, err := g.addType(src, t.Key())
 		if err != nil {
 			return nil, err
 		}
-		schv, err := g.addType(t.Elem())
+		schv, err := g.addType(src, t.Elem())
 		if err != nil {
 			return nil, err
 		}
 		sch.Key = schk
 		sch.Elem = schv
 	case gotype.Slice:
-		schv, err := g.addType(t.Elem())
+		schv, err := g.addType(src, t.Elem())
 		if err != nil {
 			return nil, err
 		}
 		sch.Elem = schv
 	case gotype.Array:
-		schv, err := g.addType(t.Elem())
+		schv, err := g.addType(src, t.Elem())
 		if err != nil {
 			return nil, err
 		}
 		sch.Elem = schv
 		sch.Len = t.Len()
 	case gotype.Ptr:
-		schv, err := g.addType(t.Elem())
+		schv, err := g.addType(src, t.Elem())
 		if err != nil {
 			return nil, err
 		}
@@ -830,24 +839,24 @@ func (g *Parser) addType(t gotype.Type) (sch *spec.Type, err error) {
 
 	sch.Kind = kindMapping[kind]
 
-	if text, ok := g.importChild("encoding", "TextUnmarshaler"); ok && gotype.Implements(t, text) {
+	if text, ok := g.importChild("encoding", "", "TextUnmarshaler"); ok && gotype.Implements(t, text) {
 		sch.Attr.Add(spec.AttrTextUnmarshaler)
 	}
-	if text, ok := g.importChild("encoding", "TextMarshaler"); ok && gotype.Implements(t, text) {
+	if text, ok := g.importChild("encoding", "", "TextMarshaler"); ok && gotype.Implements(t, text) {
 		sch.Attr.Add(spec.AttrTextMarshaler)
 	}
-	if text, ok := g.importChild("encoding/json", "Unmarshaler"); ok && gotype.Implements(t, text) {
+	if text, ok := g.importChild("encoding/json", "", "Unmarshaler"); ok && gotype.Implements(t, text) {
 		sch.Attr.Add(spec.AttrJSONUnmarshaler)
 	}
-	if text, ok := g.importChild("encoding/json", "Marshaler"); ok && gotype.Implements(t, text) {
+	if text, ok := g.importChild("encoding/json", "", "Marshaler"); ok && gotype.Implements(t, text) {
 		sch.Attr.Add(spec.AttrJSONMarshaler)
 	}
 
-	if read, ok := g.importChild("io", "Reader"); ok && gotype.Implements(t, read) {
+	if read, ok := g.importChild("io", "", "Reader"); ok && gotype.Implements(t, read) {
 		sch.Attr.Add(spec.AttrReader)
 	}
 
-	if read, ok := g.importChild("image", "Image"); ok && gotype.Implements(t, read) {
+	if read, ok := g.importChild("image", "", "Image"); ok && gotype.Implements(t, read) {
 		sch.Attr.Add(spec.AttrImage)
 	}
 
