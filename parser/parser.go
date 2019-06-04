@@ -188,6 +188,10 @@ func (g *Parser) addPaths(src string, t gotype.Type) (err error) {
 }
 
 func (g *Parser) addMethods(src string, basePath string, sch *spec.Type, t gotype.Type, chain []string, filter map[string]bool) (err error) {
+	if t.Kind() == gotype.Ptr {
+		t = t.Elem()
+	}
+
 	numm := t.NumMethod()
 	for i := 0; i != numm; i++ {
 		v := t.Method(i)
@@ -221,9 +225,7 @@ func (g *Parser) addMethods(src string, basePath string, sch *spec.Type, t gotyp
 			return err
 		}
 	}
-	if t.Kind() == gotype.Ptr {
-		t = t.Elem()
-	}
+
 	if t.Kind() == gotype.Struct {
 		numf := t.NumField()
 		for i := 0; i != numf; i++ {
