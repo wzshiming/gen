@@ -836,7 +836,7 @@ func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) 
 	case gotype.Interface:
 		// No action
 	default:
-		return nil, fmt.Errorf("Gen.addType: unsupported type: %s is %s kind\n", t.String(), t.Kind().String())
+		return nil, fmt.Errorf("Gen.addType: unsupported type: %s %s is %s kind\n", pkgpath, t, kind)
 	}
 
 	sch.Kind = kindMapping[kind]
