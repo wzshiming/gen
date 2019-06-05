@@ -17,6 +17,8 @@ func PackageOmitted(pkgpath string) []string {
 	dirs := build.Default.SrcDirs()
 	pkgpath = strings.TrimSuffix(pkgpath, "/...")
 
+	isLocal := strings.HasPrefix(pkgpath, "./")
+
 	dir := ""
 	for _, d := range dirs {
 		fi, err := os.Stat(path.Join(d, pkgpath))
@@ -41,6 +43,9 @@ func PackageOmitted(pkgpath string) []string {
 			if fi.IsDir() {
 				pkgs = append(pkgs, path.Join(pkg, name))
 			} else if curr && strings.HasSuffix(name, ".go") {
+				if isLocal {
+					pkg = "./" + pkg
+				}
 				outs = append(outs, pkg)
 				curr = false
 			}
