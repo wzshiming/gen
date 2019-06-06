@@ -108,17 +108,13 @@ func (g *Parser) importChild(pkgpath string, src string, name string) (gotype.Ty
 }
 
 func (g *Parser) importOnce(pkgpath string) error {
-	pkg, err := g.imp.Import(pkgpath, "")
+	dir, err := os.Getwd()
 	if err != nil {
-		err0 := err
-		dir, err := os.Getwd()
-		if err != nil {
-			return err0
-		}
-		pkg, err = g.imp.Import(pkgpath, dir)
-		if err != nil {
-			return err0
-		}
+		return err
+	}
+	pkg, err := g.imp.Import(pkgpath, dir)
+	if err != nil {
+		return err
 	}
 	g.api.Imports = append(g.api.Imports, pkg.PkgPath())
 	src := pkg.Name()
