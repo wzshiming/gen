@@ -11,7 +11,6 @@ import (
 	"github.com/wzshiming/gen/parser"
 	"github.com/wzshiming/gen/route"
 	"github.com/wzshiming/gen/utils"
-	"github.com/wzshiming/gotype"
 	oaspec "github.com/wzshiming/openapi/spec"
 	"github.com/wzshiming/openapi/util"
 )
@@ -47,11 +46,10 @@ var Cmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		imp := gotype.NewImporter(gotype.WithCommentLocator())
 		dir, _ := filepath.Abs(out)
 		dir = filepath.Dir(dir)
 		impPath := utils.GetPackagePath(dir)
-		def := parser.NewParser(imp)
+		def := parser.NewParser(nil)
 		for _, arg := range args {
 			err := def.Import(arg, way)
 			if err != nil {

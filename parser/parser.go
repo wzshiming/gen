@@ -28,6 +28,16 @@ type Parser struct {
 }
 
 func NewParser(imp *gotype.Importer) *Parser {
+	if imp == nil {
+		imp = gotype.NewImporter(
+			gotype.WithCommentLocator(),
+			gotype.ImportHandler(func(path, src, dir string) {
+				fmt.Fprintln(os.Stderr, "gen: import", dir)
+			}),
+			gotype.ErrorHandler(func(err error) {
+				fmt.Fprintln(os.Stderr, "gen: error", err.Error())
+			}))
+	}
 	return &Parser{
 		imp:       imp,
 		api:       spec.NewAPI(),

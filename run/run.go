@@ -10,7 +10,6 @@ import (
 	"github.com/wzshiming/gen/openapi"
 	"github.com/wzshiming/gen/parser"
 	"github.com/wzshiming/gen/route"
-	"github.com/wzshiming/gotype"
 	oaspec "github.com/wzshiming/openapi/spec"
 )
 
@@ -69,8 +68,7 @@ func get(pkg string) {
 }
 
 func file(pkgs []string, port string, way string) ([]byte, error) {
-	imp := gotype.NewImporter(gotype.WithCommentLocator())
-	def := parser.NewParser(imp)
+	def := parser.NewParser(nil)
 
 	for _, pkg := range pkgs {
 		err := def.Import(pkg, way)

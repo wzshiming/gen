@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/wzshiming/gen/client"
 	"github.com/wzshiming/gen/parser"
-	"github.com/wzshiming/gotype"
 )
 
 var (
@@ -32,8 +31,7 @@ var Cmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		imp := gotype.NewImporter(gotype.WithCommentLocator())
-		def := parser.NewParser(imp)
+		def := parser.NewParser(nil)
 
 		for _, pkg := range args {
 			err := def.Import(pkg, way)
