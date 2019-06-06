@@ -44,15 +44,22 @@ func Run(pkgs []string, port string, way string) error {
 		return err
 	}
 
-	file := filepath.Join(pkg, "main.go")
-	err = ioutil.WriteFile(file, f, 0666)
+	const modFile = `module gen-run`
+
+	err = ioutil.WriteFile(filepath.Join(pkg, "go.mod"), []byte(modFile), 0666)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filepath.Join(pkg, "main.go"), f, 0666)
 	if err != nil {
 		return err
 	}
 
 	get(pkg)
 
-	cmd := exec.Command("go", "run", pkg)
+	cmd := exec.Command("go", "run", ".")
+	cmd.Dir = pkg
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
