@@ -12,8 +12,8 @@ github.com/spf13/cobra v0.0.3/go.mod h1:1l0Ry5zgKvJasoi3XT1TypsSe7PqH0Sj9dhYf7v3
 github.com/spf13/pflag v1.0.3 h1:zPAT6CGy6wXeQ7NtTnaTerfKOsV6V6F8agHXFiazDkg=
 github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/wzshiming/go-bindata v4.0.0+incompatible/go.mod h1:I1JLfFr6JaehMPaEaLpSv6+fbyyZGxYDkdBDRjKfHzM=
-github.com/wzshiming/gotype v0.5.0 h1:9j+fxXoQ4U5r4erNMENEMc4AA+vra5JjzqNqXembBLM=
-github.com/wzshiming/gotype v0.5.0/go.mod h1:P0t9DFmwzTST7oUbGw7IaW8DAQxgkCfi7WnGY/+COs4=
+github.com/wzshiming/gotype v0.5.2 h1:lBocqXhSx0URRSTrWy2+ukLYsFxgb2+aGJnrCG7fTjc=
+github.com/wzshiming/gotype v0.5.2/go.mod h1:lku8AeNO4HFlQaTLJQT+Qqc4cmygswXdbh1jv7k8zmk=
 github.com/wzshiming/namecase v0.0.0-20190401152339-68d8fc0f8328 h1:H08vNPBvkMjU2N6+JhtWh3ikT/szgOMDnj2nkFBVozg=
 github.com/wzshiming/namecase v0.0.0-20190401152339-68d8fc0f8328/go.mod h1:q3P1U6voOD8f/qupop2s7rFCYotZHayowv3UqVj1hBQ=
 github.com/wzshiming/openapi v0.0.0-20190330160949-6d0c1bfecb8c h1:KyhPiDqbDMLtYhjSFfEhgBLrv7a9ojba5crWaHyGkpw=
