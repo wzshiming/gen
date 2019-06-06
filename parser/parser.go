@@ -120,7 +120,7 @@ func (g *Parser) importOnce(pkgpath string) error {
 			return err0
 		}
 	}
-	g.api.Imports = append(g.api.Imports, pkgpath)
+	g.api.Imports = append(g.api.Imports, pkg.PkgPath())
 	src := pkg.Name()
 	g.api.Package = src
 	numchi := pkg.NumChild()
