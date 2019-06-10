@@ -85,8 +85,10 @@ EOF
           - [X] File
           - [X] Value
         - [ ] URLEncode
-  - [Javascript client](https://github.com/swagger-api/swagger-js)
-  - [Other language client](https://github.com/swagger-api/swagger-codegen/tree/3.0.0)
+  - Other Client
+    - [OpenAPITools/openapi-generator](https://github.com/OpenAPITools/openapi-generator)
+    - [swagger-api/swagger-js](https://github.com/swagger-api/swagger-js)
+    - [swagger-api/swagger-codegen](https://github.com/swagger-api/swagger-codegen/tree/3.0.0)
 - [ ] gRPC & Proto3
 
 ## License
