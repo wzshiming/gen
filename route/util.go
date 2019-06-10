@@ -9,6 +9,13 @@ import (
 	"github.com/wzshiming/namecase"
 )
 
+var codeRequest = &spec.Request{
+	Name: "code",
+	Type: &spec.Type{
+		Kind: spec.Int,
+	},
+}
+
 func (g *GenRoute) getVarName(name string, typ *spec.Type) string {
 	if typ == nil {
 		if name == "" {

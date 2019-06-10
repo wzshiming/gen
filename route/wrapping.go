@@ -12,7 +12,7 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 	}
 	g.only[name] = true
 
-	err = g.generateFunctionDefine("wrapping", name, wrap.Name, wrap.Type, wrap.Requests, nil)
+	err = g.generateFunctionDefine("wrapping", name, wrap.Name, wrap.Type, append([]*spec.Request{codeRequest}, wrap.Requests...), nil)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,8 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 		return err
 	}
 
-	err = g.generateResponses(wrap.Responses, "400", errName)
+	codeName := g.getVarName(codeRequest.Name, codeRequest.Type)
+	err = g.generateResponses(wrap.Responses, codeName, errName)
 	if err != nil {
 		return err
 	}
@@ -60,8 +61,8 @@ func (g *GenRoute) generateResponseErrorReturn(errName string, code string, noFm
 
 			name := g.getWrappingFunctionName(wrap)
 			g.buf.WriteFormat(`
-			%s(w, r, %s)
-`, name, errName)
+			%s(w, r, %s, %s)
+`, name, code, errName)
 
 			return nil
 		}
