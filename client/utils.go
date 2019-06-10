@@ -10,6 +10,13 @@ import (
 	"github.com/wzshiming/namecase"
 )
 
+var errResponse = &spec.Response{
+	Name: "err",
+	Type: &spec.Type{
+		Kind: spec.Error,
+	},
+}
+
 func (g *GenClient) getVarName(name string, typ *spec.Type) string {
 	if typ == nil {
 		if name == "" {

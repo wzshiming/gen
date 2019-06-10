@@ -5,13 +5,6 @@ import (
 	"github.com/wzshiming/gen/utils"
 )
 
-var errResponse = &spec.Response{
-	Name: "err",
-	Type: &spec.Type{
-		Kind: spec.Error,
-	},
-}
-
 func (g *GenClient) generateClient() (err error) {
 	g.buf.AddImport("", "github.com/wzshiming/requests")
 	g.buf.WriteFormat(`
