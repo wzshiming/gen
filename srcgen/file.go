@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/wzshiming/namecase"
 	"golang.org/x/tools/imports"
 )
 
@@ -41,6 +42,7 @@ func (f *File) Save() error {
 		} else {
 			f.packname = b.Name
 		}
+		f.packname = namecase.ToLowerSnake(f.packname)
 	}
 
 	err := os.MkdirAll(filepath.Dir(f.filename), 0755)
