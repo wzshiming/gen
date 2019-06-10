@@ -35,7 +35,12 @@ func NewGenRoute(api *spec.API) *GenRoute {
 func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) {
 	g.buf.WithPackname(pkg)
 	g.GenModel = *model.NewGenModel(g.api, g.buf, []string{outpkg})
-	err := g.generateRoutes(funcName)
+
+	err := g.generateNotFound("notFoundHandler")
+	if err != nil {
+		return nil, err
+	}
+	err = g.generateRoutes(funcName)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +178,11 @@ func (g *GenRoute) generateRouteFunc(typ *spec.Type, op []*spec.Operation) (err 
 			return err
 		}
 	}
+
 	g.buf.WriteString(`
+	if router.NotFoundHandler == nil {
+		router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	}
 	return router
 }
 `)
@@ -204,7 +213,9 @@ func %s() http.Handler {
 	router = RouteOpenAPI(router)
 		`)
 	}
+
 	g.buf.WriteString(`
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	return router
 }
 `)
