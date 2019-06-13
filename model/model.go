@@ -48,11 +48,12 @@ func (g *GenModel) TypesZero(typ *spec.Type) (err error) {
 	case spec.String:
 		g.buf.WriteString("\"\"")
 	case spec.Struct:
+		g.buf.WriteString("(")
 		err = g.Types(typ0)
 		if err != nil {
 			return err
 		}
-		g.buf.WriteString("{}")
+		g.buf.WriteString("{})")
 	case spec.Int, spec.Int8, spec.Int16, spec.Int32, spec.Int64,
 		spec.Uint, spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64,
 		spec.Float32, spec.Float64, spec.Complex64, spec.Complex128,
