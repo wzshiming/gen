@@ -303,7 +303,7 @@ func (g *GenRoute) generateRequestVar(req *spec.Request) error {
 		g.buf.WriteFormat(`
 	var %s = r.URL.Query()["%s"]
 `, varName, req.Name)
-		g.GenModel.ConvertToMulti(varName, name, req.Type)
+		g.GenModel.ConvertToMulti(varName, name, req.Type, g.explode)
 		g.generateResponseError("err", "400", false)
 	case "header":
 		varName := g.getVarName("raw_"+name, req.Type)

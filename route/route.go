@@ -14,12 +14,13 @@ import (
 
 // GenClient is the generating generating
 type GenRoute struct {
+	model.GenModel
 	api          *spec.API
 	apiInterface interface{}
 	buf          *srcgen.File
-	model.GenModel
-	only  map[string]bool
-	named *named.Named
+	only         map[string]bool
+	named        *named.Named
+	explode      bool
 }
 
 func NewGenRoute(api *spec.API) *GenRoute {
@@ -30,6 +31,11 @@ func NewGenRoute(api *spec.API) *GenRoute {
 		only:  map[string]bool{},
 		named: named.NewNamed("_"),
 	}
+}
+
+func (g *GenRoute) SetExplode(b bool) *GenRoute {
+	g.explode = b
+	return g
 }
 
 func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) {

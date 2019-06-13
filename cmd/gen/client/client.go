@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	out  string
-	pack string
-	way  string
+	out     string
+	pack    string
+	way     string
+	explode bool
 )
 
 func init() {
@@ -19,6 +20,7 @@ func init() {
 	flag.StringVarP(&out, "out", "o", "client_gen.go", "output file")
 	flag.StringVarP(&pack, "package", "p", "", "package name")
 	flag.StringVarP(&way, "way", "w", "", "way to export")
+	flag.BoolVarP(&explode, "explode", "", false, "query parameter of array type explode")
 }
 
 var Cmd = &cobra.Command{
@@ -39,7 +41,9 @@ var Cmd = &cobra.Command{
 				return err
 			}
 		}
-		d, err := client.NewGenClient(def.API()).Generate()
+		d, err := client.NewGenClient(def.API()).
+			SetExplode(explode).
+			Generate()
 		if err != nil {
 			return err
 		}

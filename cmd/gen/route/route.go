@@ -23,6 +23,7 @@ var (
 	info     string
 	openapiF bool
 	way      string
+	explode  bool
 )
 
 func init() {
@@ -34,6 +35,7 @@ func init() {
 	flag.StringSliceVarP(&servers, "servers", "s", nil, "")
 	flag.StringVarP(&info, "info", "i", "", "Info")
 	flag.StringVarP(&way, "way", "w", "", "way to export")
+	flag.BoolVarP(&explode, "explode", "", false, "query parameter of array type explode")
 }
 
 var Cmd = &cobra.Command{
@@ -57,7 +59,8 @@ var Cmd = &cobra.Command{
 			}
 		}
 
-		rg := route.NewGenRoute(def.API())
+		rg := route.NewGenRoute(def.API()).
+			SetExplode(explode)
 		if openapiF {
 
 			var oainfo *oaspec.Info
@@ -78,7 +81,11 @@ var Cmd = &cobra.Command{
 				}
 			}
 
-			api, err := openapi.NewGenOpenAPI(def.API()).WithServices(servers...).SetInfo(oainfo).Generate()
+			api, err := openapi.NewGenOpenAPI(def.API()).
+				WithServices(servers...).
+				SetInfo(oainfo).
+				SetExplode(explode).
+				Generate()
 			if err != nil {
 				return err
 			}

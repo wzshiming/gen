@@ -133,7 +133,7 @@ func (g *GenModel) ConvertTo(in, out string, typ *spec.Type) error {
 	return g.convertTo(in, out, typ)
 }
 
-func (g *GenModel) convertToMulti(in, out string, typ *spec.Type) error {
+func (g *GenModel) convertToMulti(in, out string, typ *spec.Type, explode bool) error {
 	if typ.Ref != "" {
 		typ = g.api.Types[typ.Ref]
 	}
@@ -143,10 +143,11 @@ func (g *GenModel) convertToMulti(in, out string, typ *spec.Type) error {
 	}
 `, in)
 
-	switch typ.Kind {
-	default:
-		return g.convertTo(in+"[0]", out, typ)
-	case spec.Slice, spec.Array:
+	if !explode || (typ.Kind != spec.Slice && typ.Kind != spec.Array) {
+		g.buf.WriteFormat(`
+		_%s_0 := %s[0]
+		`, in, in)
+		return g.convertTo("_"+in+"_0", out, typ)
 	}
 
 	g.buf.WriteFormat(`%s = make(`, out)
@@ -175,6 +176,6 @@ func (g *GenModel) convertToMulti(in, out string, typ *spec.Type) error {
 	return nil
 }
 
-func (g *GenModel) ConvertToMulti(in, out string, typ *spec.Type) error {
-	return g.convertToMulti(in, out, typ)
+func (g *GenModel) ConvertToMulti(in, out string, typ *spec.Type, explode bool) error {
+	return g.convertToMulti(in, out, typ, explode)
 }

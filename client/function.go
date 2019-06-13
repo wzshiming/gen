@@ -34,10 +34,19 @@ func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 		}
 
 		switch req.In {
-		case "header", "cookie", "path", "query":
+		case "header", "cookie", "path":
 			name := g.getVarName(req.Name, req.Type)
 			g.buf.WriteFormat(`var _%s string
 `, name)
+		case "query":
+			name := g.getVarName(req.Name, req.Type)
+			if g.explode && (req.Type.Kind == spec.Array || req.Type.Kind == spec.Slice) {
+				g.buf.WriteFormat(`var _%s []string
+`, name)
+			} else {
+				g.buf.WriteFormat(`var _%s string
+`, name)
+			}
 		}
 	}
 
@@ -48,11 +57,24 @@ func (g *GenClient) generateRequests(oper *spec.Operation) (err error) {
 		}
 
 		switch req.In {
-		case "header", "cookie", "path", "query":
+		case "header", "cookie", "path":
 			name := g.getVarName(req.Name, req.Type)
 			err = g.GenModel.ConvertFrom(name, "_"+name, req.Type)
 			if err != nil {
 				return err
+			}
+		case "query":
+			name := g.getVarName(req.Name, req.Type)
+			if req.Type.Kind == spec.Array || req.Type.Kind == spec.Slice {
+				err = g.GenModel.ConvertFromMulti(name, "_"+name, req.Type, g.explode)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = g.GenModel.ConvertFrom(name, "_"+name, req.Type)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -77,8 +99,13 @@ SetHeader("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 			g.buf.WriteFormat(`.
 SetPath("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
 		case "query":
-			g.buf.WriteFormat(`.
+			if g.explode && (req.Type.Kind == spec.Array || req.Type.Kind == spec.Slice) {
+				g.buf.WriteFormat(`.
+AddQuerys("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
+			} else {
+				g.buf.WriteFormat(`.
 SetQuery("%s", _%s)`, req.Name, g.getVarName(req.Name, req.Type))
+			}
 		case "body":
 			switch req.Content {
 			case "json":

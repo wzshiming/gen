@@ -12,10 +12,11 @@ import (
 
 // GenClient is the generating generating
 type GenClient struct {
-	api *spec.API
-	buf *srcgen.File
 	model.GenModel
-	named *named.Named
+	api     *spec.API
+	buf     *srcgen.File
+	named   *named.Named
+	explode bool
 }
 
 func NewGenClient(api *spec.API) *GenClient {
@@ -26,6 +27,11 @@ func NewGenClient(api *spec.API) *GenClient {
 		GenModel: *model.NewGenModel(api, buf, api.Imports),
 		named:    named.NewNamed("_"),
 	}
+}
+
+func (g *GenClient) SetExplode(b bool) *GenClient {
+	g.explode = b
+	return g
 }
 
 func (g *GenClient) Generate() (*srcgen.File, error) {

@@ -14,6 +14,7 @@ type GenOpenAPI struct {
 	api     *spec.API
 	openapi *oaspec.OpenAPI
 	servers []string
+	explode bool
 }
 
 func NewGenOpenAPI(api *spec.API) *GenOpenAPI {
@@ -25,6 +26,11 @@ func NewGenOpenAPI(api *spec.API) *GenOpenAPI {
 			Paths:      oaspec.Paths{},
 		},
 	}
+}
+
+func (g *GenOpenAPI) SetExplode(b bool) *GenOpenAPI {
+	g.explode = b
+	return g
 }
 
 func (g *GenOpenAPI) SetInfo(info *oaspec.Info) *GenOpenAPI {
@@ -356,6 +362,7 @@ func (g *GenOpenAPI) generateParameters(req *spec.Request) (par *oaspec.Paramete
 		par = oaspec.PathParam(req.Name, sch)
 	case "query":
 		par = oaspec.QueryParam(req.Name, sch)
+		par.Explode = g.explode
 	default:
 		return nil, fmt.Errorf("Parameters undefined in:%s", req.In)
 	}

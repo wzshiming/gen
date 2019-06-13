@@ -124,3 +124,47 @@ func (g *GenModel) convertFrom(in, out string, typ *spec.Type) error {
 func (g *GenModel) ConvertFrom(in, out string, typ *spec.Type) error {
 	return g.convertFrom(in, out, typ)
 }
+
+func (g *GenModel) convertFromMulti(in, out string, typ *spec.Type, explode bool) error {
+	if typ.Ref != "" {
+		typ = g.api.Types[typ.Ref]
+	}
+	g.buf.WriteFormat(`
+	if len(%s) == 0 {
+		return
+	}
+`, in)
+
+	if !explode || (typ.Kind != spec.Slice && typ.Kind != spec.Array) {
+		g.buf.WriteFormat(`
+		_%s_0 := %s[0]
+		`, in, in)
+		return g.convertFrom("_"+in+"_0", out, typ)
+	}
+
+	g.buf.WriteFormat(`%s = make([]string, 0, len(%s))
+`, out, in)
+
+	g.buf.WriteFormat(`
+	for _, _%s := range %s {
+		var _%s string
+	`, in, in, out)
+
+	err := g.convertFrom("_"+in, "_"+out, typ.Elem)
+	if err != nil {
+		return err
+	}
+	g.buf.WriteFormat(`
+		if err != nil {
+			break
+		}
+		%s = append(%s, _%s)
+	}
+`, out, out, out)
+
+	return nil
+}
+
+func (g *GenModel) ConvertFromMulti(in, out string, typ *spec.Type, explode bool) error {
+	return g.convertFromMulti(in, out, typ, explode)
+}

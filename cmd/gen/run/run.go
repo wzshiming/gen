@@ -9,14 +9,16 @@ import (
 )
 
 var (
-	port uint
-	way  string
+	port    uint
+	way     string
+	explode bool
 )
 
 func init() {
 	flag := Cmd.Flags()
 	flag.UintVarP(&port, "port", "p", 8080, "listening port")
 	flag.StringVarP(&way, "way", "w", "", "way to export")
+	flag.BoolVarP(&explode, "explode", "", false, "query parameter of array type explode")
 }
 
 var Cmd = &cobra.Command{
@@ -29,6 +31,6 @@ var Cmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return run.Run(args, fmt.Sprintf(":%d", port), way)
+		return run.Run(args, fmt.Sprintf(":%d", port), way, explode)
 	},
 }
