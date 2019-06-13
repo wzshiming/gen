@@ -202,6 +202,9 @@ func (g *GenModel) TypesDefine(typ *spec.Type) (err error) {
 			g.buf.WriteByte('\n')
 		}
 		for _, v := range typ.Fields {
+			if v.Type.Kind == spec.Func {
+				continue
+			}
 			if !v.Anonymous {
 				g.buf.WriteString(v.Name)
 				g.buf.WriteByte(' ')
