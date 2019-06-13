@@ -838,7 +838,7 @@ func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) 
 			return nil, err
 		}
 		sch.Elem = schv
-	case gotype.Interface:
+	case gotype.Interface, gotype.Func:
 		// No action
 	default:
 		return nil, fmt.Errorf("Gen.addType: unsupported type: %s %s is %s kind\n", pkgpath, t, kind)
