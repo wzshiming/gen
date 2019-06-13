@@ -4,6 +4,15 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
+func (g *GenModel) convertFromBool(in, out string, typ *spec.Type) error {
+	g.buf.AddImport("", "strconv")
+	g.buf.WriteFormat(`
+	%s = `, out)
+	g.buf.WriteFormat(`strconv.FormatBool(bool(%s))
+`, in)
+	return nil
+}
+
 func (g *GenModel) convertFromString(in, out string, typ *spec.Type) error {
 	g.buf.WriteFormat(`%s = `, out)
 	g.buf.WriteFormat(`string(%s)
@@ -98,6 +107,8 @@ func (g *GenModel) convertFrom(in, out string, typ *spec.Type) error {
 	}
 
 	switch typ.Kind {
+	case spec.Bool:
+		return g.convertFromBool(in, out, typ)
 	case spec.String:
 		return g.convertFromString(in, out, typ)
 	case spec.Int8, spec.Int16, spec.Int32, spec.Int64, spec.Int:
