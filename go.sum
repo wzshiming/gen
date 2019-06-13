@@ -16,8 +16,8 @@ github.com/wzshiming/gotype v0.5.3 h1:Ri+9qPRoIAqdE3JUgBcSOqgVp+fvBKxOpu9u60v2is
 github.com/wzshiming/gotype v0.5.3/go.mod h1:lku8AeNO4HFlQaTLJQT+Qqc4cmygswXdbh1jv7k8zmk=
 github.com/wzshiming/namecase v0.0.0-20190401152339-68d8fc0f8328 h1:H08vNPBvkMjU2N6+JhtWh3ikT/szgOMDnj2nkFBVozg=
 github.com/wzshiming/namecase v0.0.0-20190401152339-68d8fc0f8328/go.mod h1:q3P1U6voOD8f/qupop2s7rFCYotZHayowv3UqVj1hBQ=
-github.com/wzshiming/openapi v0.0.0-20190330160949-6d0c1bfecb8c h1:KyhPiDqbDMLtYhjSFfEhgBLrv7a9ojba5crWaHyGkpw=
-github.com/wzshiming/openapi v0.0.0-20190330160949-6d0c1bfecb8c/go.mod h1:bGcw/6WQPCRn7A4S77rCct+0xY31fUn9A+89KWVmNNA=
+github.com/wzshiming/openapi v0.0.0-20190613132828-ae58aca1f951 h1:l10pyvPQeyyIvu8bK7715S6RSyLNkCkcKh2DDYPWRx4=
+github.com/wzshiming/openapi v0.0.0-20190613132828-ae58aca1f951/go.mod h1:bGcw/6WQPCRn7A4S77rCct+0xY31fUn9A+89KWVmNNA=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/net v0.0.0-20190311183353-d8887717615a/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
