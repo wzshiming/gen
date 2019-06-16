@@ -653,7 +653,7 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 	for _, v := range typ.Enum {
 		sch.Enum = append(sch.Enum, oaspec.Any(v.Value))
 		if v.Description != "" {
-			sch.Description += "\n" + v.Value + ":" + v.Description
+			sch.Description += "\n - " + v.Value + ": " + v.Description
 		}
 	}
 	sch.Description = strings.TrimSpace(sch.Description)
