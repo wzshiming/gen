@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"sort"
 	"strings"
 )
 
@@ -118,7 +117,6 @@ func GetTag(text string) (string, reflect.StructTag) {
 		other.WriteRune('\n')
 	}
 
-	sort.Strings(ss)
 	tag := strings.Join(ss, "#\n#")
 	if tag != "" {
 		other.WriteString("\n#")
