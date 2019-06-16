@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/wzshiming/gen/spec"
+	"github.com/wzshiming/gen/utils"
 	oaspec "github.com/wzshiming/openapi/spec"
 )
 
@@ -376,10 +377,10 @@ func (g *GenOpenAPI) generateParameters(req *spec.Request) (par *oaspec.Paramete
 	for _, v := range typ.Enum {
 		sch.Enum = append(sch.Enum, oaspec.Any(v.Value))
 		if v.Description != "" {
-			par.Description += "\n" + v.Value + ":" + v.Description
+			par.Description += "\n - " + v.Value + ":" + v.Description
 		}
 	}
-	par.Description = strings.TrimSpace(par.Description)
+	par.Description, _ = utils.GetTag(par.Description)
 
 	return
 }
@@ -581,10 +582,8 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 					val.Description = tt.Description
 				}
 				if v.Description != "" {
-					val.Description += "\n" + v.Description
+					val.Description, _ = utils.GetTag(val.Description + "\n" + v.Description)
 				}
-				val.Description = strings.TrimSpace(val.Description)
-
 				if v.Anonymous {
 					sch.AllOf = append(sch.AllOf, val)
 					continue
@@ -656,7 +655,7 @@ func (g *GenOpenAPI) generateSchemas(typ *spec.Type) (sch *oaspec.Schema, err er
 			sch.Description += "\n - " + v.Value + ": " + v.Description
 		}
 	}
-	sch.Description = strings.TrimSpace(sch.Description)
+	sch.Description, _ = utils.GetTag(sch.Description)
 	return sch, nil
 }
 
