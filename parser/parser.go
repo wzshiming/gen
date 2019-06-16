@@ -173,11 +173,10 @@ func (g *Parser) importOnce(pkgpath string) error {
 }
 
 func (g *Parser) addPaths(src string, t gotype.Type) (err error) {
-	doc := strings.TrimSpace(t.Doc().Text())
-	if doc == "" {
+	_, tag := utils.GetTag(t.Doc().Text())
+	if tag == "" {
 		return nil
 	}
-	_, tag := utils.GetTag(doc)
 	path := tag.Get("path")
 	if path == "" {
 		return nil
@@ -236,15 +235,17 @@ func (g *Parser) addMethods(src string, basePath string, sch *spec.Type, t gotyp
 		for i := 0; i != numf; i++ {
 			v := t.Field(i)
 			if v.IsAnonymous() {
-				doc := strings.TrimSpace(v.Doc().Text())
-				if doc == "" {
+				_, tag := utils.GetTag(v.Doc().Text())
+				if tag == "" {
 					continue
 				}
-				_, tag := utils.GetTag(doc)
-				basePath := path.Join(basePath, tag.Get("path"))
+				lpath := tag.Get("path")
+				if lpath == "" {
+					continue
+				}
 
+				basePath := path.Join(basePath, lpath)
 				v = v.Elem()
-
 				err = g.addMethods(src, basePath, sch, v, chain, filter)
 				if err != nil {
 					return err
@@ -255,20 +256,18 @@ func (g *Parser) addMethods(src string, basePath string, sch *spec.Type, t gotyp
 				if !IsExported(name) {
 					continue
 				}
-				doc := strings.TrimSpace(v.Doc().Text())
-				if doc == "" {
+
+				_, tag := utils.GetTag(v.Doc().Text())
+				if tag == "" {
 					continue
 				}
-
-				_, tag := utils.GetTag(doc)
 				lpath := tag.Get("path")
 				if lpath == "" {
 					continue
 				}
+
 				basePath := path.Join(basePath, lpath)
-
 				v = v.Elem()
-
 				newChain := make([]string, len(chain), len(chain)+1)
 				copy(newChain, chain)
 				newChain = append(newChain, name)
@@ -284,21 +283,20 @@ func (g *Parser) addMethods(src string, basePath string, sch *spec.Type, t gotyp
 }
 
 func (g *Parser) addMiddleware(src string, sch *spec.Type, t gotype.Type) (err error) {
-	oname := t.Name()
-	doc := strings.TrimSpace(t.Doc().Text())
-	pkgpath := t.PkgPath()
-	if doc == "" {
+	doc, tag := utils.GetTag(t.Doc().Text())
+	if tag == "" {
 		return nil
 	}
-	t = t.Declaration()
-	if t.Kind() != gotype.Func {
+	middleware := tag.Get("middleware")
+	if middleware == "" {
 		return nil
 	}
 
-	doc, tag := utils.GetTag(doc)
-	name := GetName(oname, tag)
-	middleware := tag.Get("middleware")
-	if middleware == "" {
+	oname := t.Name()
+	pkgpath := t.PkgPath()
+
+	t = t.Declaration()
+	if t.Kind() != gotype.Func {
 		return nil
 	}
 
@@ -309,6 +307,7 @@ func (g *Parser) addMiddleware(src string, sch *spec.Type, t gotype.Type) (err e
 	}
 
 	hash := utils.Hash(oname, pkgpath, middleware, doc)
+	name := GetName(oname, tag)
 	key := g.namedMidd.GetName(name, hash)
 
 	midd := &spec.Middleware{}
@@ -329,21 +328,21 @@ func (g *Parser) addMiddleware(src string, sch *spec.Type, t gotype.Type) (err e
 }
 
 func (g *Parser) addWrapping(src string, sch *spec.Type, t gotype.Type) (err error) {
-	oname := t.Name()
-	doc := strings.TrimSpace(t.Doc().Text())
-	pkgpath := t.PkgPath()
-	if doc == "" {
+
+	doc, tag := utils.GetTag(t.Doc().Text())
+	if tag == "" {
 		return nil
 	}
-	t = t.Declaration()
-	if t.Kind() != gotype.Func {
+	wrapping := tag.Get("wrapping")
+	if wrapping == "" {
 		return nil
 	}
 
-	doc, tag := utils.GetTag(doc)
-	name := GetName(oname, tag)
-	wrapping := tag.Get("wrapping")
-	if wrapping == "" {
+	oname := t.Name()
+	pkgpath := t.PkgPath()
+
+	t = t.Declaration()
+	if t.Kind() != gotype.Func {
 		return nil
 	}
 
@@ -354,6 +353,7 @@ func (g *Parser) addWrapping(src string, sch *spec.Type, t gotype.Type) (err err
 	}
 
 	hash := utils.Hash(oname, pkgpath, wrapping, doc)
+	name := GetName(oname, tag)
 	key := g.namedWrap.GetName(name, hash)
 
 	wrap := &spec.Wrapping{}
@@ -374,25 +374,26 @@ func (g *Parser) addWrapping(src string, sch *spec.Type, t gotype.Type) (err err
 }
 
 func (g *Parser) addSecurity(src string, sch *spec.Type, t gotype.Type) (err error) {
-	oname := t.Name()
-	doc := strings.TrimSpace(t.Doc().Text())
-	pkgpath := t.PkgPath()
-	if doc == "" {
-		return nil
-	}
-	t = t.Declaration()
-	if t.Kind() != gotype.Func {
-		return nil
-	}
 
-	doc, tag := utils.GetTag(doc)
-	name := GetName(oname, tag)
+	doc, tag := utils.GetTag(t.Doc().Text())
+	if tag == "" {
+		return nil
+	}
 	security := tag.Get("security")
 	if security == "" {
 		return nil
 	}
 
+	oname := t.Name()
+	pkgpath := t.PkgPath()
+
+	t = t.Declaration()
+	if t.Kind() != gotype.Func {
+		return nil
+	}
+
 	hash := utils.Hash(oname, pkgpath, security, doc)
+	name := GetName(oname, tag)
 	key := g.namedSecu.GetName(name, hash)
 
 	secu := &spec.Security{}
@@ -413,23 +414,24 @@ func (g *Parser) addSecurity(src string, sch *spec.Type, t gotype.Type) (err err
 }
 
 func (g *Parser) addOperation(src string, basePath string, sch *spec.Type, t gotype.Type, chain []string) (err error) {
-	oname := t.Name()
-	doc := strings.TrimSpace(t.Doc().Text())
-	pkgpath := t.PkgPath()
 
-	if doc == "" {
+	doc, tag := utils.GetTag(t.Doc().Text())
+	if tag == "" {
 		return nil
 	}
-	t = t.Declaration()
-	if t.Kind() != gotype.Func {
-		return nil
-	}
-	doc, tag := utils.GetTag(doc)
-	name := GetName(oname, tag)
 	route := tag.Get("route")
 	if route == "" {
 		return nil
 	}
+
+	oname := t.Name()
+	pkgpath := t.PkgPath()
+
+	t = t.Declaration()
+	if t.Kind() != gotype.Func {
+		return nil
+	}
+
 	deprecated, method, pat, ok := GetRoute(route)
 	if !ok {
 		return nil
@@ -440,6 +442,7 @@ func (g *Parser) addOperation(src string, basePath string, sch *spec.Type, t got
 		pat = path.Join(basePath, pat)
 	}
 
+	name := GetName(oname, tag)
 	oper := &spec.Operation{}
 	oper.PkgPath = pkgpath
 	oper.Method = method
@@ -492,8 +495,7 @@ func (g *Parser) addResponses(src string, t gotype.Type) (resps []*spec.Response
 func (g *Parser) addResponse(src string, t gotype.Type) (resp *spec.Response, err error) {
 
 	oname := t.Name()
-	doc := strings.TrimSpace(t.Comment().Text())
-	doc, tag := utils.GetTag(doc)
+	doc, tag := utils.GetTag(t.Comment().Text())
 	name := GetName(oname, tag)
 	code := tag.Get("code")
 	in := tag.Get("in")
@@ -582,8 +584,7 @@ func (g *Parser) addRequests(src string, basePath string, t gotype.Type, resp bo
 func (g *Parser) addRequest(src string, basePath string, t gotype.Type, resp bool) (par *spec.Request, err error) {
 
 	oname := t.Name()
-	doc := strings.TrimSpace(t.Comment().Text())
-	doc, tag := utils.GetTag(doc)
+	doc, tag := utils.GetTag(t.Comment().Text())
 	name := GetName(oname, tag)
 	in := tag.Get("in")
 	t = t.Declaration()
@@ -708,8 +709,8 @@ func (g *Parser) addRequest(src string, basePath string, t gotype.Type, resp boo
 func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) {
 	oname := t.Name()
 	pkgpath := t.PkgPath()
-	doc := strings.TrimSpace(t.Doc().Text())
-	doc, tag := utils.GetTag(doc)
+
+	doc, tag := utils.GetTag(t.Doc().Text())
 	name := GetName(oname, tag)
 	kind := t.Kind()
 	isRoot := t.IsGoroot()
@@ -763,7 +764,7 @@ func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) 
 				}
 
 				desc := v.Doc().Text() + "\n" + v.Comment().Text()
-				desc = strings.TrimSpace(desc)
+				desc, _ = utils.GetTag(desc)
 				field := &spec.Field{
 					Name:        name,
 					Type:        val,
@@ -798,7 +799,7 @@ func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) 
 				if typname := v.Name(); name == typname {
 					if value := v.Value(); value != "" {
 						desc := v.Doc().Text() + "\n" + v.Comment().Text()
-						desc = strings.TrimSpace(desc)
+						desc, _ = utils.GetTag(desc)
 						sch.Enum = append(sch.Enum, &spec.Enum{
 							Name:        vname,
 							Value:       value,
