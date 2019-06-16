@@ -90,22 +90,32 @@ func Hash(s ...string) string {
 
 // GetTag [#[^#]+#]...
 func GetTag(text string) (string, reflect.StructTag) {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return "", ""
+	}
 	ss := []string{}
-	prev := -1
 	other := bytes.NewBuffer(nil)
-	for i, v := range text {
-		if v != '#' {
-			if prev == -1 {
-				other.WriteRune(v)
-			}
+	for _, text := range strings.Split(text, "\n") {
+		if text == "" {
 			continue
 		}
-		if prev == -1 {
-			prev = i
-		} else {
-			ss = append(ss, strings.TrimSpace(text[prev+1:i]))
-			prev = -1
+		prev := -1
+		for i, v := range text {
+			if v != '#' {
+				if prev == -1 {
+					other.WriteRune(v)
+				}
+				continue
+			}
+			if prev == -1 {
+				prev = i
+			} else {
+				ss = append(ss, strings.TrimSpace(text[prev+1:i]))
+				prev = -1
+			}
 		}
+		other.WriteRune('\n')
 	}
 
 	sort.Strings(ss)
