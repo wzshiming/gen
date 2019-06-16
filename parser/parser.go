@@ -315,6 +315,7 @@ func (g *Parser) addMiddleware(src string, sch *spec.Type, t gotype.Type) (err e
 	midd.PkgPath = pkgpath
 	midd.Schema = middleware
 	midd.Description = doc
+	midd.DescriptionTag = tag
 	midd.Type = sch
 
 	reqs, err := g.addRequests(src, path, t, false)
@@ -361,6 +362,7 @@ func (g *Parser) addWrapping(src string, sch *spec.Type, t gotype.Type) (err err
 	wrap.PkgPath = pkgpath
 	wrap.Schema = wrapping
 	wrap.Description = doc
+	wrap.DescriptionTag = tag
 	wrap.Type = sch
 
 	reqs, err := g.addRequests(src, path, t, true)
@@ -401,6 +403,7 @@ func (g *Parser) addSecurity(src string, sch *spec.Type, t gotype.Type) (err err
 	secu.PkgPath = pkgpath
 	secu.Schema = security
 	secu.Description = doc
+	secu.DescriptionTag = tag
 	secu.Type = sch
 
 	reqs, err := g.addRequests(src, "", t, false)
@@ -451,6 +454,7 @@ func (g *Parser) addOperation(src string, basePath string, sch *spec.Type, t got
 	oper.Description = doc
 	oper.Summary = strings.SplitN(oper.Description, "\n", 2)[0]
 	oper.Deprecated = deprecated
+	oper.DescriptionTag = tag
 	oper.Type = sch
 	oper.Name = name
 	oper.Chain = chain
@@ -559,6 +563,7 @@ func (g *Parser) addResponse(src string, t gotype.Type) (resp *spec.Response, er
 	resp.Code = code
 	resp.Content = content
 	resp.Description = doc
+	resp.DescriptionTag = tag
 	resp.Type = sch
 
 	g.api.Responses[key] = resp
@@ -698,6 +703,7 @@ func (g *Parser) addRequest(src string, basePath string, t gotype.Type, resp boo
 	par.Name = name
 	par.Content = content
 	par.Description = doc
+	par.DescriptionTag = tag
 	par.Type = sch
 
 	g.api.Requests[key] = par
@@ -735,6 +741,7 @@ func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) 
 	sch.Name = name
 	sch.PkgPath = pkgpath
 	sch.Description = doc
+	sch.DescriptionTag = tag
 
 	if time, ok := g.importChild("time", "", "Time"); ok && gotype.Equal(time, t) {
 		sch.Description = "This is the time string in RFC3339 format"
