@@ -19,7 +19,15 @@ func (g *GenRoute) generateMiddlewareFunction(midd *spec.Middleware) (err error)
 
 	g.buf.WriteString(`{
 `)
-	err = g.generateRequestsVar(midd.Requests)
+
+	pname := midd.Name
+	if typ := midd.Type; typ != nil {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		pname = typ.Name + "." + pname
+	}
+	err = g.generateRequestsVar(pname, midd.Requests)
 	if err != nil {
 		return err
 	}

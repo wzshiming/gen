@@ -20,7 +20,14 @@ func (g *GenRoute) generateSecurityFunction(secu *spec.Security) (err error) {
 	g.buf.WriteString(`{
 `)
 
-	err = g.generateRequestsVar(secu.Requests)
+	pname := secu.Name
+	if typ := secu.Type; typ != nil {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		pname = typ.Name + "." + pname
+	}
+	err = g.generateRequestsVar(pname, secu.Requests)
 	if err != nil {
 		return err
 	}

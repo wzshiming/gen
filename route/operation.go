@@ -19,12 +19,20 @@ func (g *GenRoute) generateOperationFunction(oper *spec.Operation) (err error) {
 
 	g.buf.WriteFormat(`{
 `)
-	err = g.generateRequestsVar(oper.Requests)
+
+	pname := oper.Name
+	if typ := oper.Type; typ != nil {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		pname = typ.Name + "." + pname
+	}
+	err = g.generateRequestsVar(pname, oper.Requests)
 	if err != nil {
 		return err
 	}
 
-	err = g.generateResponsesVar(oper.Responses)
+	err = g.generateResponsesVar(pname, oper.Responses)
 	if err != nil {
 		return err
 	}

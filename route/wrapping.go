@@ -20,7 +20,14 @@ func (g *GenRoute) generateWrappingFunction(wrap *spec.Wrapping) (err error) {
 	g.buf.WriteString(`{
 `)
 
-	err = g.generateResponsesVar(wrap.Responses)
+	pname := wrap.Name
+	if typ := wrap.Type; typ != nil {
+		if typ.Ref != "" {
+			typ = g.api.Types[typ.Ref]
+		}
+		pname = typ.Name + "." + pname
+	}
+	err = g.generateResponsesVar(pname, wrap.Responses)
 	if err != nil {
 		return err
 	}

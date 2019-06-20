@@ -7,7 +7,7 @@ import (
 	"github.com/wzshiming/gen/spec"
 )
 
-func (g *GenRoute) generateRequestsVar(reqs []*spec.Request) error {
+func (g *GenRoute) generateRequestsVar(name string, reqs []*spec.Request) error {
 
 	for _, req := range reqs {
 		if req.Ref != "" {
@@ -17,7 +17,8 @@ func (g *GenRoute) generateRequestsVar(reqs []*spec.Request) error {
 			continue
 		}
 
-		g.buf.WriteFormat("var %s ", g.getVarName(req.Name, req.Type))
+		g.buf.WriteFormat(`// requests %s %s.%s
+var %s `, req.Type.PkgPath, name, req.Name, g.getVarName(req.Name, req.Type))
 		g.Types(req.Type)
 		g.buf.WriteString("\n")
 	}
