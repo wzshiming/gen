@@ -21,17 +21,17 @@ func NewNamed(seg string) *Named {
 func (n *Named) GetName(name string, addr string) string {
 	d, ok := n.set[name]
 	if !ok {
-		n.set[name] = map[string]string{
-			addr: name,
-		}
-		return name
+		d = map[string]string{}
+		n.set[name] = d
 	}
 
 	if name, ok := d[addr]; ok {
 		return name
 	}
 
-	name = fmt.Sprintf("%s%s%d", name, n.seg, len(d))
+	if len(d) != 0 {
+		name = fmt.Sprintf("%s%s%d", name, n.seg, len(d))
+	}
 	d[addr] = name
 	return name
 }
