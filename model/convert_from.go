@@ -147,10 +147,7 @@ func (g *GenModel) convertFromMulti(in, out string, typ *spec.Type, explode bool
 `, in)
 
 	if !explode || (typ.Kind != spec.Slice && typ.Kind != spec.Array) {
-		g.buf.WriteFormat(`
-		_%s_0 := %s[0]
-		`, in, in)
-		return g.convertFrom("_"+in+"_0", out, typ)
+		return g.convertFrom(in, out, typ)
 	}
 
 	g.buf.WriteFormat(`%s = make([]string, 0, len(%s))
