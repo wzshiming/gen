@@ -306,8 +306,8 @@ func (g *Parser) addMiddleware(src string, sch *spec.Type, t gotype.Type) (err e
 		_, _, path, _ = GetRoute(route)
 	}
 
-	hash := utils.Hash(oname, pkgpath, middleware, doc)
 	name := GetName(oname, tag)
+	hash := utils.Hash(pkgpath, name, oname, middleware)
 	key := g.namedMidd.GetName(name, hash)
 
 	midd := &spec.Middleware{}
@@ -353,8 +353,8 @@ func (g *Parser) addWrapping(src string, sch *spec.Type, t gotype.Type) (err err
 		_, _, path, _ = GetRoute(route)
 	}
 
-	hash := utils.Hash(oname, pkgpath, wrapping, doc)
 	name := GetName(oname, tag)
+	hash := utils.Hash(pkgpath, name, oname, wrapping)
 	key := g.namedWrap.GetName(name, hash)
 
 	wrap := &spec.Wrapping{}
@@ -394,8 +394,8 @@ func (g *Parser) addSecurity(src string, sch *spec.Type, t gotype.Type) (err err
 		return nil
 	}
 
-	hash := utils.Hash(oname, pkgpath, security, doc)
 	name := GetName(oname, tag)
+	hash := utils.Hash(pkgpath, name, oname, security)
 	key := g.namedSecu.GetName(name, hash)
 
 	secu := &spec.Security{}
@@ -504,6 +504,7 @@ func (g *Parser) addResponse(src string, t gotype.Type) (resp *spec.Response, er
 	code := tag.Get("code")
 	in := tag.Get("in")
 	content := tag.Get("content")
+	pkgpath := t.PkgPath()
 	t = t.Declaration()
 
 	kind := t.Kind()
@@ -543,11 +544,8 @@ func (g *Parser) addResponse(src string, t gotype.Type) (resp *spec.Response, er
 		}
 	}
 
-	si := sch.Ref
-	if si == "" {
-		si = sch.Ident
-	}
-	hash := utils.Hash(oname, in, code, content, doc, si)
+	hash := utils.Hash(pkgpath, name, oname, in, code, content, sch.Ref, sch.Ident)
+
 	key := g.namedResp.GetName(name+"_"+in, hash)
 
 	if g.api.Responses[key] != nil {
@@ -592,6 +590,7 @@ func (g *Parser) addRequest(src string, basePath string, t gotype.Type, resp boo
 	doc, tag := utils.GetTag(t.Comment().Text())
 	name := GetName(oname, tag)
 	in := tag.Get("in")
+	pkgpath := t.PkgPath()
 	t = t.Declaration()
 	switch t.Kind() {
 	case gotype.Ptr:
@@ -684,11 +683,7 @@ func (g *Parser) addRequest(src string, basePath string, t gotype.Type, resp boo
 		content = "json"
 	}
 
-	si := sch.Ref
-	if si == "" {
-		si = sch.Ident
-	}
-	hash := utils.Hash(oname, in, content, doc, si)
+	hash := utils.Hash(pkgpath, name, oname, in, content, sch.Ref, sch.Ident)
 	key := g.namedReq.GetName(name+"_"+in, hash)
 
 	if g.api.Requests[key] != nil {
@@ -723,7 +718,7 @@ func (g *Parser) addType(src string, t gotype.Type) (sch *spec.Type, err error) 
 	isBuiltin := name == strings.ToLower(kind.String())
 	hash := ""
 	if !isBuiltin {
-		hash = utils.Hash(t.String(), oname, pkgpath, doc)
+		hash = utils.Hash(pkgpath, name, oname, t.String())
 	}
 	key := g.namedTyp.GetName(name, hash)
 
