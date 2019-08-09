@@ -14,6 +14,28 @@
 
 ## 示例
 
+'#'是注释，注释是golang tag语法，这里唯一的区别是'#' 包裹而不是 '`'
+
+``` golang
+// ItemService #path:"/item/"#
+type ItemService struct {}
+
+// Create a Item #route:"POST /"#
+func (s *ItemService) Create(item *Item) (err error) {}
+
+// Update the Item #route:"PUT /{item_id}"#
+func (s *ItemService) Update(itemID int /* #name:"item_id"# */, item *Item) (err error) {}
+
+// Delete the Item #route:"DELETE /{item_id}"#
+func (s *ItemService) Delete(itemID int /* #name:"item_id"# */) (err error) {}
+
+// Get the Item #route:"GET /{item_id}"#
+func (s *ItemService) Get(itemID int /* #name:"item_id"# */) (item *ItemWithID, err error) {}
+
+// List of the Item #route:"GET /"#
+func (s *ItemService) List(offset, limit int) (items []*ItemWithID, err error) {}
+```
+
 1. 安装 gen 工具 `go get -v github.com/wzshiming/gen/cmd/gen`
 2. 添加 gen 工具到 $PATH
 3. 启动 `gen run github.com/wzshiming/gen-examples/service/...`

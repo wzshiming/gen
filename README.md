@@ -14,6 +14,28 @@ generating clients is also supported
 
 ## Examples
 
+'#' is the annotation, the annotation is the golang tag syntax, the only difference here is '#' wraps not '`'.
+
+``` golang
+// ItemService #path:"/item/"#
+type ItemService struct {}
+
+// Create a Item #route:"POST /"#
+func (s *ItemService) Create(item *Item) (err error) {}
+
+// Update the Item #route:"PUT /{item_id}"#
+func (s *ItemService) Update(itemID int /* #name:"item_id"# */, item *Item) (err error) {}
+
+// Delete the Item #route:"DELETE /{item_id}"#
+func (s *ItemService) Delete(itemID int /* #name:"item_id"# */) (err error) {}
+
+// Get the Item #route:"GET /{item_id}"#
+func (s *ItemService) Get(itemID int /* #name:"item_id"# */) (item *ItemWithID, err error) {}
+
+// List of the Item #route:"GET /"#
+func (s *ItemService) List(offset, limit int) (items []*ItemWithID, err error) {}
+```
+
 1. Install gen tool `go get -v github.com/wzshiming/gen/cmd/gen`
 2. Add gen tool to $PATH
 3. Start it `gen run github.com/wzshiming/gen-examples/service/...`
