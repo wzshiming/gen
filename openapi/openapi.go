@@ -40,7 +40,9 @@ func (g *GenOpenAPI) SetInfo(info *oaspec.Info) *GenOpenAPI {
 }
 
 func (g *GenOpenAPI) WithServices(servers ...string) *GenOpenAPI {
-	g.servers = append(g.servers, servers...)
+	if len(servers) != 0 {
+		g.servers = servers
+	}
 	return g
 }
 
