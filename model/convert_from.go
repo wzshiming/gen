@@ -20,6 +20,15 @@ func (g *GenModel) convertFromString(in, out string, typ *spec.Type) error {
 	return nil
 }
 
+func (g *GenModel) convertFromFloat64(in, out string, typ *spec.Type) error {
+	g.buf.AddImport("", "strconv")
+	g.buf.WriteFormat(`
+	%s = `, out)
+	g.buf.WriteFormat(`strconv.FormatFloat(float64(%s), 'e', -1, 64)
+`, in)
+	return nil
+}
+
 func (g *GenModel) convertFromInt64(in, out string, typ *spec.Type) error {
 	g.buf.AddImport("", "strconv")
 	g.buf.WriteFormat(`
@@ -115,6 +124,8 @@ func (g *GenModel) convertFrom(in, out string, typ *spec.Type) error {
 		return g.convertFromInt64(in, out, typ)
 	case spec.Uint8, spec.Uint16, spec.Uint32, spec.Uint64, spec.Uint:
 		return g.convertFromUint64(in, out, typ)
+	case spec.Float32, spec.Float64:
+		return g.convertFromFloat64(in, out, typ)
 	case spec.Slice:
 		switch typ.Elem.Kind {
 		case spec.Byte, spec.Rune:
