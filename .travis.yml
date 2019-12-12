@@ -1,26 +1,23 @@
-go_import_path: github.com/wzshiming/gen
-
 language: go
-
-go:
-  - 1.10.x
-  - 1.11.x
-  - tip
-
-os:
-  - linux
-  - osx
-  - windows
-
-matrix:
-  allow_failures:
-    - go: tip
-  fast_finish: true
-
-install:
-  - go get -v github.com/wzshiming/gen/cmd/gen
-
-script:
-  - go test -v github.com/wzshiming/gen/...
-
 sudo: false
+notifications:
+  email: false
+jobs:
+  include:
+    - go: 1.13.x
+      stage: deploy
+      go_import_path: github.com/wzshiming/gen
+      install: skip
+      script: skip
+      before_deploy:
+        - BASENAME=gen bash -c "$(curl -fsSL https://github.com/wzshiming/my-shell/raw/master/build_all.bash)"
+      deploy:
+        provider: releases
+        api_key: $CI_TOKEN
+        file_glob: true
+        file: release/*
+        skip_cleanup: true
+        on:
+          repo: wzshiming/gen
+          branch: master
+          tags: true
