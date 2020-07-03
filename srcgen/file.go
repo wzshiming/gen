@@ -15,9 +15,10 @@ import (
 
 type File struct {
 	srcgen
-	filename string
-	packname string
-	imports  map[string]string
+	filename    string
+	packname    string
+	imports     map[string]string
+	buildIgnore bool
 }
 
 func NewFile() *File {
@@ -80,8 +81,17 @@ func (f *File) AddImport(aliase, importpath string) *File {
 	return f
 }
 
+func (f *File) SetBuildIgnore(b bool) *File {
+	f.buildIgnore = b
+	return f
+}
+
 func (f *File) Bytes() []byte {
 	buf := srcgen{}
+	if f.buildIgnore {
+		buf.WriteFormat(`// +build ignore
+`)
+	}
 	buf.WriteFormat(`// Code generated; DO NOT EDIT.
 // file %s
 

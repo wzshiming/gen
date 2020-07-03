@@ -24,25 +24,12 @@ func Run(pkgs []string, port string, way string, explode bool) error {
 	}
 
 	dir := os.TempDir()
-
-	pathOrigin := filepath.Join(dir, "gen-path")
-
-	pwd, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		return err
-	}
-
-	path, err := filepath.Rel(pwd, pathOrigin)
-	if err != nil {
-		return err
-	}
-
-	pkg := filepath.Join(path, "src", "gen-run")
-
+	pkg := filepath.Join(dir, "gen-run")
 	err = os.MkdirAll(pkg, 0755)
 	if err != nil {
 		return err
 	}
+	defer os.RemoveAll(dir)
 
 	const modFile = `module gen-run`
 
@@ -50,7 +37,6 @@ func Run(pkgs []string, port string, way string, explode bool) error {
 	if err != nil {
 		return err
 	}
-
 	err = ioutil.WriteFile(filepath.Join(pkg, "main.go"), f, 0666)
 	if err != nil {
 		return err
@@ -58,7 +44,7 @@ func Run(pkgs []string, port string, way string, explode bool) error {
 
 	get(pkg)
 
-	cmd := exec.Command("go", "run", ".")
+	cmd := exec.Command("go", "run", "./main.go")
 	cmd.Dir = pkg
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -106,6 +92,7 @@ func file(pkgs []string, port string, way string, explode bool) ([]byte, error) 
 	router, err := route.NewGenRoute(def.API()).
 		WithOpenAPI(api).
 		SetExplode(explode).
+		SetBuildIgnore(true).
 		Generate("main", ".", "Router")
 	if err != nil {
 		return nil, err

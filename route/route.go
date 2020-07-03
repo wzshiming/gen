@@ -38,6 +38,11 @@ func (g *GenRoute) SetExplode(b bool) *GenRoute {
 	return g
 }
 
+func (g *GenRoute) SetBuildIgnore(b bool) *GenRoute {
+	g.buf.SetBuildIgnore(b)
+	return g
+}
+
 func (g *GenRoute) Generate(pkg, outpkg, funcName string) (*srcgen.File, error) {
 	g.buf.WithPackname(pkg)
 	g.GenModel = *model.NewGenModel(g.api, g.buf, []string{outpkg})
@@ -73,10 +78,10 @@ func (g *GenRoute) generateOpenAPI() (err error) {
 	g.buf.WriteFormat("var OpenAPI4YAML=[]byte(`%s`)\n", oay)
 	g.buf.WriteFormat("var OpenAPI4JSON=[]byte(`%s`)\n", oaj)
 
-	g.buf.AddImport("", "github.com/wzshiming/openapi/ui")
-	g.buf.AddImport("", "github.com/wzshiming/openapi/ui/swaggerui")
-	g.buf.AddImport("", "github.com/wzshiming/openapi/ui/swaggereditor")
-	g.buf.AddImport("", "github.com/wzshiming/openapi/ui/redoc")
+	g.buf.AddImport("", "github.com/wzshiming/openapiui")
+	g.buf.AddImport("", "github.com/wzshiming/openapiui/swaggerui")
+	g.buf.AddImport("", "github.com/wzshiming/openapiui/swaggereditor")
+	g.buf.AddImport("", "github.com/wzshiming/openapiui/redoc")
 	g.buf.AddImport("", "github.com/gorilla/mux")
 
 	g.buf.WriteString(`
@@ -87,10 +92,10 @@ func RouteOpenAPI(router *mux.Router) *mux.Router {
 		"openapi.yml": OpenAPI4YAML,
 		"openapi.yaml": OpenAPI4YAML,
 	}
-	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", ui.HandleWithFiles(openapi, swaggerui.Asset)))
-	router.PathPrefix("/swaggerui/").Handler(http.StripPrefix("/swaggerui", ui.HandleWithFiles(openapi, swaggerui.Asset)))
-	router.PathPrefix("/swaggereditor/").Handler(http.StripPrefix("/swaggereditor", ui.HandleWithFiles(openapi, swaggereditor.Asset)))
-	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/redoc", ui.HandleWithFiles(openapi, redoc.Asset)))
+	router.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger", openapiui.HandleWithFiles(openapi, swaggerui.Asset)))
+	router.PathPrefix("/swaggerui/").Handler(http.StripPrefix("/swaggerui", openapiui.HandleWithFiles(openapi, swaggerui.Asset)))
+	router.PathPrefix("/swaggereditor/").Handler(http.StripPrefix("/swaggereditor", openapiui.HandleWithFiles(openapi, swaggereditor.Asset)))
+	router.PathPrefix("/redoc/").Handler(http.StripPrefix("/redoc", openapiui.HandleWithFiles(openapi, redoc.Asset)))
 	return router
 }
 `)
