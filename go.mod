@@ -1,13 +1,11 @@
 module github.com/wzshiming/gen
 
-require (
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/spf13/cobra v0.0.3
-	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/wzshiming/gotype v0.6.3
-	github.com/wzshiming/namecase v0.0.0-20190401152339-68d8fc0f8328
-	github.com/wzshiming/openapi v0.0.0-20190613132828-ae58aca1f951
-	golang.org/x/tools v0.0.0-20191007185444-6536af71d98a
-)
+go 1.14
 
-go 1.13
+require (
+	github.com/spf13/cobra v1.0.0
+	github.com/wzshiming/gotype v0.6.3
+	github.com/wzshiming/namecase v0.2.0
+	github.com/wzshiming/openapi v0.0.0-20200703170606-f8ff864b47e1
+	golang.org/x/tools v0.0.0-20200702044944-0cc1aa72b347
+)
