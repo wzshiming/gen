@@ -58,7 +58,7 @@ type Gentest struct {
 EOF
 ```
 4. Generated from CRUD template `gen crud -t mock -n Gentest`
-5. Start it `gen run gentest`
+5. Start it `GO111MODULE=off gen run gentest`
 
 ## Supported
 

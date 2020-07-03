@@ -60,7 +60,7 @@ EOF
 4. 根据CRUD模板生成
 `gen crud -t mock -n Gentest`
 5. 启动
-`gen run gentest`
+`GO111MODULE=off gen run gentest`
 
 ## 支持的功能
 
