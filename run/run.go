@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -14,10 +15,6 @@ import (
 )
 
 func Run(pkgs []string, port string, way string, explode bool) error {
-	for _, pkg := range pkgs {
-		get(pkg)
-	}
-
 	f, err := file(pkgs, port, way, explode)
 	if err != nil {
 		return err
@@ -29,7 +26,13 @@ func Run(pkgs []string, port string, way string, explode bool) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(dir)
+	defer func() {
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "gen: workdir", pkg)
+		} else {
+			os.RemoveAll(dir)
+		}
+	}()
 
 	const modFile = `module gen-run`
 
@@ -42,22 +45,22 @@ func Run(pkgs []string, port string, way string, explode bool) error {
 		return err
 	}
 
-	get(pkg)
+	command(pkg, "go", "mod", "tidy")
 
-	cmd := exec.Command("go", "run", "./main.go")
-	cmd.Dir = pkg
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	err = cmd.Run()
+	err = command(pkg, "go", "run", "./main.go")
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func get(pkg string) {
-	exec.Command("go", "get", pkg).Run()
+func command(pkg string, cmd ...string) error {
+	c := exec.Command(cmd[0], cmd[1:]...)
+	c.Dir = pkg
+	c.Stderr = os.Stderr
+	c.Stdout = os.Stdout
+	c.Stdin = os.Stdin
+	return c.Run()
 }
 
 func file(pkgs []string, port string, way string, explode bool) ([]byte, error) {
@@ -92,7 +95,6 @@ func file(pkgs []string, port string, way string, explode bool) ([]byte, error) 
 	router, err := route.NewGenRoute(def.API()).
 		WithOpenAPI(api).
 		SetExplode(explode).
-		SetBuildIgnore(true).
 		Generate("main", ".", "Router")
 	if err != nil {
 		return nil, err
