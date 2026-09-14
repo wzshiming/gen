@@ -1,0 +1,24 @@
+name: Build
+on:
+  push:
+    tags:
+      - v*
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+    - name: Build Cross Platform
+      uses: wzshiming/action-go-build-cross-plantform@v1
+    - name: Upload Release Assets
+      uses: wzshiming/action-upload-release-assets@v1
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
